@@ -1,0 +1,52 @@
+export type TriggerType = 'webhook' | 'schedule' | 'manual' | 'app' | 'unknown'
+export type LinkType = 'execute' | 'webhookHttp' | 'error'
+
+export interface RawNode {
+  id?: string
+  name: string
+  type: string
+  parameters?: Record<string, any>
+  credentials?: Record<string, { id?: string; name?: string }>
+}
+
+export interface RawWorkflow {
+  id: string
+  name: string
+  active?: boolean
+  nodes: RawNode[]
+  connections?: Record<string, any>
+  settings?: { errorWorkflow?: string; [k: string]: any }
+  tags?: ({ id?: string; name: string } | string)[]
+}
+
+export interface NodeTypeCount { type: string; count: number }
+
+export interface WorkflowSummary {
+  nodeCount: number
+  nodeTypes: NodeTypeCount[]
+  credentials: string[]
+  inbound: number
+  outbound: number
+}
+
+export interface WorkflowNode {
+  id: string
+  name: string
+  active: boolean
+  triggers: TriggerType[]
+  tags: string[]
+  webhookPaths: string[]
+  summary: WorkflowSummary
+  deepLink: string | null
+}
+
+export interface WorkflowEdge { source: string; target: string; type: LinkType }
+export interface UnresolvedLink { workflowId: string; nodeName: string; reason: string }
+export interface SkippedWorkflow { name?: string; reason: string }
+
+export interface WorkflowGraph {
+  nodes: WorkflowNode[]
+  edges: WorkflowEdge[]
+  unresolved: UnresolvedLink[]
+  skipped: SkippedWorkflow[]
+}
