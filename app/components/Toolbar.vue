@@ -79,7 +79,7 @@ async function onUpload(e: Event) {
       </button>
     </div>
 
-    <div v-if="store.graph?.unresolved.length" class="row">
+    <div v-if="store.graph?.unresolved.length" class="row unresolved">
       <button @click="showUnresolved = !showUnresolved">
         Unresolved links ({{ store.graph.unresolved.length }})
       </button>
@@ -91,14 +91,28 @@ async function onUpload(e: Event) {
 </template>
 
 <style scoped>
-.toolbar { padding: 10px; border-bottom: 1px solid #ddd; display: flex; flex-direction: column; gap: 8px; background: #fafafa; }
-.row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; position: relative; }
-.tags button.active { background: #3b82f6; color: #fff; }
-.search .results { position: absolute; top: 100%; left: 0; background: #fff; border: 1px solid #ddd; list-style: none; margin: 0; padding: 4px; width: 320px; z-index: 5; }
-.search .results li { padding: 4px 6px; cursor: pointer; }
-.search .results li:hover { background: #eef; }
-.kind { font-size: 11px; color: #888; margin-right: 6px; }
-.err { color: #c00; }
-.disconnect { background: var(--bg-3); color: var(--text); border: 1px solid var(--border); border-radius: var(--radius-s); padding: 4px 10px; cursor: pointer; }
+.toolbar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+details { position: relative; }
+summary { list-style: none; cursor: pointer; display: inline-flex; align-items: center; gap: 7px;
+  background: var(--bg-2); border: 1px solid var(--border); color: var(--text); border-radius: var(--radius-m); padding: 7px 11px; font-size: 12px; }
+summary::-webkit-details-marker { display: none; }
+.row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; position: relative; margin-top: 8px; }
+input { background: var(--bg-2); border: 1px solid var(--border); color: var(--text); border-radius: var(--radius-m); padding: 7px 10px; font-size: 12px; }
+input::placeholder { color: var(--text-faint); }
+button { background: var(--accent-dim); color: var(--accent); border: 1px solid transparent; border-radius: var(--radius-m); padding: 7px 12px; font-size: 12px; cursor: pointer; }
+button:hover { filter: brightness(1.15); }
+.disconnect { background: var(--bg-3); color: var(--text); border: 1px solid var(--border); }
 .hint { color: var(--text-faint); font-size: 11px; }
+.search { position: relative; }
+.search input { width: 280px; }
+.search .results { position: absolute; top: 100%; left: 0; margin-top: 4px; background: var(--bg-2); border: 1px solid var(--border);
+  border-radius: var(--radius-m); list-style: none; padding: 4px; width: 320px; z-index: 40; box-shadow: var(--shadow-1); }
+.search .results li { padding: 5px 8px; cursor: pointer; border-radius: var(--radius-s); color: var(--text); }
+.search .results li:hover { background: var(--bg-3); }
+.kind { font-size: 11px; color: var(--text-faint); margin-right: 6px; }
+.tags { display: flex; gap: 6px; flex-wrap: wrap; }
+.tags button { background: var(--bg-3); color: var(--text-dim); border: 1px solid var(--border); border-radius: 999px; padding: 3px 10px; }
+.tags button.active { background: var(--accent-dim); color: var(--accent); border-color: transparent; }
+.err { color: var(--danger); font-size: 12px; }
+.unresolved button { background: var(--bg-3); color: var(--text-dim); border: 1px solid var(--border); }
 </style>

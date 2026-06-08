@@ -1,25 +1,27 @@
 <script setup lang="ts">
-import { computed, watch } from 'vue'
-import { VueFlow, useVueFlow } from '@vue-flow/core'
-import { Background } from '@vue-flow/background'
-import { Controls } from '@vue-flow/controls'
+import { computed, ref, watch } from 'vue'
+import { VueFlow, useVueFlow, MarkerType } from '@vue-flow/core'
 import type { Edge, Node } from '@vue-flow/core'
+import { Background, BackgroundVariant } from '@vue-flow/background'
+import { MiniMap } from '@vue-flow/minimap'
+import '@vue-flow/minimap/dist/style.css'
 import { computeLayeredLayout } from '~/composables/useLayeredLayout'
 import { matchesTags } from '~/composables/useTagFilter'
 import { overlayNodesAndEdges } from '~/composables/useMapLayers'
 import { visibleGraph } from '~/composables/useVisibility'
 import { useGraphStore } from '~/stores/graph'
 import { traceFlow } from '~/composables/useTraceFlow'
+import { edgeColor } from '~/composables/edgeColors'
+import { neighbors } from '~/composables/useNeighbors'
 
 const store = useGraphStore()
 
 const FLOW_ID = 'main'
 const { fitView } = useVueFlow(FLOW_ID)
 
-const edgeStyle: Record<string, Record<string, any>> = {
-  execute: { stroke: '#3b82f6' },
-  webhookHttp: { stroke: '#10b981', strokeDasharray: '6 4' },
-  error: { stroke: '#ef4444' },
+const showMinimap = ref(true)
+function miniColor(node: Node) {
+  return node.data?.kind === 'credential' ? '#ffb454' : node.data?.kind === 'nodeType' ? '#6aa0ff' : '#3ddc97'
 }
 
 const visible = computed(() => store.graph
@@ -37,18 +39,24 @@ const overlay = computed(() => store.graph
 const flow = computed(() => traceFlow(visible.value.nodes, visible.value.edges, store.selectedId))
 const focused = computed(() => store.selectedId != null && flow.value.nodeIds.size > 0)
 
+const hoveredId = ref<string | null>(null)
+const hover = computed(() => neighbors(visible.value.edges, focused.value ? null : hoveredId.value))
+const hovering = computed(() => !focused.value && hoveredId.value != null && hover.value.nodeIds.size > 0)
+
 const nodes = computed<Node[]>(() => {
   const base: Node[] = visible.value.nodes.map(n => ({
     id: n.id, type: 'workflow', position: positions.value.get(n.id) ?? { x: 0, y: 0 },
     data: {
-      kind: 'workflow', label: n.name, triggers: n.triggers, inbound: n.summary.inbound,
+      kind: 'workflow', label: n.name, triggers: n.triggers,
+      inbound: n.summary.inbound, outbound: n.summary.outbound, nodeCount: n.summary.nodeCount,
       dimmed: !matchesTags(n, store.tagFilter) || (focused.value && !flow.value.nodeIds.has(n.id)),
       selected: store.selectedId === n.id,
+      emphasized: hovering.value && hover.value.nodeIds.has(n.id),
     },
   }))
   const overlayNodes: Node[] = overlay.value.nodes.map(o => ({
     id: o.id, type: 'workflow', position: { x: o.x, y: o.y },
-    data: { kind: o.kind, label: o.label, triggers: [], inbound: 0, dimmed: focused.value, selected: false },
+    data: { kind: o.kind, label: o.label, triggers: [], inbound: 0, outbound: 0, nodeCount: 0, dimmed: focused.value, selected: false },
   }))
   return [...base, ...overlayNodes]
 })
@@ -57,9 +65,9 @@ const edges = computed<Edge[]>(() => {
   const baseEdges: Edge[] = visible.value.edges.map(e => {
     const inFlow = !focused.value || flow.value.edgeIds.has(`${e.source}|${e.target}`)
     return {
-      id: `${e.source}|${e.target}|${e.type}`, source: e.source, target: e.target,
-      animated: e.type === 'webhookHttp',
-      style: { ...edgeStyle[e.type], opacity: inFlow ? 1 : 0.12 },
+      id: `${e.source}|${e.target}|${e.type}`, source: e.source, target: e.target, type: 'flow',
+      markerEnd: { type: MarkerType.ArrowClosed, color: edgeColor(e.type) },
+      data: { type: e.type, dimmed: !inFlow, emphasized: hovering.value && hover.value.edgeIds.has(`${e.source}|${e.target}`) },
     }
   })
   const overlayEdges: Edge[] = overlay.value.edges.map(o => ({
@@ -75,6 +83,9 @@ function onNodeClick({ node }: { node: Node }) {
 
 function onPaneClick() { store.selectedId = null }
 
+function onNodeEnter({ node }: { node: Node }) { if (node.data?.kind === 'workflow') hoveredId.value = node.id }
+function onNodeLeave() { hoveredId.value = null }
+
 watch(() => store.selectedId, (id) => {
   if (id && flow.value.nodeIds.size) {
     const ids = [...flow.value.nodeIds]
@@ -85,11 +96,15 @@ watch(() => store.selectedId, (id) => {
 </script>
 
 <template>
-  <VueFlow :id="FLOW_ID" :nodes="nodes" :edges="edges" fit-view-on-init @node-click="onNodeClick" @pane-click="onPaneClick">
+  <VueFlow :id="FLOW_ID" :nodes="nodes" :edges="edges" fit-view-on-init @node-click="onNodeClick" @pane-click="onPaneClick" @nodeMouseEnter="onNodeEnter" @nodeMouseLeave="onNodeLeave">
     <template #node-workflow="props">
       <WorkflowNodeCard :data="props.data" />
     </template>
-    <Background />
-    <Controls />
+    <template #edge-flow="props">
+      <FlowEdge v-bind="props" />
+    </template>
+    <Background :variant="BackgroundVariant.Dots" :gap="22" :size="1.2" pattern-color="#1c2640" />
+    <MiniMap v-if="showMinimap" pannable zoomable :node-color="miniColor" mask-color="rgba(11,15,26,0.7)" />
+    <MapControls :flow-id="FLOW_ID" v-model:minimap="showMinimap" />
   </VueFlow>
 </template>
