@@ -24,9 +24,7 @@ const accentColor = computed(() =>
   : props.data.kind === 'nodeType' ? 'var(--link)'
   : accent[entryKind.value])
 const headIcon = computed(() =>
-  props.data.kind === 'workflow'
-    ? (icons[entryKind.value as TriggerType] ?? '🗂')
-    : kindIcon[props.data.kind])
+  props.data.kind === 'workflow' ? '🗂' : kindIcon[props.data.kind])
 </script>
 
 <template>
@@ -34,8 +32,10 @@ const headIcon = computed(() =>
     <Handle type="target" :position="Position.Left" />
     <div class="accent" :style="{ background: accentColor }" />
     <div class="head">
-      <span class="ico" :data-trigger="entryKind">{{ headIcon }}</span>
+      <span class="ico">{{ headIcon }}</span>
       <span class="label">{{ data.label }}</span>
+      <span v-if="data.kind === 'workflow' && entryKind !== 'none'" class="trig" :data-trigger="entryKind"
+        :style="{ background: accentColor }" :title="entryKind">{{ icons[entryKind] }}</span>
     </div>
     <div v-if="data.kind === 'workflow'" class="meta">
       <span v-if="data.nodeCount" class="chip">{{ data.nodeCount }} nodes</span>
@@ -75,4 +75,6 @@ const headIcon = computed(() =>
   padding: 6px 8px; font-size: 11px; color: var(--text-dim); z-index: 50; pointer-events: none; }
 .node:hover .tip { display: flex; }
 :deep(.vue-flow__handle) { opacity: 0; width: 1px; height: 1px; min-width: 0; min-height: 0; border: none; }
+.trig { margin-left: auto; font-size: 11px; line-height: 1; padding: 2px 5px; border-radius: 6px;
+  filter: saturate(1.2); }
 </style>
