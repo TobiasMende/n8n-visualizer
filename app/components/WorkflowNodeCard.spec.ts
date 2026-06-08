@@ -2,28 +2,23 @@ import { describe, it, expect } from 'vitest'
 import { mount } from '@vue/test-utils'
 import WorkflowNodeCard from './WorkflowNodeCard.vue'
 
-// NOTE: @vue-flow/core's <Handle> requires a VueFlow provider context injected via
-// provide/inject. Mounting it in isolation throws:
-//   TypeError: Cannot read properties of undefined (reading 'dimensions')
-// at vue-flow-core.mjs:7009. We stub it here so the node card itself can be unit-tested
-// independently of the Vue Flow graph context.
-const mountOptions = {
-  global: { stubs: { Handle: { template: '<div />' } } },
-}
-
-const baseData = {
-  label: 'Order Flow', triggers: ['webhook'], inbound: 3, dimmed: false,
-}
+const stubs = { Handle: { template: '<div />' } }   // Vue Flow Handle needs a provider; stub in unit test
 
 describe('WorkflowNodeCard', () => {
-  it('renders the workflow name and a trigger icon', () => {
-    const w = mount(WorkflowNodeCard, { props: { data: baseData }, ...mountOptions })
+  it('renders a workflow node with name + trigger icon', () => {
+    const w = mount(WorkflowNodeCard, { props: { data: { kind: 'workflow', label: 'Order Flow', triggers: ['webhook'], inbound: 3, dimmed: false } }, global: { stubs } })
     expect(w.text()).toContain('Order Flow')
     expect(w.find('[data-trigger="webhook"]').exists()).toBe(true)
   })
 
-  it('applies a dimmed class when data.dimmed is true', () => {
-    const w = mount(WorkflowNodeCard, { props: { data: { ...baseData, dimmed: true } }, ...mountOptions })
+  it('renders a credential node with a distinct kind class', () => {
+    const w = mount(WorkflowNodeCard, { props: { data: { kind: 'credential', label: 'My API', triggers: [], inbound: 0, dimmed: false } }, global: { stubs } })
+    expect(w.text()).toContain('My API')
+    expect(w.find('.kind-credential').exists()).toBe(true)
+  })
+
+  it('applies dimmed class', () => {
+    const w = mount(WorkflowNodeCard, { props: { data: { kind: 'workflow', label: 'X', triggers: [], inbound: 0, dimmed: true } }, global: { stubs } })
     expect(w.classes()).toContain('dimmed')
   })
 })

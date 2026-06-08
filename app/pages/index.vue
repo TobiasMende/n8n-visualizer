@@ -4,21 +4,20 @@ const store = useGraphStore()
 </script>
 
 <template>
-  <div class="app">
-    <Toolbar />
-    <div class="canvas">
-      <ClientOnly>
-        <WorkflowMap v-if="store.graph" />
-      </ClientOnly>
-      <p v-if="!store.graph && !store.loading" class="empty">Connect an n8n instance or upload workflow JSON to begin.</p>
-      <p v-if="store.loading" class="empty">Loading…</p>
-      <SidePanel v-if="store.selected" :node="store.selected" @close="store.selectedId = null" />
-    </div>
-  </div>
-</template>
+  <AppShell>
+    <template #topbar><Toolbar /></template>
 
-<style scoped>
-.app { display: flex; flex-direction: column; height: 100vh; }
-.canvas { position: relative; flex: 1; }
-.empty { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: #888; }
-</style>
+    <ClientOnly>
+      <WorkflowMap v-if="store.view === 'map' && store.graph" />
+      <WebhooksView v-else-if="store.view === 'webhooks' && store.graph" />
+      <SchedulesView v-else-if="store.view === 'schedules' && store.graph" />
+    </ClientOnly>
+
+    <EmptyState v-if="!store.graph && !store.loading"
+      title="Connect an n8n instance or upload workflow JSON"
+      hint="Use the bar above to load via API or drop a workflow export." />
+    <EmptyState v-if="store.loading" title="Loading…" />
+
+    <SidePanel v-if="store.selected && store.view === 'map'" :node="store.selected" @close="store.selectedId = null" />
+  </AppShell>
+</template>

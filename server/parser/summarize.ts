@@ -1,5 +1,7 @@
-import type { RawWorkflow, WorkflowSummary } from '#shared/types/graph'
+import type { RawWorkflow } from '#shared/types/graph'
 import { webhookPathOf } from './webhook-path'
+
+export interface RawTypeCount { type: string; count: number }
 
 export function extractTags(wf: RawWorkflow): string[] {
   return (wf.tags ?? [])
@@ -11,7 +13,7 @@ export function extractWebhookPaths(wf: RawWorkflow): string[] {
   return (wf.nodes ?? []).map(webhookPathOf).filter((p): p is string => p !== null)
 }
 
-export function summarize(wf: RawWorkflow): Omit<WorkflowSummary, 'inbound' | 'outbound'> {
+export function summarize(wf: RawWorkflow): { nodeCount: number; nodeTypes: RawTypeCount[]; credentials: string[] } {
   const counts = new Map<string, number>()
   const creds = new Set<string>()
   for (const node of wf.nodes ?? []) {

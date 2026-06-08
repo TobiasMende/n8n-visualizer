@@ -1,0 +1,21 @@
+:root {
+  --bg-0: #0b0f1a; --bg-1: #0f1420; --bg-2: #151b2b; --bg-3: #1b2538;
+  --border: #243049; --border-soft: #1c2336;
+  --text: #cdd9f0; --text-dim: #7f8db0; --text-faint: #5b6680;
+  --accent: #3ddc97; --accent-dim: #236047;
+  --warn: #ffb454; --danger: #ef4444; --link: #6aa0ff;
+  --radius-s: 6px; --radius-m: 10px; --radius-l: 14px;
+  --shadow-1: 0 4px 18px rgba(0,0,0,.5);
+  --shadow-glow: 0 0 0 1px rgba(61,220,151,.25), 0 4px 24px rgba(61,220,151,.12);
+  --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px; --space-5: 24px;
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, monospace;
+  --dur: 160ms; --ease: cubic-bezier(.2,.6,.2,1);
+}
+
+* { box-sizing: border-box; }
+html, body, #__nuxt { height: 100%; margin: 0; }
+body { background: var(--bg-0); color: var(--text); font-family: var(--font-sans); }
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-thumb { background: var(--bg-3); border-radius: 6px; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }

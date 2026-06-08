@@ -1,0 +1,19 @@
+{
+  "n8n-nodes-base.httpRequest": "HTTP Request",
+  "n8n-nodes-base.webhook": "Webhook",
+  "n8n-nodes-base.set": "Edit Fields (Set)",
+  "n8n-nodes-base.if": "If",
+  "n8n-nodes-base.switch": "Switch",
+  "n8n-nodes-base.merge": "Merge",
+  "n8n-nodes-base.code": "Code",
+  "n8n-nodes-base.function": "Function",
+  "n8n-nodes-base.scheduleTrigger": "Schedule Trigger",
+  "n8n-nodes-base.cron": "Cron",
+  "n8n-nodes-base.manualTrigger": "Manual Trigger",
+  "n8n-nodes-base.executeWorkflow": "Execute Sub-workflow",
+  "n8n-nodes-base.noOp": "No Operation",
+  "n8n-nodes-base.emailSend": "Send Email",
+  "n8n-nodes-base.slack": "Slack",
+  "n8n-nodes-base.postgres": "Postgres",
+  "n8n-nodes-base.googleSheets": "Google Sheets"
+}

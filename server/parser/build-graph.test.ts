@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { buildGraph } from './build-graph'
 import type { RawWorkflow } from '#shared/types/graph'
+import type { NodeCatalog } from '../catalog/catalog'
 
 const producer: RawWorkflow = { id: 'p', name: 'Producer', active: true, nodes: [
   { name: 'hook', type: 'n8n-nodes-base.webhook', parameters: { path: 'orders' } },
@@ -49,5 +50,33 @@ describe('buildGraph', () => {
     const g = buildGraph([producer, bad], null)
     expect(g.nodes.map(n => n.id)).toEqual(['p'])
     expect(g.skipped).toEqual([{ name: 'no id', reason: 'missing id or nodes' }])
+  })
+})
+
+const stubCatalog: NodeCatalog = { displayName: (t) => (t === 'n8n-nodes-base.webhook' ? 'Webhook' : t) }
+
+describe('buildGraph enrichment', () => {
+  const wf: RawWorkflow = { id: 'w', name: 'W', active: true, nodes: [
+    { name: 'hook', type: 'n8n-nodes-base.webhook', parameters: { path: 'p', httpMethod: 'POST' } },
+    { name: 's', type: 'n8n-nodes-base.scheduleTrigger', parameters: { rule: { interval: [{ field: 'days', daysInterval: 1, triggerAtHour: 2, triggerAtMinute: 0 }] } } },
+    { name: 'h', type: 'n8n-nodes-base.httpRequest', credentials: { httpHeaderAuth: { id: '1', name: 'My API' } } },
+  ] }
+
+  it('attaches webhooks, schedules, credentials and readable node-type names', () => {
+    const g = buildGraph([wf], 'https://n8n.example.com', { from: '2026-06-08T00:00:00.000Z', catalog: stubCatalog })
+    expect(g.webhooks).toHaveLength(1)
+    expect(g.webhooks[0].prodUrl).toBe('https://n8n.example.com/webhook/p')
+    expect(g.schedules[0].cadenceText).toBe('Every day at 02:00')
+    expect(g.schedules[0].nextFire).toBe('2026-06-08T02:00:00.000Z')
+    expect(g.credentials.find(c => c.name === 'My API')!.workflowIds).toEqual(['w'])
+    const wh = g.nodes[0].summary.nodeTypes.find(t => t.type === 'n8n-nodes-base.webhook')!
+    expect(wh.displayName).toBe('Webhook')
+  })
+
+  it('still works with no opts (v1 call style)', () => {
+    const g = buildGraph([wf], null)
+    expect(g.webhooks[0].prodUrl).toBeNull()
+    expect(g.schedules[0].nextFire).toBeNull()
+    expect(g.nodes[0].summary.nodeTypes[0].displayName).toBeTypeOf('string')
   })
 })

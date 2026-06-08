@@ -1,10 +1,15 @@
 import { normalizeWorkflows } from '../../ingest/normalize'
 import { buildGraph } from '../../parser/build-graph'
+import { buildCatalog } from '../../catalog/catalog'
+import bundled from '../../catalog/bundled.json'
 
 export default defineEventHandler(async (event) => {
   const body = await readBody(event)
   const raw = body?.workflows ?? body
   const baseUrl = typeof body?.baseUrl === 'string' && body.baseUrl ? body.baseUrl : null
   const workflows = normalizeWorkflows(raw)
-  return buildGraph(workflows, baseUrl)
+  const catalog = await buildCatalog({
+    host: null, cache: { get: async () => null, set: async () => {} }, source: { fetch: async () => null }, bundled,
+  })
+  return buildGraph(workflows, baseUrl, { from: new Date().toISOString(), catalog })
 })

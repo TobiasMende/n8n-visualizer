@@ -19,7 +19,32 @@ export interface RawWorkflow {
   tags?: ({ id?: string; name: string } | string)[]
 }
 
-export interface NodeTypeCount { type: string; count: number }
+export interface NodeTypeCount { type: string; displayName: string; count: number }
+
+export type CadenceGroup =
+  | 'sub-minute' | 'minutes' | 'hourly' | 'daily' | 'weekly' | 'monthly' | 'cron'
+
+export interface WebhookEntry {
+  workflowId: string
+  method: string
+  path: string
+  prodUrl: string | null
+  testUrl: string | null
+}
+
+export interface ScheduleEntry {
+  workflowId: string
+  cadenceText: string
+  cadenceGroup: CadenceGroup
+  nextFire: string | null
+}
+
+export interface CredentialRef {
+  id: string | null
+  name: string
+  type: string
+  workflowIds: string[]
+}
 
 export interface WorkflowSummary {
   nodeCount: number
@@ -49,4 +74,7 @@ export interface WorkflowGraph {
   edges: WorkflowEdge[]
   unresolved: UnresolvedLink[]
   skipped: SkippedWorkflow[]
+  webhooks: WebhookEntry[]
+  schedules: ScheduleEntry[]
+  credentials: CredentialRef[]
 }
