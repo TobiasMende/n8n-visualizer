@@ -21,7 +21,7 @@ const positions = computed(() =>
 )
 
 const overlay = computed(() => store.graph
-  ? overlayNodesAndEdges(store.graph, positions.value, store.layers)
+  ? overlayNodesAndEdges(store.graph, positions.value, store.layers, store.hiddenNodeTypes)
   : { nodes: [], edges: [] })
 
 const nodes = computed<Node[]>(() => {

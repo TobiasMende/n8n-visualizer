@@ -54,6 +54,7 @@ export const useGraphStore = defineStore('graph', () => {
   type ViewId = 'map' | 'webhooks' | 'schedules' | 'credentials'
   const view = ref<ViewId>('map')
   const layers = ref<{ credentials: boolean; nodeTypes: boolean }>({ credentials: false, nodeTypes: false })
+  const hiddenNodeTypes = ref<string[]>([])
 
   if (import.meta.client) {
     const saved = localStorage.getItem('n8nviz.prefs')
@@ -64,14 +65,16 @@ export const useGraphStore = defineStore('graph', () => {
         if (p.layers) layers.value = p.layers
         if (p.linkTypes) linkTypes.value = p.linkTypes
         if (p.tagFilter) tagFilter.value = p.tagFilter
+        if (p.hiddenNodeTypes) hiddenNodeTypes.value = p.hiddenNodeTypes
       } catch { /* ignore corrupt prefs */ }
     }
-    watch([view, layers, linkTypes, tagFilter], () => {
+    watch([view, layers, linkTypes, tagFilter, hiddenNodeTypes], () => {
       localStorage.setItem('n8nviz.prefs', JSON.stringify({
-        view: view.value, layers: layers.value, linkTypes: linkTypes.value, tagFilter: tagFilter.value,
+        view: view.value, layers: layers.value, linkTypes: linkTypes.value,
+        tagFilter: tagFilter.value, hiddenNodeTypes: hiddenNodeTypes.value,
       }))
     }, { deep: true })
   }
 
-  return { graph, loading, error, selectedId, selected, tagFilter, linkTypes, loadFromApi, loadFromUpload, view, layers, connection, connectedHost, disconnect, restoreConnection }
+  return { graph, loading, error, selectedId, selected, tagFilter, linkTypes, loadFromApi, loadFromUpload, view, layers, hiddenNodeTypes, connection, connectedHost, disconnect, restoreConnection }
 })
