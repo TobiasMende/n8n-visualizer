@@ -21,7 +21,7 @@ const views = [
       <header class="topbar">
         <slot name="topbar" />
         <div class="spacer" />
-        <MapLayerToggles v-if="store.view === 'map' && store.graph" />
+        <LayersPanel v-if="store.view === 'map' && store.graph" />
       </header>
       <div class="body"><slot /></div>
     </div>

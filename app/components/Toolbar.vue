@@ -72,12 +72,6 @@ async function onUpload(e: Event) {
       </ul>
     </div>
 
-    <div v-if="store.graph" class="row">
-      <label v-for="(on, type) in store.linkTypes" :key="type">
-        <input type="checkbox" v-model="store.linkTypes[type]" /> {{ type }}
-      </label>
-    </div>
-
     <div v-if="tags.length" class="row tags">
       <button v-for="tag in tags" :key="tag"
               :class="{ active: store.tagFilter.includes(tag) }" @click="toggleTag(tag)">

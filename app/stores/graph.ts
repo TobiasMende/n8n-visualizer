@@ -1,5 +1,6 @@
 import type { WorkflowGraph } from '#shared/types/graph'
 import { saveConnection, loadConnection, clearConnection, hostOf, type Conn } from '~/composables/useConnectionStorage'
+import { defaultVisibility, type Visibility } from '~/composables/useVisibility'
 
 export const useGraphStore = defineStore('graph', () => {
   const graph = ref<WorkflowGraph | null>(null)
@@ -7,7 +8,6 @@ export const useGraphStore = defineStore('graph', () => {
   const error = ref<string | null>(null)
   const selectedId = ref<string | null>(null)
   const tagFilter = ref<string[]>([])
-  const linkTypes = ref<Record<string, boolean>>({ execute: true, webhookHttp: true, error: true })
   const connection = ref<Conn | null>(null)
 
   function extractError(e: any): string {
@@ -54,8 +54,7 @@ export const useGraphStore = defineStore('graph', () => {
 
   type ViewId = 'map' | 'webhooks' | 'schedules' | 'credentials'
   const view = ref<ViewId>('map')
-  const layers = ref<{ credentials: boolean; nodeTypes: boolean }>({ credentials: false, nodeTypes: false })
-  const hiddenNodeTypes = ref<string[]>([])
+  const visibility = ref<Visibility>(defaultVisibility())
 
   if (import.meta.client) {
     const saved = localStorage.getItem('n8nviz.prefs')
@@ -63,19 +62,23 @@ export const useGraphStore = defineStore('graph', () => {
       try {
         const p = JSON.parse(saved)
         if (p.view) view.value = p.view
-        if (p.layers) layers.value = p.layers
-        if (p.linkTypes) linkTypes.value = p.linkTypes
         if (p.tagFilter) tagFilter.value = p.tagFilter
-        if (p.hiddenNodeTypes) hiddenNodeTypes.value = p.hiddenNodeTypes
+        if (p.visibility && typeof p.visibility === 'object') {
+          const d = defaultVisibility()
+          visibility.value = {
+            triggerKinds: { ...d.triggerKinds, ...(p.visibility.triggerKinds ?? {}) },
+            hideErrorHandlers: !!p.visibility.hideErrorHandlers,
+            linkTypes: { ...d.linkTypes, ...(p.visibility.linkTypes ?? {}) },
+            overlays: { ...d.overlays, ...(p.visibility.overlays ?? {}) },
+            hiddenNodeTypes: Array.isArray(p.visibility.hiddenNodeTypes) ? p.visibility.hiddenNodeTypes : [],
+          }
+        }
       } catch { /* ignore corrupt prefs */ }
     }
-    watch([view, layers, linkTypes, tagFilter, hiddenNodeTypes], () => {
-      localStorage.setItem('n8nviz.prefs', JSON.stringify({
-        view: view.value, layers: layers.value, linkTypes: linkTypes.value,
-        tagFilter: tagFilter.value, hiddenNodeTypes: hiddenNodeTypes.value,
-      }))
+    watch([view, tagFilter, visibility], () => {
+      localStorage.setItem('n8nviz.prefs', JSON.stringify({ view: view.value, tagFilter: tagFilter.value, visibility: visibility.value }))
     }, { deep: true })
   }
 
-  return { graph, loading, error, selectedId, selected, tagFilter, linkTypes, loadFromApi, loadFromUpload, view, layers, hiddenNodeTypes, connection, connectedHost, disconnect, restoreConnection }
+  return { graph, loading, error, selectedId, selected, tagFilter, loadFromApi, loadFromUpload, view, visibility, connection, connectedHost, disconnect, restoreConnection }
 })
