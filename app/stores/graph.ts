@@ -7,6 +7,7 @@ export const useGraphStore = defineStore('graph', () => {
   const loading = ref(false)
   const error = ref<string | null>(null)
   const selectedId = ref<string | null>(null)
+  const selectedCredId = ref<string | null>(null)
   const tagFilter = ref<string[]>([])
   const connection = ref<Conn | null>(null)
 
@@ -34,6 +35,7 @@ export const useGraphStore = defineStore('graph', () => {
     connection.value = null
     graph.value = null
     selectedId.value = null
+    selectedCredId.value = null
     error.value = null
     view.value = 'map'
     if (import.meta.client) clearConnection(sessionStorage)
@@ -51,6 +53,9 @@ export const useGraphStore = defineStore('graph', () => {
   const connectedHost = computed(() => connection.value ? hostOf(connection.value.baseUrl) : null)
 
   const selected = computed(() => graph.value?.nodes.find(n => n.id === selectedId.value) ?? null)
+
+  const selectedCredential = computed(() =>
+    graph.value?.credentials.find(c => `cred:${c.type}:${c.name}` === selectedCredId.value) ?? null)
 
   type ViewId = 'map' | 'webhooks' | 'schedules' | 'credentials'
   const view = ref<ViewId>('map')
@@ -80,5 +85,5 @@ export const useGraphStore = defineStore('graph', () => {
     }, { deep: true })
   }
 
-  return { graph, loading, error, selectedId, selected, tagFilter, loadFromApi, loadFromUpload, view, visibility, connection, connectedHost, disconnect, restoreConnection }
+  return { graph, loading, error, selectedId, selected, selectedCredId, selectedCredential, tagFilter, loadFromApi, loadFromUpload, view, visibility, connection, connectedHost, disconnect, restoreConnection }
 })

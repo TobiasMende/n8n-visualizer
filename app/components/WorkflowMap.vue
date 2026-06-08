@@ -56,7 +56,7 @@ const nodes = computed<Node[]>(() => {
   }))
   const overlayNodes: Node[] = overlay.value.nodes.map(o => ({
     id: o.id, type: 'workflow', position: { x: o.x, y: o.y },
-    data: { kind: o.kind, label: o.label, triggers: [], inbound: 0, outbound: 0, nodeCount: 0, dimmed: focused.value, selected: false },
+    data: { kind: o.kind, label: o.label, triggers: [], inbound: 0, outbound: 0, nodeCount: 0, dimmed: focused.value, selected: o.id === store.selectedCredId },
   }))
   return [...base, ...overlayNodes]
 })
@@ -78,10 +78,11 @@ const edges = computed<Edge[]>(() => {
 })
 
 function onNodeClick({ node }: { node: Node }) {
-  if (node.data?.kind === 'workflow') store.selectedId = node.id
+  if (node.data?.kind === 'workflow') { store.selectedId = node.id; store.selectedCredId = null }
+  else if (node.data?.kind === 'credential') { store.selectedCredId = node.id; store.selectedId = null }
 }
 
-function onPaneClick() { store.selectedId = null }
+function onPaneClick() { store.selectedId = null; store.selectedCredId = null }
 
 function onNodeEnter({ node }: { node: Node }) { if (node.data?.kind === 'workflow') hoveredId.value = node.id }
 function onNodeLeave() { hoveredId.value = null }
