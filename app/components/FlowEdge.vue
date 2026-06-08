@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import { BaseEdge, getBezierPath } from '@vue-flow/core'
 import type { Position } from '@vue-flow/core'
+import { edgeColor } from '~/composables/edgeColors'
 
 const props = defineProps<{
   id: string
@@ -15,12 +16,11 @@ const props = defineProps<{
   data?: Record<string, any>
 }>()
 
-const colors: Record<string, string> = { execute: '#3ddc97', webhookHttp: '#10b981', error: '#ef4444' }
 const path = computed(() => getBezierPath({
   sourceX: props.sourceX, sourceY: props.sourceY, sourcePosition: props.sourcePosition,
   targetX: props.targetX, targetY: props.targetY, targetPosition: props.targetPosition,
 }))
-const color = computed(() => colors[props.data?.type] ?? '#6aa0ff')
+const color = computed(() => edgeColor(props.data?.type))
 const dimmed = computed(() => !!props.data?.dimmed)
 const emphasized = computed(() => !!props.data?.emphasized)
 </script>

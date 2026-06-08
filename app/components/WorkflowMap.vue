@@ -11,6 +11,7 @@ import { overlayNodesAndEdges } from '~/composables/useMapLayers'
 import { visibleGraph } from '~/composables/useVisibility'
 import { useGraphStore } from '~/stores/graph'
 import { traceFlow } from '~/composables/useTraceFlow'
+import { edgeColor } from '~/composables/edgeColors'
 import { neighbors } from '~/composables/useNeighbors'
 
 const store = useGraphStore()
@@ -65,7 +66,7 @@ const edges = computed<Edge[]>(() => {
     const inFlow = !focused.value || flow.value.edgeIds.has(`${e.source}|${e.target}`)
     return {
       id: `${e.source}|${e.target}|${e.type}`, source: e.source, target: e.target, type: 'flow',
-      markerEnd: MarkerType.ArrowClosed,
+      markerEnd: { type: MarkerType.ArrowClosed, color: edgeColor(e.type) },
       data: { type: e.type, dimmed: !inFlow, emphasized: hovering.value && hover.value.edgeIds.has(`${e.source}|${e.target}`) },
     }
   })
