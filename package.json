@@ -17,6 +17,7 @@
     "@vue-flow/background": "^1.3.2",
     "@vue-flow/controls": "^1.1.3",
     "@vue-flow/core": "^1.48.2",
+    "@vue-flow/minimap": "^1.5.4",
     "cron-parser": "^4",
     "nuxt": "^4.4.7",
     "pinia": "^3.0.4",

@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { computed, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { VueFlow, useVueFlow, MarkerType } from '@vue-flow/core'
-import { Background, BackgroundVariant } from '@vue-flow/background'
-import { Controls } from '@vue-flow/controls'
 import type { Edge, Node } from '@vue-flow/core'
+import { Background, BackgroundVariant } from '@vue-flow/background'
+import { MiniMap } from '@vue-flow/minimap'
+import '@vue-flow/minimap/dist/style.css'
 import { computeLayeredLayout } from '~/composables/useLayeredLayout'
 import { matchesTags } from '~/composables/useTagFilter'
 import { overlayNodesAndEdges } from '~/composables/useMapLayers'
@@ -15,6 +16,11 @@ const store = useGraphStore()
 
 const FLOW_ID = 'main'
 const { fitView } = useVueFlow(FLOW_ID)
+
+const showMinimap = ref(true)
+function miniColor(node: Node) {
+  return node.data?.kind === 'credential' ? '#ffb454' : node.data?.kind === 'nodeType' ? '#6aa0ff' : '#3ddc97'
+}
 
 const visible = computed(() => store.graph
   ? visibleGraph(store.graph, store.visibility)
@@ -88,6 +94,7 @@ watch(() => store.selectedId, (id) => {
       <FlowEdge v-bind="props" />
     </template>
     <Background :variant="BackgroundVariant.Dots" :gap="22" :size="1.2" pattern-color="#1c2640" />
-    <Controls />
+    <MiniMap v-if="showMinimap" pannable zoomable :node-color="miniColor" mask-color="rgba(11,15,26,0.7)" />
+    <MapControls :flow-id="FLOW_ID" v-model:minimap="showMinimap" />
   </VueFlow>
 </template>
