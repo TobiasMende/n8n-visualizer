@@ -1,6 +1,9 @@
 <script setup lang="ts">
+import { onMounted } from 'vue'
 import { useGraphStore } from '~/stores/graph'
 const store = useGraphStore()
+
+onMounted(() => { store.restoreConnection() })
 </script>
 
 <template>

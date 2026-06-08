@@ -41,17 +41,25 @@ async function onUpload(e: Event) {
 
 <template>
   <div class="toolbar">
-    <details open>
-      <summary>Connect</summary>
-      <div class="row">
-        <input v-model="baseUrl" placeholder="https://n8n.example.com" />
-        <input v-model="apiKey" type="password" placeholder="API key" />
-        <button :disabled="store.loading" @click="store.loadFromApi(baseUrl, apiKey)">Load via API</button>
-      </div>
-      <div class="row">
-        <input v-model="uploadBaseUrl" placeholder="instance URL (optional, for links)" />
-        <input type="file" accept="application/json" @change="onUpload" />
-      </div>
+    <details :open="!store.connectedHost">
+      <summary>{{ store.connectedHost ? `Connected to ${store.connectedHost}` : 'Connect' }}</summary>
+      <template v-if="store.connectedHost">
+        <div class="row">
+          <button class="disconnect" @click="store.disconnect()">Disconnect</button>
+          <span class="hint">API key stored for this browser session only.</span>
+        </div>
+      </template>
+      <template v-else>
+        <div class="row">
+          <input v-model="baseUrl" placeholder="https://n8n.example.com" />
+          <input v-model="apiKey" type="password" placeholder="API key" />
+          <button :disabled="store.loading" @click="store.loadFromApi(baseUrl, apiKey)">Load via API</button>
+        </div>
+        <div class="row">
+          <input v-model="uploadBaseUrl" placeholder="instance URL (optional, for links)" />
+          <input type="file" accept="application/json" @change="onUpload" />
+        </div>
+      </template>
       <p v-if="store.error" class="err">{{ store.error }}</p>
     </details>
 
@@ -97,4 +105,6 @@ async function onUpload(e: Event) {
 .search .results li:hover { background: #eef; }
 .kind { font-size: 11px; color: #888; margin-right: 6px; }
 .err { color: #c00; }
+.disconnect { background: var(--bg-3); color: var(--text); border: 1px solid var(--border); border-radius: var(--radius-s); padding: 4px 10px; cursor: pointer; }
+.hint { color: var(--text-faint); font-size: 11px; }
 </style>
