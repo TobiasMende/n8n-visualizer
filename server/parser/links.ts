@@ -1,4 +1,5 @@
-import type { RawNode, RawWorkflow, WorkflowEdge, UnresolvedLink } from '#shared/types/graph'
+import type { RawWorkflow, WorkflowEdge, UnresolvedLink } from '#shared/types/graph'
+import { webhookPathOf } from './webhook-path'
 
 function resolveWorkflowId(param: unknown): string | null {
   if (typeof param === 'string') return param || null
@@ -26,23 +27,21 @@ export function extractErrorLink(wf: RawWorkflow): WorkflowEdge | null {
 
 export interface WebhookHttpResult { edges: WorkflowEdge[]; unresolved: UnresolvedLink[] }
 
-function webhookPathOf(node: RawNode): string | null {
-  if (node.type !== 'n8n-nodes-base.webhook') return null
-  const p = node.parameters?.path
-  return typeof p === 'string' && p ? p.replace(/^\/+|\/+$/g, '') : null
-}
-
 function pathFromUrl(url: string): string | null {
   const m = url.match(/\/webhook(?:-test)?\/([^?#\s]+)/)
   return m ? m[1].replace(/\/+$/, '') : null
 }
 
 export function extractWebhookHttpLinks(workflows: RawWorkflow[]): WebhookHttpResult {
-  const pathToWf = new Map<string, string>()
+  const pathToWf = new Map<string, string[]>()
   for (const wf of workflows)
     for (const node of wf.nodes ?? []) {
       const p = webhookPathOf(node)
-      if (p) pathToWf.set(p, wf.id)
+      if (p) {
+        const existing = pathToWf.get(p)
+        if (existing) existing.push(wf.id)
+        else pathToWf.set(p, [wf.id])
+      }
     }
 
   const edges: WorkflowEdge[] = []
@@ -58,8 +57,18 @@ export function extractWebhookHttpLinks(workflows: RawWorkflow[]): WebhookHttpRe
       }
       const p = pathFromUrl(url)
       if (!p) continue
-      const target = pathToWf.get(p)
-      if (target && target !== wf.id) edges.push({ source: wf.id, target, type: 'webhookHttp' })
+      let candidate: string | undefined = p
+      let targets: string[] | undefined
+      while (candidate !== undefined) {
+        targets = pathToWf.get(candidate)
+        if (targets) break
+        const slash = candidate.lastIndexOf('/')
+        candidate = slash === -1 ? undefined : candidate.slice(0, slash)
+      }
+      if (targets) {
+        for (const target of targets)
+          if (target !== wf.id) edges.push({ source: wf.id, target, type: 'webhookHttp' })
+      }
     }
   return { edges, unresolved }
 }

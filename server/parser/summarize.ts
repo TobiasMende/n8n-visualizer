@@ -1,4 +1,5 @@
 import type { RawWorkflow, WorkflowSummary } from '#shared/types/graph'
+import { webhookPathOf } from './webhook-path'
 
 export function extractTags(wf: RawWorkflow): string[] {
   return (wf.tags ?? [])
@@ -7,13 +8,7 @@ export function extractTags(wf: RawWorkflow): string[] {
 }
 
 export function extractWebhookPaths(wf: RawWorkflow): string[] {
-  const out: string[] = []
-  for (const node of wf.nodes ?? []) {
-    if (node.type !== 'n8n-nodes-base.webhook') continue
-    const p = node.parameters?.path
-    if (typeof p === 'string' && p) out.push(p.replace(/^\/+|\/+$/g, ''))
-  }
-  return out
+  return (wf.nodes ?? []).map(webhookPathOf).filter((p): p is string => p !== null)
 }
 
 export function summarize(wf: RawWorkflow): Omit<WorkflowSummary, 'inbound' | 'outbound'> {

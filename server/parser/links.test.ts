@@ -58,6 +58,34 @@ describe('extractWebhookHttpLinks', () => {
     expect(unresolved).toEqual([{ workflowId: 'c', nodeName: 'http', reason: 'URL built from expression' }])
   })
 
+  it('links a caller to every workflow exposing the matched webhook path', () => {
+    const p1: RawWorkflow = { id: 'p1', name: 'P1', nodes: [
+      { name: 'hook', type: 'n8n-nodes-base.webhook', parameters: { path: 'orders' } },
+    ] }
+    const p2: RawWorkflow = { id: 'p2', name: 'P2', nodes: [
+      { name: 'hook', type: 'n8n-nodes-base.webhook', parameters: { path: 'orders' } },
+    ] }
+    const c: RawWorkflow = { id: 'c', name: 'C', nodes: [
+      { name: 'http', type: 'n8n-nodes-base.httpRequest', parameters: { url: 'https://h/webhook/orders' } },
+    ] }
+    const { edges } = extractWebhookHttpLinks([p1, p2, c])
+    expect(edges).toEqual([
+      { source: 'c', target: 'p1', type: 'webhookHttp' },
+      { source: 'c', target: 'p2', type: 'webhookHttp' },
+    ])
+  })
+
+  it('matches a URL with extra trailing path segments to the base webhook path', () => {
+    const producer: RawWorkflow = { id: 'p', name: 'P', nodes: [
+      { name: 'hook', type: 'n8n-nodes-base.webhook', parameters: { path: 'orders' } },
+    ] }
+    const consumer: RawWorkflow = { id: 'c', name: 'C', nodes: [
+      { name: 'http', type: 'n8n-nodes-base.httpRequest', parameters: { url: 'https://h/webhook/orders/123' } },
+    ] }
+    expect(extractWebhookHttpLinks([producer, consumer]).edges)
+      .toEqual([{ source: 'c', target: 'p', type: 'webhookHttp' }])
+  })
+
   it('does not link a workflow to its own webhook', () => {
     const selfRef: RawWorkflow = { id: 's', name: 'S', nodes: [
       { name: 'hook', type: 'n8n-nodes-base.webhook', parameters: { path: 'x' } },

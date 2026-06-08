@@ -32,6 +32,18 @@ describe('buildGraph', () => {
     expect(buildGraph([lone], null).edges).toEqual([])
   })
 
+  it('de-duplicates identical edges so counts are not inflated', () => {
+    const caller: RawWorkflow = { id: 'a', name: 'A', nodes: [
+      { name: 'c1', type: 'n8n-nodes-base.executeWorkflow', parameters: { workflowId: 'b' } },
+      { name: 'c2', type: 'n8n-nodes-base.executeWorkflow', parameters: { workflowId: 'b' } },
+    ] }
+    const target: RawWorkflow = { id: 'b', name: 'B', nodes: [] }
+    const g = buildGraph([caller, target], null)
+    expect(g.edges).toEqual([{ source: 'a', target: 'b', type: 'execute' }])
+    expect(g.nodes.find(n => n.id === 'b')!.summary.inbound).toBe(1)
+    expect(g.nodes.find(n => n.id === 'a')!.summary.outbound).toBe(1)
+  })
+
   it('skips malformed workflows but keeps the rest', () => {
     const bad = { name: 'no id' } as unknown as RawWorkflow
     const g = buildGraph([producer, bad], null)

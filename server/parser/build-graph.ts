@@ -29,7 +29,14 @@ export function buildGraph(workflows: RawWorkflow[], baseUrl: string | null): Wo
   unresolved.push(...wh.unresolved)
 
   const ids = new Set(valid.map(w => w.id))
-  const keptEdges = edges.filter(e => ids.has(e.source) && ids.has(e.target))
+  const filteredEdges = edges.filter(e => ids.has(e.source) && ids.has(e.target))
+  const seen = new Set<string>()
+  const keptEdges = filteredEdges.filter(e => {
+    const key = `${e.source}|${e.target}|${e.type}`
+    if (seen.has(key)) return false
+    seen.add(key)
+    return true
+  })
 
   const inbound = new Map<string, number>()
   const outbound = new Map<string, number>()
