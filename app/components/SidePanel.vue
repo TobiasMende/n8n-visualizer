@@ -33,7 +33,7 @@ defineEmits<{ close: [] }>()
 
     <section>
       <h3>Nodes ({{ node.summary.nodeCount }})</h3>
-      <ul><li v-for="nt in node.summary.nodeTypes" :key="nt.type">{{ nt.count }}× {{ nt.type }}</li></ul>
+      <ul><li v-for="nt in node.summary.nodeTypes" :key="nt.type">{{ nt.count }}× {{ nt.displayName }}</li></ul>
     </section>
 
     <section v-if="node.summary.credentials.length">
@@ -49,11 +49,18 @@ defineEmits<{ close: [] }>()
 </template>
 
 <style scoped>
-.panel { position: absolute; top: 0; right: 0; width: 320px; height: 100%; overflow-y: auto;
-  background: #fff; border-left: 1px solid #ddd; padding: 16px; box-shadow: -2px 0 8px rgba(0,0,0,.06); }
+.panel {
+  position: absolute; top: 0; right: 0; width: 320px; height: 100%; overflow-y: auto;
+  background: var(--bg-2); border-left: 1px solid var(--border); color: var(--text);
+  padding: 16px; box-shadow: -2px 0 8px rgba(0,0,0,.06);
+}
 header { display: flex; justify-content: space-between; align-items: center; }
-.badge { display: inline-block; padding: 2px 8px; margin: 2px; border-radius: 10px; background: #eee; font-size: 12px; }
-.badge.on { background: #d6f5d6; } .badge.off { background: #f5d6d6; }
+.badge {
+  display: inline-block; padding: 2px 8px; margin: 2px; border-radius: 10px;
+  background: var(--bg-3); font-size: 12px;
+}
+.badge.on { background: var(--accent-dim); color: var(--accent); }
+.badge.off { background: var(--bg-3); }
 .deep-link { display: inline-block; margin: 8px 0; font-weight: 600; }
-section h3 { margin: 14px 0 4px; font-size: 13px; text-transform: uppercase; color: #666; }
+section h3 { margin: 14px 0 4px; font-size: 13px; text-transform: uppercase; color: var(--text-dim); }
 </style>
