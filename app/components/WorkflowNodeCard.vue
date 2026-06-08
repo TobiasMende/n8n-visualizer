@@ -5,7 +5,7 @@ import type { TriggerType } from '#shared/types/graph'
 
 type Kind = 'workflow' | 'credential' | 'nodeType'
 const props = defineProps<{
-  data: { kind: Kind; label: string; triggers: TriggerType[]; inbound: number; dimmed: boolean }
+  data: { kind: Kind; label: string; triggers: TriggerType[]; inbound: number; dimmed: boolean; selected?: boolean }
 }>()
 
 const icons: Record<TriggerType, string> = { webhook: '⚡', schedule: '⏰', manual: '▶', app: '🧩', unknown: '•' }
@@ -14,7 +14,7 @@ const size = computed(() => 36 + Math.min(props.data.inbound, 12) * 6)
 </script>
 
 <template>
-  <div class="node" :class="[`kind-${data.kind}`, { dimmed: data.dimmed }]" :style="{ minWidth: size + 'px' }">
+  <div class="node" :class="[`kind-${data.kind}`, { dimmed: data.dimmed, selected: data.selected }]" :style="{ minWidth: size + 'px' }">
     <Handle type="target" :position="Position.Left" />
     <span v-if="kindIcon[data.kind]" class="kindico">{{ kindIcon[data.kind] }}</span>
     <span v-for="t in data.triggers" :key="t" class="ico" :data-trigger="t">{{ icons[t] }}</span>
@@ -31,6 +31,7 @@ const size = computed(() => 36 + Math.min(props.data.inbound, 12) * 6)
 .node.dimmed { opacity: 0.22; }
 .kind-credential { border-color: var(--warn); border-radius: 999px; }
 .kind-nodeType { border-style: dashed; border-color: var(--link); }
+.node.selected { border-color: var(--accent); box-shadow: var(--shadow-glow); }
 .label { font-weight: 600; }
 .kindico { opacity: .85; }
 </style>
