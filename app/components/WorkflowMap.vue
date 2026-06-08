@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, watch } from 'vue'
 import { VueFlow, useVueFlow } from '@vue-flow/core'
-import { Background } from '@vue-flow/background'
+import { Background, BackgroundVariant } from '@vue-flow/background'
 import { Controls } from '@vue-flow/controls'
 import type { Edge, Node } from '@vue-flow/core'
 import { computeLayeredLayout } from '~/composables/useLayeredLayout'
@@ -90,7 +90,7 @@ watch(() => store.selectedId, (id) => {
     <template #node-workflow="props">
       <WorkflowNodeCard :data="props.data" />
     </template>
-    <Background />
+    <Background :variant="BackgroundVariant.Dots" :gap="22" :size="1.2" pattern-color="#1c2640" />
     <Controls />
   </VueFlow>
 </template>
