@@ -2,7 +2,7 @@ import type { WorkflowGraph } from '#shared/types/graph'
 
 export interface OverlayNode { id: string; kind: 'credential' | 'nodeType'; label: string; x: number; y: number }
 export interface OverlayEdge { id: string; source: string; target: string; kind: 'uses' | 'contains' }
-export interface Point { x: number; y: number }
+interface Point { x: number; y: number }
 
 export function overlayNodesAndEdges(
   graph: WorkflowGraph,
