@@ -23,7 +23,7 @@ function toggle(id: string) { expanded.value = expanded.value === id ? null : id
 <template>
   <div class="wrap">
     <div class="bar"><input v-model="filter" class="search" placeholder="Filter webhooks…" /></div>
-    <DataTable :columns="columns" :rows="rows" :filter="filter">
+    <DataTable :columns="columns" :rows="rows" :filter="filter" @row-click="jump">
       <template #cell-method="{ row }"><Badge :tone="row.method === 'POST' ? 'accent' : 'warn'">{{ row.method }}</Badge></template>
       <template #cell-url="{ row }">
         <code class="url" @click.stop="copy(row.url)" :title="'Click to copy: ' + row.url">{{ row.url }}</code>
