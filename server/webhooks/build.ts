@@ -1,21 +1,19 @@
 import type { RawWorkflow, WebhookEntry } from '#shared/types/graph'
-import { webhookPathOf } from '../parser/webhook-path'
+import { webhookNodeInfo } from './extract'
 
 export function buildWebhooks(workflows: RawWorkflow[], baseUrl: string | null): WebhookEntry[] {
   const base = baseUrl ? baseUrl.replace(/\/+$/, '') : null
   const out: WebhookEntry[] = []
   for (const wf of workflows ?? []) {
     for (const node of wf.nodes ?? []) {
-      const path = webhookPathOf(node)
-      if (path === null) continue
-      const method = typeof node.parameters?.httpMethod === 'string'
-        ? node.parameters.httpMethod : 'GET'
+      const info = webhookNodeInfo(node)
+      if (!info) continue
       out.push({
         workflowId: wf.id,
-        method,
-        path,
-        prodUrl: base ? `${base}/webhook/${path}` : null,
-        testUrl: base ? `${base}/webhook-test/${path}` : null,
+        method: info.method,
+        path: info.path,
+        prodUrl: base ? `${base}/webhook/${info.path}` : null,
+        testUrl: base ? `${base}/webhook-test/${info.path}` : null,
       })
     }
   }

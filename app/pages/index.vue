@@ -1,6 +1,9 @@
 <script setup lang="ts">
+import { onMounted } from 'vue'
 import { useGraphStore } from '~/stores/graph'
 const store = useGraphStore()
+
+onMounted(() => { store.restoreConnection() })
 </script>
 
 <template>
@@ -11,6 +14,7 @@ const store = useGraphStore()
       <WorkflowMap v-if="store.view === 'map' && store.graph" />
       <WebhooksView v-else-if="store.view === 'webhooks' && store.graph" />
       <SchedulesView v-else-if="store.view === 'schedules' && store.graph" />
+      <CredentialsView v-else-if="store.view === 'credentials' && store.graph" />
     </ClientOnly>
 
     <EmptyState v-if="!store.graph && !store.loading"
