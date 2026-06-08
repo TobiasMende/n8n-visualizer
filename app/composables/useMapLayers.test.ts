@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { overlayNodesAndEdges } from './useMapLayers'
+import { overlayNodesAndEdges, overlayNodesAndEdges as overlay2, allNodeTypes } from './useMapLayers'
 import type { WorkflowGraph } from '#shared/types/graph'
 
 const graph: WorkflowGraph = {
@@ -27,5 +27,34 @@ describe('overlayNodesAndEdges', () => {
   it('adds a node-type node + contains edge when nodeTypes layer on', () => {
     const r = overlayNodesAndEdges(graph, basePos, { credentials: false, nodeTypes: true })
     expect(r.nodes.some(n => n.kind === 'nodeType' && n.label === 'Set')).toBe(true)
+  })
+})
+
+const g2 = {
+  nodes: [
+    { id: 'w', name: 'W', active: true, triggers: [], tags: [], webhookPaths: [], deepLink: null,
+      summary: { nodeCount: 2, nodeTypes: [
+        { type: 'n8n-nodes-base.set', displayName: 'Set', count: 1 },
+        { type: 'n8n-nodes-base.httpRequest', displayName: 'HTTP Request', count: 1 },
+      ], credentials: [], inbound: 0, outbound: 0 } },
+  ],
+  edges: [], unresolved: [], skipped: [], webhooks: [], schedules: [], credentials: [],
+} as any
+const pos2 = new Map([['w', { x: 0, y: 0 }]])
+
+describe('allNodeTypes', () => {
+  it('returns deduped node types sorted by display name', () => {
+    expect(allNodeTypes(g2)).toEqual([
+      { type: 'n8n-nodes-base.httpRequest', displayName: 'HTTP Request' },
+      { type: 'n8n-nodes-base.set', displayName: 'Set' },
+    ])
+  })
+})
+
+describe('overlayNodesAndEdges hidden types', () => {
+  it('skips node types listed in hiddenNodeTypes', () => {
+    const r = overlay2(g2, pos2, { credentials: false, nodeTypes: true }, ['n8n-nodes-base.set'])
+    const labels = r.nodes.filter(n => n.kind === 'nodeType').map(n => n.label)
+    expect(labels).toEqual(['HTTP Request'])
   })
 })

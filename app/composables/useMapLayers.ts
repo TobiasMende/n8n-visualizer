@@ -8,6 +8,7 @@ export function overlayNodesAndEdges(
   graph: WorkflowGraph,
   basePos: Map<string, Point>,
   layers: { credentials: boolean; nodeTypes: boolean },
+  hiddenNodeTypes: string[] = [],
 ): { nodes: OverlayNode[]; edges: OverlayEdge[] } {
   const nodes: OverlayNode[] = []
   const edges: OverlayEdge[] = []
@@ -34,6 +35,7 @@ export function overlayNodesAndEdges(
   if (layers.nodeTypes) {
     for (const n of graph.nodes) {
       for (const t of n.summary.nodeTypes) {
+        if (hiddenNodeTypes.includes(t.type)) continue
         const id = `type:${t.type}`
         if (!seen.has(id)) {
           const pos = place(n.id, nodes.length)
@@ -46,4 +48,15 @@ export function overlayNodesAndEdges(
   }
 
   return { nodes, edges }
+}
+
+export function allNodeTypes(graph: WorkflowGraph | null): { type: string; displayName: string }[] {
+  if (!graph) return []
+  const m = new Map<string, string>()
+  for (const n of graph.nodes)
+    for (const t of n.summary.nodeTypes)
+      if (!m.has(t.type)) m.set(t.type, t.displayName)
+  return [...m.entries()]
+    .map(([type, displayName]) => ({ type, displayName }))
+    .sort((a, b) => a.displayName.localeCompare(b.displayName))
 }
