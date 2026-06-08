@@ -1,6 +1,6 @@
 import { graphlib, layout } from '@dagrejs/dagre'
 
-export interface Point { x: number; y: number }
+interface Point { x: number; y: number }
 interface LNode { id: string }
 interface LEdge { source: string; target: string }
 

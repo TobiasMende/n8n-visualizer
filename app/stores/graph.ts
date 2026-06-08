@@ -8,7 +8,6 @@ export const useGraphStore = defineStore('graph', () => {
   const error = ref<string | null>(null)
   const selectedId = ref<string | null>(null)
   const tagFilter = ref<string[]>([])
-  const linkTypes = ref<Record<string, boolean>>({ execute: true, webhookHttp: true, error: true })
   const connection = ref<Conn | null>(null)
 
   function extractError(e: any): string {
