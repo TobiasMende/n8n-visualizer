@@ -28,7 +28,7 @@ export const useGraphStore = defineStore('graph', () => {
 
   const selected = computed(() => graph.value?.nodes.find(n => n.id === selectedId.value) ?? null)
 
-  type ViewId = 'map' | 'webhooks' | 'schedules'
+  type ViewId = 'map' | 'webhooks' | 'schedules' | 'credentials'
   const view = ref<ViewId>('map')
   const layers = ref<{ credentials: boolean; nodeTypes: boolean }>({ credentials: false, nodeTypes: false })
 

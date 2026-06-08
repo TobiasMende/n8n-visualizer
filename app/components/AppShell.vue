@@ -5,6 +5,7 @@ const views = [
   { id: 'map', icon: '🗺️', label: 'Map' },
   { id: 'webhooks', icon: '🔗', label: 'Webhooks' },
   { id: 'schedules', icon: '⏰', label: 'Schedules' },
+  { id: 'credentials', icon: '🔑', label: 'Credentials' },
 ] as const
 </script>
 <template>
