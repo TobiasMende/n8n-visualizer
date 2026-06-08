@@ -3,7 +3,7 @@ import type {
   UnresolvedLink, SkippedWorkflow, ScheduleEntry,
 } from '#shared/types/graph'
 import type { NodeCatalog } from '../catalog/catalog'
-import { prettifyType } from '../catalog/prettify'
+import { prettifyType } from '#shared/prettify'
 import { classifyTriggers } from './triggers'
 import { extractExecuteLinks, extractErrorLink, extractWebhookHttpLinks } from './links'
 import { summarize, extractTags, extractWebhookPaths } from './summarize'

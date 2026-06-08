@@ -1,4 +1,4 @@
-import { prettifyType } from './prettify'
+import { prettifyType } from '#shared/prettify'
 
 export interface NodeCatalog { displayName(type: string): string }
 export interface CatalogCache {
