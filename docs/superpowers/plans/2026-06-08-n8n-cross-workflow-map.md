@@ -6,7 +6,26 @@
 
 **Architecture:** Three layers with clean boundaries. (1) **Ingest** — Nitro server routes normalize API/upload input to `RawWorkflow[]`. (2) **Parser** — pure TypeScript functions turn `RawWorkflow[]` into one `WorkflowGraph`; this is where the differentiating logic and the test coverage live. (3) **Viz** — Nuxt/Vue Flow client renders the graph from a Pinia store with precomputed d3-force layout.
 
-**Tech Stack:** Bun, Nuxt 3 (Vue 3, TypeScript, Nitro), Vue Flow (`@vue-flow/core`), d3-force, Pinia, Vitest + @vue/test-utils.
+**Tech Stack:** Bun, Nuxt 4 (Vue 3, TypeScript, Nitro), Vue Flow (`@vue-flow/core`), d3-force, Pinia, Vitest + @vue/test-utils.
+
+---
+
+## Nuxt 4 Path Convention (applied during execution)
+
+The scaffold resolved to Nuxt 4, whose default `srcDir` is `app/`. Paths in the
+tasks below were written Nuxt-3-style; apply this mapping when executing:
+
+- **Shared domain types** live in `shared/types/graph.ts` and are imported as
+  `#shared/types/graph` from **both** server and app code (the only alias valid
+  in both contexts). Wherever a task shows `~/types/graph`, use
+  `#shared/types/graph`.
+- **App code** lives under `app/`: `app/components/`, `app/pages/`,
+  `app/composables/`, `app/stores/`. Tests sit beside their source.
+- **Server code** stays at `server/` (repo root).
+- Inside app code, `~` resolves to `app/`, so imports like
+  `~/composables/useForceLayout` and `~/stores/graph` are correct as written.
+- `vitest.config.ts` aliases mirror this: `#shared`→`shared/`, `~`/`@`→`app/`,
+  `~~`/`@@`→ root.
 
 ---
 
