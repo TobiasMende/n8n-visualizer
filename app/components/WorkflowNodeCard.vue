@@ -74,4 +74,5 @@ const headIcon = computed(() =>
   background: var(--bg-0); border: 1px solid var(--border); border-radius: var(--radius-s); box-shadow: var(--shadow-1);
   padding: 6px 8px; font-size: 11px; color: var(--text-dim); z-index: 50; pointer-events: none; }
 .node:hover .tip { display: flex; }
+:deep(.vue-flow__handle) { opacity: 0; width: 1px; height: 1px; min-width: 0; min-height: 0; border: none; }
 </style>
