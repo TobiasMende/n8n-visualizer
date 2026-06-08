@@ -1,8 +1,11 @@
 <script setup lang="ts">
 import type { WorkflowNode } from '#shared/types/graph'
+import type { LinkItem } from '~/composables/useWorkflowLinks'
 
-defineProps<{ node: WorkflowNode }>()
-defineEmits<{ close: [] }>()
+withDefaults(defineProps<{ node: WorkflowNode; links?: { inbound: LinkItem[]; outbound: LinkItem[] } }>(), {
+  links: () => ({ inbound: [], outbound: [] }),
+})
+defineEmits<{ close: []; select: [id: string] }>()
 </script>
 
 <template>
@@ -43,7 +46,19 @@ defineEmits<{ close: [] }>()
 
     <section>
       <h3>Links</h3>
-      <p>Inbound: {{ node.summary.inbound }} · Outbound: {{ node.summary.outbound }}</p>
+      <div v-if="links.inbound.length" class="lgroup">
+        <div class="lsub">Inbound ({{ links.inbound.length }})</div>
+        <ul><li v-for="(l, i) in links.inbound" :key="'in' + i" class="link" @click="$emit('select', l.id)">
+          <span class="lt" :data-lt="l.type">{{ l.type }}</span> {{ l.name }}
+        </li></ul>
+      </div>
+      <div v-if="links.outbound.length" class="lgroup">
+        <div class="lsub">Outbound ({{ links.outbound.length }})</div>
+        <ul><li v-for="(l, i) in links.outbound" :key="'out' + i" class="link" @click="$emit('select', l.id)">
+          {{ l.name }} <span class="lt" :data-lt="l.type">{{ l.type }}</span>
+        </li></ul>
+      </div>
+      <p v-if="!links.inbound.length && !links.outbound.length" class="muted">No links.</p>
     </section>
   </aside>
 </template>
@@ -63,4 +78,10 @@ header { display: flex; justify-content: space-between; align-items: center; }
 .badge.off { background: var(--bg-3); }
 .deep-link { display: inline-block; margin: 8px 0; font-weight: 600; }
 section h3 { margin: 14px 0 4px; font-size: 13px; text-transform: uppercase; color: var(--text-dim); }
+.lgroup { margin-bottom: 8px; }
+.lsub { font-size: 11px; color: var(--text-faint); margin: 4px 0; }
+.link { cursor: pointer; padding: 3px 4px; border-radius: var(--radius-s); color: var(--accent); }
+.link:hover { background: var(--bg-3); }
+.lt { font-size: 10px; color: var(--text-dim); background: var(--bg-3); border-radius: 4px; padding: 0 5px; margin-right: 4px; }
+.muted { color: var(--text-faint); font-size: 12px; }
 </style>

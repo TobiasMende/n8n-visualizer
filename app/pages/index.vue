@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { onMounted } from 'vue'
 import { useGraphStore } from '~/stores/graph'
+import { workflowLinks } from '~/composables/useWorkflowLinks'
 const store = useGraphStore()
 
 onMounted(() => { store.restoreConnection() })
@@ -22,6 +23,8 @@ onMounted(() => { store.restoreConnection() })
       hint="Use the bar above to load via API or drop a workflow export." />
     <EmptyState v-if="store.loading" title="Loading…" />
 
-    <SidePanel v-if="store.selected && store.view === 'map'" :node="store.selected" @close="store.selectedId = null" />
+    <SidePanel v-if="store.selected && store.view === 'map'" :node="store.selected"
+      :links="workflowLinks(store.graph, store.selected.id)"
+      @close="store.selectedId = null" @select="store.selectedId = $event" />
   </AppShell>
 </template>
