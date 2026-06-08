@@ -1,4 +1,5 @@
 import type { WorkflowGraph } from '#shared/types/graph'
+import { saveConnection, loadConnection, clearConnection, hostOf, type Conn } from '~/composables/useConnectionStorage'
 
 export const useGraphStore = defineStore('graph', () => {
   const graph = ref<WorkflowGraph | null>(null)
@@ -7,6 +8,7 @@ export const useGraphStore = defineStore('graph', () => {
   const selectedId = ref<string | null>(null)
   const tagFilter = ref<string[]>([])
   const linkTypes = ref<Record<string, boolean>>({ execute: true, webhookHttp: true, error: true })
+  const connection = ref<Conn | null>(null)
 
   function extractError(e: any): string {
     return e?.data?.statusMessage ?? e?.statusMessage ?? e?.message ?? 'Request failed'
@@ -16,6 +18,8 @@ export const useGraphStore = defineStore('graph', () => {
     loading.value = true; error.value = null
     try {
       graph.value = await $fetch<WorkflowGraph>('/api/ingest/api', { method: 'POST', body: { baseUrl, apiKey } })
+      connection.value = { baseUrl, apiKey }
+      if (import.meta.client) saveConnection(sessionStorage, connection.value)
     } catch (e) { error.value = extractError(e) } finally { loading.value = false }
   }
 
@@ -25,6 +29,25 @@ export const useGraphStore = defineStore('graph', () => {
       graph.value = await $fetch<WorkflowGraph>('/api/ingest/upload', { method: 'POST', body: { workflows, baseUrl } })
     } catch (e) { error.value = extractError(e) } finally { loading.value = false }
   }
+
+  function disconnect() {
+    connection.value = null
+    graph.value = null
+    selectedId.value = null
+    error.value = null
+    if (import.meta.client) clearConnection(sessionStorage)
+  }
+
+  async function restoreConnection() {
+    if (!import.meta.client) return
+    const c = loadConnection(sessionStorage)
+    if (!c) return
+    connection.value = c
+    await loadFromApi(c.baseUrl, c.apiKey)
+    if (error.value) { connection.value = null; clearConnection(sessionStorage) }
+  }
+
+  const connectedHost = computed(() => connection.value ? hostOf(connection.value.baseUrl) : null)
 
   const selected = computed(() => graph.value?.nodes.find(n => n.id === selectedId.value) ?? null)
 
@@ -50,5 +73,5 @@ export const useGraphStore = defineStore('graph', () => {
     }, { deep: true })
   }
 
-  return { graph, loading, error, selectedId, selected, tagFilter, linkTypes, loadFromApi, loadFromUpload, view, layers }
+  return { graph, loading, error, selectedId, selected, tagFilter, linkTypes, loadFromApi, loadFromUpload, view, layers, connection, connectedHost, disconnect, restoreConnection }
 })
