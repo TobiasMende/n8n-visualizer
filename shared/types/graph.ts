@@ -5,6 +5,7 @@ export interface RawNode {
   id?: string
   name: string
   type: string
+  webhookId?: string
   parameters?: Record<string, any>
   credentials?: Record<string, { id?: string; name?: string }>
 }
