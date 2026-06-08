@@ -23,10 +23,19 @@ function toggleTag(tag: string) {
 function pick(id: string) { store.selectedId = id; query.value = '' }
 
 async function onUpload(e: Event) {
-  const file = (e.target as HTMLInputElement).files?.[0]
+  const input = e.target as HTMLInputElement
+  const file = input.files?.[0]
   if (!file) return
-  const parsed = JSON.parse(await file.text())
+  let parsed: unknown
+  try {
+    parsed = JSON.parse(await file.text())
+  } catch {
+    store.error = 'Could not parse that file as JSON.'
+    input.value = ''
+    return
+  }
   await store.loadFromUpload(parsed, uploadBaseUrl.value || null)
+  input.value = ''
 }
 </script>
 

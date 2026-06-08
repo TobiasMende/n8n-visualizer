@@ -15,10 +15,14 @@ const edgeStyle: Record<string, Record<string, any>> = {
   error: { stroke: '#ef4444' },
 }
 
+const positions = computed(() =>
+  store.graph ? computeLayout(store.graph) : new Map<string, { x: number; y: number }>()
+)
+
 const nodes = computed<Node[]>(() => {
   const g = store.graph
   if (!g) return []
-  const pos = computeLayout(g)
+  const pos = positions.value
   return g.nodes.map(n => ({
     id: n.id,
     type: 'workflow',
@@ -37,8 +41,8 @@ const edges = computed<Edge[]>(() => {
   if (!g) return []
   return g.edges
     .filter(e => store.linkTypes[e.type])
-    .map((e, i) => ({
-      id: `e${i}`, source: e.source, target: e.target,
+    .map(e => ({
+      id: `${e.source}|${e.target}|${e.type}`, source: e.source, target: e.target,
       animated: e.type === 'webhookHttp', style: edgeStyle[e.type],
     }))
 })
