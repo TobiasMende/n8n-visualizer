@@ -27,6 +27,8 @@ phases of the eventual SaaS.
 - Make per-workflow internals legible without leaving the map (side panel).
 - Let the user jump straight from any workflow to that workflow in their n8n
   instance.
+- Let the user **search** — notably, find a webhook path and jump to the
+  workflow that exposes it — and **filter the map by workflow tags**.
 
 ## Non-Goals (v1)
 
@@ -84,6 +86,10 @@ access → fully unit-testable from JSON fixtures.
 - `summarize(wf)` → node-type histogram (e.g. `3×HTTP Request, 2×Set, 1×IF`),
   list of credentials referenced, node count, inbound/outbound link counts.
   Feeds the side panel.
+- `extractTags(wf)` → workflow tag names. Present from the n8n API; present from
+  uploaded JSON only when the export included tags. Drives the tag filter.
+- `extractWebhookPaths(wf)` → the path(s) of each webhook trigger node. Indexed
+  per workflow so search can resolve a webhook path → its workflow.
 
 **Output — `WorkflowGraph`:**
 
@@ -95,6 +101,8 @@ interface WorkflowNode {
   name: string
   active: boolean
   triggers: TriggerType[]
+  tags: string[]
+  webhookPaths: string[]        // searchable webhook paths exposed by this workflow
   summary: WorkflowSummary      // histogram, credentials, counts
   deepLink: string | null       // `{baseUrl}/workflow/{id}` or null if no baseUrl
 }
@@ -131,6 +139,13 @@ interface WorkflowGraph {
   deep link (hidden when `deepLink` is null).
 - **Toolbar**: input-source switch (API vs upload), link-type filter toggles,
   and an "Unresolved links (N)" badge that expands the `unresolved` list.
+- **Search**: a search box that matches across workflow names and webhook paths
+  (and node names). Matching is client-side over the loaded `WorkflowGraph`.
+  Selecting a result focuses/centers that workflow node on the canvas and opens
+  its side panel — so "search a webhook → see its workflow" is one action.
+- **Tag filter**: multi-select of all tags present in the graph. Non-matching
+  workflows are dimmed (and their edges hidden); the map stays in place rather
+  than re-laying-out, so context is preserved. Empty selection = show all.
 
 ### Deep links
 
@@ -162,7 +177,10 @@ input (API creds | uploaded JSON)
 
 - **Parser** — the core. Fixture-driven unit tests: sample n8n workflow JSON in,
   expected `WorkflowGraph` out. Cover each link type, multi-trigger
-  classification, the unresolved-URL heuristic, and malformed-input skipping.
+  classification, the unresolved-URL heuristic, malformed-input skipping, and
+  tag / webhook-path extraction.
+- **Search** — unit tests that a webhook path resolves to the correct workflow,
+  and that name/path matching behaves as specified.
 - **Ingest routes** — test normalization of single workflow / array / export
   bundle shapes; test API pagination handling with a mocked fetch.
 - **Viz** — light component tests for the side panel given a `WorkflowNode`, and
