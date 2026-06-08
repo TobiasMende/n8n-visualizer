@@ -3,7 +3,7 @@ import { VueFlow } from '@vue-flow/core'
 import { Background } from '@vue-flow/background'
 import { Controls } from '@vue-flow/controls'
 import type { Edge, Node } from '@vue-flow/core'
-import { computeLayout } from '~/composables/useForceLayout'
+import { computeLayeredLayout } from '~/composables/useLayeredLayout'
 import { matchesTags } from '~/composables/useTagFilter'
 import { overlayNodesAndEdges } from '~/composables/useMapLayers'
 import { useGraphStore } from '~/stores/graph'
@@ -17,7 +17,7 @@ const edgeStyle: Record<string, Record<string, any>> = {
 }
 
 const positions = computed(() =>
-  store.graph ? computeLayout(store.graph) : new Map<string, { x: number; y: number }>()
+  store.graph ? computeLayeredLayout(store.graph.nodes, store.graph.edges) : new Map<string, { x: number; y: number }>()
 )
 
 const overlay = computed(() => store.graph
