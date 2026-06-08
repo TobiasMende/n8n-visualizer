@@ -41,14 +41,15 @@ const nodes = computed<Node[]>(() => {
   const base: Node[] = visible.value.nodes.map(n => ({
     id: n.id, type: 'workflow', position: positions.value.get(n.id) ?? { x: 0, y: 0 },
     data: {
-      kind: 'workflow', label: n.name, triggers: n.triggers, inbound: n.summary.inbound,
+      kind: 'workflow', label: n.name, triggers: n.triggers,
+      inbound: n.summary.inbound, outbound: n.summary.outbound, nodeCount: n.summary.nodeCount,
       dimmed: !matchesTags(n, store.tagFilter) || (focused.value && !flow.value.nodeIds.has(n.id)),
       selected: store.selectedId === n.id,
     },
   }))
   const overlayNodes: Node[] = overlay.value.nodes.map(o => ({
     id: o.id, type: 'workflow', position: { x: o.x, y: o.y },
-    data: { kind: o.kind, label: o.label, triggers: [], inbound: 0, dimmed: focused.value, selected: false },
+    data: { kind: o.kind, label: o.label, triggers: [], inbound: 0, outbound: 0, nodeCount: 0, dimmed: focused.value, selected: false },
   }))
   return [...base, ...overlayNodes]
 })
