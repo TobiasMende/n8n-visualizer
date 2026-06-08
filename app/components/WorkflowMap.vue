@@ -20,6 +20,10 @@ const positions = computed(() =>
   store.graph ? computeLayout(store.graph) : new Map<string, { x: number; y: number }>()
 )
 
+const overlay = computed(() => store.graph
+  ? overlayNodesAndEdges(store.graph, positions.value, store.layers)
+  : { nodes: [], edges: [] })
+
 const nodes = computed<Node[]>(() => {
   const g = store.graph
   if (!g) return []
@@ -28,8 +32,7 @@ const nodes = computed<Node[]>(() => {
     id: n.id, type: 'workflow', position: pos.get(n.id) ?? { x: 0, y: 0 },
     data: { kind: 'workflow', label: n.name, triggers: n.triggers, inbound: n.summary.inbound, dimmed: !matchesTags(n, store.tagFilter) },
   }))
-  const overlay = overlayNodesAndEdges(g, pos, store.layers)
-  const overlayNodes: Node[] = overlay.nodes.map(o => ({
+  const overlayNodes: Node[] = overlay.value.nodes.map(o => ({
     id: o.id, type: 'workflow', position: { x: o.x, y: o.y },
     data: { kind: o.kind, label: o.label, triggers: [], inbound: 0, dimmed: false },
   }))
@@ -43,8 +46,7 @@ const edges = computed<Edge[]>(() => {
     id: `${e.source}|${e.target}|${e.type}`, source: e.source, target: e.target,
     animated: e.type === 'webhookHttp', style: edgeStyle[e.type],
   }))
-  const overlay = overlayNodesAndEdges(g, positions.value, store.layers)
-  const overlayEdges: Edge[] = overlay.edges.map(o => ({
+  const overlayEdges: Edge[] = overlay.value.edges.map(o => ({
     id: o.id, source: o.source, target: o.target,
     style: { stroke: o.kind === 'uses' ? '#ffb454' : '#6aa0ff', strokeDasharray: '4 4', opacity: 0.6 },
   }))
@@ -52,7 +54,7 @@ const edges = computed<Edge[]>(() => {
 })
 
 function onNodeClick({ node }: { node: Node }) {
-  store.selectedId = node.id
+  if (node.data?.kind === 'workflow') store.selectedId = node.id
 }
 </script>
 

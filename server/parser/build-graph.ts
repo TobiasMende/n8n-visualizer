@@ -81,10 +81,12 @@ export function buildGraph(
 
   const webhooks = buildWebhooks(valid, baseUrl)
   const schedules: ScheduleEntry[] = []
-  for (const wf of valid)
+  for (const wf of valid) {
+    const tz = typeof wf.settings?.timezone === 'string' ? wf.settings.timezone : 'UTC'
     for (const node of wf.nodes ?? [])
       for (const c of parseSchedule(node))
-        schedules.push({ workflowId: wf.id, cadenceText: c.cadenceText, cadenceGroup: c.cadenceGroup, nextFire: from ? nextFire(c.cronExpr, from) : null })
+        schedules.push({ workflowId: wf.id, cadenceText: c.cadenceText, cadenceGroup: c.cadenceGroup, nextFire: from ? nextFire(c.cronExpr, from, tz) : null })
+  }
   const credentials = extractCredentials(valid)
 
   return { nodes, edges: keptEdges, unresolved, skipped, webhooks, schedules, credentials }
