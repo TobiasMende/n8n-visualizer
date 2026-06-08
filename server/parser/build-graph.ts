@@ -1,12 +1,25 @@
 import type {
   RawWorkflow, WorkflowGraph, WorkflowNode, WorkflowEdge,
-  UnresolvedLink, SkippedWorkflow,
+  UnresolvedLink, SkippedWorkflow, ScheduleEntry,
 } from '#shared/types/graph'
+import type { NodeCatalog } from '../catalog/catalog'
+import { prettifyType } from '../catalog/prettify'
 import { classifyTriggers } from './triggers'
 import { extractExecuteLinks, extractErrorLink, extractWebhookHttpLinks } from './links'
 import { summarize, extractTags, extractWebhookPaths } from './summarize'
+import { buildWebhooks } from '../webhooks/build'
+import { parseSchedule } from '../schedule/parse'
+import { nextFire } from '../schedule/next-fire'
+import { extractCredentials } from './credentials'
 
-export function buildGraph(workflows: RawWorkflow[], baseUrl: string | null): WorkflowGraph {
+export function buildGraph(
+  workflows: RawWorkflow[],
+  baseUrl: string | null,
+  opts: { from?: string; catalog?: NodeCatalog } = {},
+): WorkflowGraph {
+  const catalog: NodeCatalog = opts.catalog ?? { displayName: prettifyType }
+  const from = opts.from ?? null
+
   const valid: RawWorkflow[] = []
   const skipped: SkippedWorkflow[] = []
   for (const wf of workflows ?? []) {
@@ -46,16 +59,33 @@ export function buildGraph(workflows: RawWorkflow[], baseUrl: string | null): Wo
   }
 
   const base = baseUrl ? baseUrl.replace(/\/+$/, '') : null
-  const nodes: WorkflowNode[] = valid.map(wf => ({
-    id: wf.id,
-    name: wf.name,
-    active: wf.active ?? false,
-    triggers: classifyTriggers(wf),
-    tags: extractTags(wf),
-    webhookPaths: extractWebhookPaths(wf),
-    summary: { ...summarize(wf), inbound: inbound.get(wf.id) ?? 0, outbound: outbound.get(wf.id) ?? 0 },
-    deepLink: base ? `${base}/workflow/${wf.id}` : null,
-  }))
+  const nodes: WorkflowNode[] = valid.map(wf => {
+    const s = summarize(wf)
+    return {
+      id: wf.id,
+      name: wf.name,
+      active: wf.active ?? false,
+      triggers: classifyTriggers(wf),
+      tags: extractTags(wf),
+      webhookPaths: extractWebhookPaths(wf),
+      summary: {
+        nodeCount: s.nodeCount,
+        nodeTypes: s.nodeTypes.map(t => ({ ...t, displayName: catalog.displayName(t.type) })),
+        credentials: s.credentials,
+        inbound: inbound.get(wf.id) ?? 0,
+        outbound: outbound.get(wf.id) ?? 0,
+      },
+      deepLink: base ? `${base}/workflow/${wf.id}` : null,
+    }
+  })
 
-  return { nodes, edges: keptEdges, unresolved, skipped }
+  const webhooks = buildWebhooks(valid, baseUrl)
+  const schedules: ScheduleEntry[] = []
+  for (const wf of valid)
+    for (const node of wf.nodes ?? [])
+      for (const c of parseSchedule(node))
+        schedules.push({ workflowId: wf.id, cadenceText: c.cadenceText, cadenceGroup: c.cadenceGroup, nextFire: from ? nextFire(c.cronExpr, from) : null })
+  const credentials = extractCredentials(valid)
+
+  return { nodes, edges: keptEdges, unresolved, skipped, webhooks, schedules, credentials }
 }
