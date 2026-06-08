@@ -33,3 +33,13 @@ describe('extractWebhookPaths', () => {
     expect(extractWebhookPaths(wf)).toEqual(['orders'])
   })
 })
+
+describe('extractWebhookPaths (unified detector)', () => {
+  it('includes form triggers and webhookId-only webhooks', () => {
+    const wf = { id: 'w', name: 'W', nodes: [
+      { name: 'form', type: 'n8n-nodes-base.formTrigger', parameters: { path: 'signup' } },
+      { name: 'wh', type: 'n8n-nodes-base.webhook', webhookId: 'abc-123', parameters: { path: '' } },
+    ] } as any
+    expect(extractWebhookPaths(wf).sort()).toEqual(['abc-123', 'signup'])
+  })
+})

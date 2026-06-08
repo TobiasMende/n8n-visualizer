@@ -35,6 +35,7 @@ export const useGraphStore = defineStore('graph', () => {
     graph.value = null
     selectedId.value = null
     error.value = null
+    view.value = 'map'
     if (import.meta.client) clearConnection(sessionStorage)
   }
 
