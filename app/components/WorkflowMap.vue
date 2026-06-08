@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import { VueFlow } from '@vue-flow/core'
 import { Background } from '@vue-flow/background'
 import { Controls } from '@vue-flow/controls'
@@ -6,6 +7,7 @@ import type { Edge, Node } from '@vue-flow/core'
 import { computeLayeredLayout } from '~/composables/useLayeredLayout'
 import { matchesTags } from '~/composables/useTagFilter'
 import { overlayNodesAndEdges } from '~/composables/useMapLayers'
+import { visibleGraph } from '~/composables/useVisibility'
 import { useGraphStore } from '~/stores/graph'
 
 const store = useGraphStore()
@@ -16,20 +18,21 @@ const edgeStyle: Record<string, Record<string, any>> = {
   error: { stroke: '#ef4444' },
 }
 
-const positions = computed(() =>
-  store.graph ? computeLayeredLayout(store.graph.nodes, store.graph.edges) : new Map<string, { x: number; y: number }>()
-)
+const visible = computed(() => store.graph
+  ? visibleGraph(store.graph, store.visibility)
+  : { nodes: [], edges: [] })
+
+const positions = computed(() => computeLayeredLayout(visible.value.nodes, visible.value.edges))
 
 const overlay = computed(() => store.graph
-  ? overlayNodesAndEdges(store.graph, positions.value, store.layers, store.hiddenNodeTypes)
+  ? overlayNodesAndEdges(
+      { ...store.graph, nodes: visible.value.nodes, edges: visible.value.edges },
+      positions.value, store.visibility.overlays, store.visibility.hiddenNodeTypes)
   : { nodes: [], edges: [] })
 
 const nodes = computed<Node[]>(() => {
-  const g = store.graph
-  if (!g) return []
-  const pos = positions.value
-  const base: Node[] = g.nodes.map(n => ({
-    id: n.id, type: 'workflow', position: pos.get(n.id) ?? { x: 0, y: 0 },
+  const base: Node[] = visible.value.nodes.map(n => ({
+    id: n.id, type: 'workflow', position: positions.value.get(n.id) ?? { x: 0, y: 0 },
     data: { kind: 'workflow', label: n.name, triggers: n.triggers, inbound: n.summary.inbound, dimmed: !matchesTags(n, store.tagFilter) },
   }))
   const overlayNodes: Node[] = overlay.value.nodes.map(o => ({
@@ -40,9 +43,7 @@ const nodes = computed<Node[]>(() => {
 })
 
 const edges = computed<Edge[]>(() => {
-  const g = store.graph
-  if (!g) return []
-  const baseEdges: Edge[] = g.edges.filter(e => store.linkTypes[e.type]).map(e => ({
+  const baseEdges: Edge[] = visible.value.edges.map(e => ({
     id: `${e.source}|${e.target}|${e.type}`, source: e.source, target: e.target,
     animated: e.type === 'webhookHttp', style: edgeStyle[e.type],
   }))
