@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, watch } from 'vue'
-import { VueFlow, useVueFlow } from '@vue-flow/core'
+import { VueFlow, useVueFlow, MarkerType } from '@vue-flow/core'
 import { Background, BackgroundVariant } from '@vue-flow/background'
 import { Controls } from '@vue-flow/controls'
 import type { Edge, Node } from '@vue-flow/core'
@@ -15,12 +15,6 @@ const store = useGraphStore()
 
 const FLOW_ID = 'main'
 const { fitView } = useVueFlow(FLOW_ID)
-
-const edgeStyle: Record<string, Record<string, any>> = {
-  execute: { stroke: '#3b82f6' },
-  webhookHttp: { stroke: '#10b981', strokeDasharray: '6 4' },
-  error: { stroke: '#ef4444' },
-}
 
 const visible = computed(() => store.graph
   ? visibleGraph(store.graph, store.visibility)
@@ -58,9 +52,9 @@ const edges = computed<Edge[]>(() => {
   const baseEdges: Edge[] = visible.value.edges.map(e => {
     const inFlow = !focused.value || flow.value.edgeIds.has(`${e.source}|${e.target}`)
     return {
-      id: `${e.source}|${e.target}|${e.type}`, source: e.source, target: e.target,
-      animated: e.type === 'webhookHttp',
-      style: { ...edgeStyle[e.type], opacity: inFlow ? 1 : 0.12 },
+      id: `${e.source}|${e.target}|${e.type}`, source: e.source, target: e.target, type: 'flow',
+      markerEnd: MarkerType.ArrowClosed,
+      data: { type: e.type, dimmed: !inFlow, emphasized: false },
     }
   })
   const overlayEdges: Edge[] = overlay.value.edges.map(o => ({
@@ -89,6 +83,9 @@ watch(() => store.selectedId, (id) => {
   <VueFlow :id="FLOW_ID" :nodes="nodes" :edges="edges" fit-view-on-init @node-click="onNodeClick" @pane-click="onPaneClick">
     <template #node-workflow="props">
       <WorkflowNodeCard :data="props.data" />
+    </template>
+    <template #edge-flow="props">
+      <FlowEdge v-bind="props" />
     </template>
     <Background :variant="BackgroundVariant.Dots" :gap="22" :size="1.2" pattern-color="#1c2640" />
     <Controls />
