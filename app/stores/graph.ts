@@ -28,5 +28,27 @@ export const useGraphStore = defineStore('graph', () => {
 
   const selected = computed(() => graph.value?.nodes.find(n => n.id === selectedId.value) ?? null)
 
-  return { graph, loading, error, selectedId, selected, tagFilter, linkTypes, loadFromApi, loadFromUpload }
+  type ViewId = 'map' | 'webhooks' | 'schedules'
+  const view = ref<ViewId>('map')
+  const layers = ref<{ credentials: boolean; nodeTypes: boolean }>({ credentials: false, nodeTypes: false })
+
+  if (import.meta.client) {
+    const saved = localStorage.getItem('n8nviz.prefs')
+    if (saved) {
+      try {
+        const p = JSON.parse(saved)
+        if (p.view) view.value = p.view
+        if (p.layers) layers.value = p.layers
+        if (p.linkTypes) linkTypes.value = p.linkTypes
+        if (p.tagFilter) tagFilter.value = p.tagFilter
+      } catch { /* ignore corrupt prefs */ }
+    }
+    watch([view, layers, linkTypes, tagFilter], () => {
+      localStorage.setItem('n8nviz.prefs', JSON.stringify({
+        view: view.value, layers: layers.value, linkTypes: linkTypes.value, tagFilter: tagFilter.value,
+      }))
+    }, { deep: true })
+  }
+
+  return { graph, loading, error, selectedId, selected, tagFilter, linkTypes, loadFromApi, loadFromUpload, view, layers }
 })
