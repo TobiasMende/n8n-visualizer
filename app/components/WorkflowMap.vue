@@ -11,6 +11,7 @@ import { overlayNodesAndEdges } from '~/composables/useMapLayers'
 import { visibleGraph } from '~/composables/useVisibility'
 import { useGraphStore } from '~/stores/graph'
 import { traceFlow } from '~/composables/useTraceFlow'
+import { neighbors } from '~/composables/useNeighbors'
 
 const store = useGraphStore()
 
@@ -37,6 +38,10 @@ const overlay = computed(() => store.graph
 const flow = computed(() => traceFlow(visible.value.nodes, visible.value.edges, store.selectedId))
 const focused = computed(() => store.selectedId != null && flow.value.nodeIds.size > 0)
 
+const hoveredId = ref<string | null>(null)
+const hover = computed(() => neighbors(visible.value.edges, focused.value ? null : hoveredId.value))
+const hovering = computed(() => !focused.value && hoveredId.value != null && hover.value.nodeIds.size > 0)
+
 const nodes = computed<Node[]>(() => {
   const base: Node[] = visible.value.nodes.map(n => ({
     id: n.id, type: 'workflow', position: positions.value.get(n.id) ?? { x: 0, y: 0 },
@@ -45,6 +50,7 @@ const nodes = computed<Node[]>(() => {
       inbound: n.summary.inbound, outbound: n.summary.outbound, nodeCount: n.summary.nodeCount,
       dimmed: !matchesTags(n, store.tagFilter) || (focused.value && !flow.value.nodeIds.has(n.id)),
       selected: store.selectedId === n.id,
+      emphasized: hovering.value && hover.value.nodeIds.has(n.id),
     },
   }))
   const overlayNodes: Node[] = overlay.value.nodes.map(o => ({
@@ -60,7 +66,7 @@ const edges = computed<Edge[]>(() => {
     return {
       id: `${e.source}|${e.target}|${e.type}`, source: e.source, target: e.target, type: 'flow',
       markerEnd: MarkerType.ArrowClosed,
-      data: { type: e.type, dimmed: !inFlow, emphasized: false },
+      data: { type: e.type, dimmed: !inFlow, emphasized: hovering.value && hover.value.edgeIds.has(`${e.source}|${e.target}`) },
     }
   })
   const overlayEdges: Edge[] = overlay.value.edges.map(o => ({
@@ -76,6 +82,9 @@ function onNodeClick({ node }: { node: Node }) {
 
 function onPaneClick() { store.selectedId = null }
 
+function onNodeEnter({ node }: { node: Node }) { if (node.data?.kind === 'workflow') hoveredId.value = node.id }
+function onNodeLeave() { hoveredId.value = null }
+
 watch(() => store.selectedId, (id) => {
   if (id && flow.value.nodeIds.size) {
     const ids = [...flow.value.nodeIds]
@@ -86,7 +95,7 @@ watch(() => store.selectedId, (id) => {
 </script>
 
 <template>
-  <VueFlow :id="FLOW_ID" :nodes="nodes" :edges="edges" fit-view-on-init @node-click="onNodeClick" @pane-click="onPaneClick">
+  <VueFlow :id="FLOW_ID" :nodes="nodes" :edges="edges" fit-view-on-init @node-click="onNodeClick" @pane-click="onPaneClick" @nodeMouseEnter="onNodeEnter" @nodeMouseLeave="onNodeLeave">
     <template #node-workflow="props">
       <WorkflowNodeCard :data="props.data" />
     </template>
