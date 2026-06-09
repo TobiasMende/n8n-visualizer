@@ -192,3 +192,22 @@ describe('anonymizeWorkflows — names embedded in parameters (cachedResultName)
     expect(() => assertNoLeak(wf, out)).not.toThrow()
   })
 })
+
+describe('anonymizeWorkflows — drops undeclared API fields (pinData/staticData/notes)', () => {
+  it('does not leak names hiding in fields the app never reads', () => {
+    const wf = [{
+      id: 'w', name: 'Map Refresh Read Replica',
+      nodes: [{ id: 'n', name: 'Set', type: 'n8n-nodes-base.set', parameters: {}, notes: 'see Map Refresh Read Replica' }],
+      pinData: { Set: [{ json: { ref: 'Map Refresh Read Replica' } }] },
+      staticData: { last: 'Map Refresh Read Replica' },
+      meta: { templateId: 'Map Refresh Read Replica' },
+    }] as unknown as RawWorkflow[]
+    const out = anonymizeWorkflows(wf)
+    const json = JSON.stringify(out)
+    expect(json).not.toContain('Map Refresh Read Replica')
+    expect(json).not.toContain('pinData')
+    expect(json).not.toContain('staticData')
+    expect(json).not.toContain('notes')
+    expect(() => assertNoLeak(wf, out)).not.toThrow()
+  })
+})

@@ -91,32 +91,36 @@ export function anonymizeWorkflows(workflows: RawWorkflow[]): RawWorkflow[] {
 
   const replaceStr = buildReplacer(replace)
 
-  // Pass 2: build the anonymized output reusing the pre-allocated fakes.
+  // Pass 2: rebuild the output from ONLY the fields the app consumes. We do NOT
+  // spread `...wf`/`...n`: the n8n API returns extra fields not declared on
+  // RawWorkflow/RawNode (pinData, staticData, meta, node `notes`, …) that hold
+  // real, unanonymized data. Whitelisting drops every such leak vector.
   return prepared.map(({ wf, fakeWfName, nodeFakes, nameMap }) => {
     const nodes = wf.nodes.map((n, i): RawNode => {
-      const out: RawNode = { ...n, name: nodeFakes[i] }
+      const out: RawNode = { id: n.id, name: nodeFakes[i], type: n.type }
       if (n.webhookId) out.webhookId = faker.webhookId(n.webhookId)
       if (n.parameters) out.parameters = anonParams(n.parameters, faker, replaceStr)
       if (n.credentials) {
         out.credentials = {}
         for (const [slot, cred] of Object.entries(n.credentials))
-          out.credentials[slot] = { ...cred, name: faker.credName(cred.id ?? cred.name ?? slot) }
+          out.credentials[slot] = { id: cred.id, name: faker.credName(cred.id ?? cred.name ?? slot) }
       }
       return out
     })
     const tags = wf.tags?.map(t =>
       typeof t === 'string'
         ? faker.tagName(t)
-        : { ...t, name: faker.tagName(t.id ?? t.name) })
-    let settings = wf.settings
-    if (settings) {
-      settings = anonParams(settings, faker, replaceStr) as typeof wf.settings
-      const origErr = wf.settings!.errorWorkflow
+        : { id: t.id, name: faker.tagName(t.id ?? t.name) })
+    let settings: RawWorkflow['settings']
+    if (wf.settings) {
+      settings = anonParams(wf.settings, faker, replaceStr) as RawWorkflow['settings']
+      const origErr = wf.settings.errorWorkflow
       if (typeof origErr === 'string') settings!.errorWorkflow = replace.get(origErr) ?? origErr
     }
     return {
-      ...wf,
+      id: wf.id,
       name: fakeWfName,
+      active: wf.active,
       nodes,
       connections: remapConnections(wf.connections, nameMap),
       tags,
