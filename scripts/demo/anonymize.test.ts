@@ -240,3 +240,18 @@ describe('anonymizeWorkflows — generic single-word names are not secrets', () 
     expect(() => assertNoLeak(wf, out)).not.toThrow()
   })
 })
+
+describe('anonymizeWorkflows — sensitive ids in URL paths are dropped', () => {
+  it('does not leak a Google Sheets document id carried in a URL path', () => {
+    const docId = '1EMDjzzQ4gN8PQYrx67Pycl2LUfd5pf90KGSy4pJxUmM'
+    const wf: RawWorkflow[] = [{ id: 'w', name: 'W', nodes: [
+      { id: 'n', name: 'Sheets', type: 'n8n-nodes-base.googleSheets', parameters: {
+        documentId: { __rl: true, mode: 'list', value: docId,
+          cachedResultUrl: `https://docs.google.com/spreadsheets/d/${docId}/edit`,
+          cachedResultName: 'Q3 Revenue' } } },
+    ] }]
+    const out = anonymizeWorkflows(wf)
+    expect(JSON.stringify(out)).not.toContain(docId)
+    expect(() => assertNoLeak(wf, out)).not.toThrow()
+  })
+})

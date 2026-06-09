@@ -69,12 +69,10 @@ export class Faker {
     return v
   }
 
-  fakeUrl(original: string): string {
-    try {
-      const u = new URL(original)
-      return `https://api.demo.example${u.pathname === '/' ? '' : u.pathname}`
-    } catch {
-      return 'https://api.demo.example'
-    }
+  // Host only — the path/query/fragment are dropped because they routinely carry
+  // sensitive ids and tokens (e.g. a Google Sheets document id in
+  // /spreadsheets/d/<id>/edit, or an access token in a query string).
+  fakeUrl(_original: string): string {
+    return 'https://api.demo.example'
   }
 }
