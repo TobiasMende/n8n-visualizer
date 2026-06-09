@@ -4,7 +4,8 @@ export interface Visibility {
   triggerKinds: Record<TriggerKind, boolean>
   hideErrorHandlers: boolean
   linkTypes: Record<'execute' | 'webhookHttp' | 'error', boolean>
-  overlays: { credentials: boolean; nodeTypes: boolean; dataTables: boolean }
+  resources: { credentials: boolean; dataTables: boolean }
+  overlays: { nodeTypes: boolean }
   hiddenNodeTypes: string[]
 }
 
@@ -13,7 +14,8 @@ export function defaultVisibility(): Visibility {
     triggerKinds: { webhook: true, schedule: true, manual: true, app: true, form: true },
     hideErrorHandlers: false,
     linkTypes: { execute: true, webhookHttp: true, error: true },
-    overlays: { credentials: false, nodeTypes: false, dataTables: false },
+    resources: { credentials: false, dataTables: true },
+    overlays: { nodeTypes: false },
     hiddenNodeTypes: [],
   }
 }

@@ -56,3 +56,11 @@ describe('visibleGraph', () => {
     expect(r.edges.map(e => e.type)).toEqual(['execute'])
   })
 })
+
+describe('defaultVisibility resources', () => {
+  it('defaults data tables on, credentials off, node-types overlay off', () => {
+    const d = defaultVisibility()
+    expect(d.resources).toEqual({ credentials: false, dataTables: true })
+    expect(d.overlays).toEqual({ nodeTypes: false })
+  })
+})
