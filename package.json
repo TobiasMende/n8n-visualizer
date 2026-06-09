@@ -2,6 +2,9 @@
   "name": "n8n-visuzalizer",
   "type": "module",
   "private": true,
+  "imports": {
+    "#shared/*": "./shared/*.ts"
+  },
   "scripts": {
     "build": "nuxt build",
     "dev": "TMPDIR=/tmp nuxt dev",
