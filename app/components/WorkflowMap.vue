@@ -54,6 +54,7 @@ const hover = computed(() => neighbors(visible.value.edges, focused.value ? null
 const hovering = computed(() => !focused.value && hoveredId.value != null && hover.value.nodeIds.size > 0)
 
 const nodes = computed<Node[]>(() => {
+  const wfById = new Map(visible.value.nodes.map(n => [n.id, n]))
   const base: Node[] = visible.value.nodes.map(n => ({
     id: n.id, type: 'workflow', position: positions.value.get(n.id) ?? { x: 0, y: 0 },
     data: {
@@ -64,15 +65,19 @@ const nodes = computed<Node[]>(() => {
       emphasized: hovering.value && hover.value.nodeIds.has(n.id),
     },
   }))
-  const trigNodes: Node[] = triggerNodes.value.map(t => ({
-    id: t.id, type: 'workflow', position: positions.value.get(t.id) ?? { x: 0, y: 0 },
-    data: {
-      kind: 'trigger', triggerKind: t.kind, label: t.label, triggers: [],
-      workflowId: t.workflowId, inbound: 0, outbound: 0, nodeCount: 0,
-      dimmed: focused.value && !flow.value.nodeIds.has(t.workflowId),
-      selected: store.selectedId === t.workflowId,
-    },
-  }))
+  const trigNodes: Node[] = triggerNodes.value.map(t => {
+    const wf = wfById.get(t.workflowId)
+    const tagMatch = wf ? matchesTags(wf, store.tagFilter) : true
+    return {
+      id: t.id, type: 'workflow', position: positions.value.get(t.id) ?? { x: 0, y: 0 },
+      data: {
+        kind: 'trigger', triggerKind: t.kind, label: t.label, triggers: [],
+        workflowId: t.workflowId, inbound: 0, outbound: 0, nodeCount: 0,
+        dimmed: !tagMatch || (focused.value && !flow.value.nodeIds.has(t.workflowId)),
+        selected: store.selectedId === t.workflowId,
+      },
+    }
+  })
   const overlayNodes: Node[] = overlay.value.nodes.map(o => ({
     id: o.id, type: 'workflow', position: { x: o.x, y: o.y },
     data: { kind: o.kind, label: o.label, triggers: [], inbound: 0, outbound: 0, nodeCount: 0, dimmed: focused.value, selected: o.id === store.selectedCredId },
