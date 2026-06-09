@@ -3,6 +3,7 @@ import { onMounted } from 'vue'
 import { useGraphStore } from '~/stores/graph'
 import { workflowLinks } from '~/composables/useWorkflowLinks'
 import { credentialWorkflows } from '~/composables/useCredentialView'
+import { dataTableWorkflows } from '~/composables/useDataTableView'
 const store = useGraphStore()
 
 onMounted(() => { store.restoreConnection() })
@@ -17,6 +18,7 @@ onMounted(() => { store.restoreConnection() })
       <WebhooksView v-else-if="store.view === 'webhooks' && store.graph" />
       <SchedulesView v-else-if="store.view === 'schedules' && store.graph" />
       <CredentialsView v-else-if="store.view === 'credentials' && store.graph" />
+      <DataTablesView v-else-if="store.view === 'dataTables' && store.graph" />
     </ClientOnly>
 
     <EmptyState v-if="!store.graph && !store.loading"
@@ -32,5 +34,10 @@ onMounted(() => { store.restoreConnection() })
       :workflows="credentialWorkflows(store.graph, store.selectedCredential.id, store.selectedCredential.type, store.selectedCredential.name)"
       @close="store.selectedCredId = null"
       @select="(id) => { store.selectedId = id; store.selectedCredId = null }" />
+    <DataTablePanel v-if="store.selectedDataTable && store.view === 'map'"
+      :data-table="store.selectedDataTable"
+      :workflows="dataTableWorkflows(store.graph, store.selectedDataTable.id)"
+      @close="store.selectedDataTableId = null"
+      @select="(id) => { store.selectedId = id; store.selectedDataTableId = null }" />
   </AppShell>
 </template>
