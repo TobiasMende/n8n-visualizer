@@ -1,5 +1,6 @@
 export type TriggerType = 'webhook' | 'schedule' | 'manual' | 'app' | 'unknown'
-export type LinkType = 'execute' | 'webhookHttp' | 'error'
+export type LinkType = 'execute' | 'webhookHttp' | 'error' | 'trigger'
+export type TriggerKind = 'webhook' | 'schedule' | 'manual' | 'app' | 'form'
 
 export interface RawNode {
   id?: string
@@ -67,12 +68,21 @@ export interface WorkflowNode {
 }
 
 export interface WorkflowEdge { source: string; target: string; type: LinkType }
+
+export interface TriggerNode {
+  id: string
+  workflowId: string
+  kind: TriggerKind
+  label: string
+}
+
 export interface UnresolvedLink { workflowId: string; nodeName: string; reason: string }
 export interface SkippedWorkflow { name?: string; reason: string }
 
 export interface WorkflowGraph {
   nodes: WorkflowNode[]
   edges: WorkflowEdge[]
+  triggerNodes: TriggerNode[]
   unresolved: UnresolvedLink[]
   skipped: SkippedWorkflow[]
   webhooks: WebhookEntry[]
