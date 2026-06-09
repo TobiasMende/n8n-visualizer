@@ -8,6 +8,7 @@ import '@vue-flow/minimap/dist/style.css'
 import { computeLayeredLayout } from '~/composables/useLayeredLayout'
 import { tagScopedNodeIds } from '~/composables/useTagScope'
 import { overlayNodesAndEdges } from '~/composables/useMapLayers'
+import { resourceNodes } from '~/composables/useResourceNodes'
 import { visibleGraph } from '~/composables/useVisibility'
 import { useGraphStore } from '~/stores/graph'
 import { traceFlow } from '~/composables/useTraceFlow'
@@ -48,9 +49,15 @@ const triggerNodes = computed(() => scoped.value.triggerNodes)
 const triggerEdges = computed(() =>
   triggerNodes.value.map(t => ({ source: t.id, target: t.workflowId })))
 
+const resources = computed(() => resourceNodes(
+  store.graph,
+  store.visibility.resources,
+  new Set(scoped.value.nodes.map(n => n.id)),
+))
+
 const positions = computed(() => computeLayeredLayout(
-  [...scoped.value.nodes, ...triggerNodes.value],
-  [...scoped.value.edges, ...triggerEdges.value],
+  [...scoped.value.nodes, ...triggerNodes.value, ...resources.value.nodes],
+  [...scoped.value.edges, ...triggerEdges.value, ...resources.value.edges],
 ))
 
 const overlay = computed(() => store.graph
@@ -86,11 +93,19 @@ const nodes = computed<Node[]>(() => {
       selected: store.selectedId === t.workflowId,
     },
   }))
+  const resNodes: Node[] = resources.value.nodes.map(r => ({
+    id: r.id, type: 'workflow', position: positions.value.get(r.id) ?? { x: 0, y: 0 },
+    data: {
+      kind: r.kind, label: r.label, triggers: [], inbound: 0, outbound: 0, nodeCount: 0,
+      dimmed: focused.value && !r.workflowIds.some(w => flow.value.nodeIds.has(w)),
+      selected: r.id === store.selectedCredId || r.id === store.selectedDataTableId,
+    },
+  }))
   const overlayNodes: Node[] = overlay.value.nodes.map(o => ({
     id: o.id, type: 'workflow', position: { x: o.x, y: o.y },
-    data: { kind: o.kind, label: o.label, triggers: [], inbound: 0, outbound: 0, nodeCount: 0, dimmed: focused.value, selected: o.id === store.selectedCredId || o.id === store.selectedDataTableId },
+    data: { kind: o.kind, label: o.label, triggers: [], inbound: 0, outbound: 0, nodeCount: 0, dimmed: focused.value, selected: false },
   }))
-  return [...base, ...trigNodes, ...overlayNodes]
+  return [...base, ...trigNodes, ...resNodes, ...overlayNodes]
 })
 
 const edges = computed<Edge[]>(() => {
@@ -107,11 +122,16 @@ const edges = computed<Edge[]>(() => {
     markerEnd: { type: MarkerType.ArrowClosed, color: edgeColor('trigger') },
     data: { type: 'trigger', dimmed: focused.value && !flow.value.nodeIds.has(t.workflowId), emphasized: false },
   }))
+  const resEdges: Edge[] = resources.value.edges.map(e => ({
+    id: `res-edge:${e.source}:${e.target}`, source: e.source, target: e.target, type: 'flow',
+    markerEnd: { type: MarkerType.ArrowClosed, color: edgeColor(e.kind) },
+    data: { type: e.kind, dimmed: focused.value && !flow.value.nodeIds.has(e.source), emphasized: false },
+  }))
   const overlayEdges: Edge[] = overlay.value.edges.map(o => ({
     id: o.id, source: o.source, target: o.target,
-    style: { stroke: o.id.includes(':datatable:') ? '#b48cff' : o.kind === 'uses' ? '#ffb454' : '#6aa0ff', strokeDasharray: '4 4', opacity: focused.value ? 0.05 : 0.6 },
+    style: { stroke: '#6aa0ff', strokeDasharray: '4 4', opacity: focused.value ? 0.05 : 0.6 },
   }))
-  return [...baseEdges, ...trigEdges, ...overlayEdges]
+  return [...baseEdges, ...trigEdges, ...resEdges, ...overlayEdges]
 })
 
 function onNodeClick({ node }: { node: Node }) {
