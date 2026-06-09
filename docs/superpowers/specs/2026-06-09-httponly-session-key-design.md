@@ -150,7 +150,14 @@ behavior otherwise unchanged.
   connected (`GET /api/session` → `{connected: false}`); ingest cookie path →
   401.
 - `disconnect()` when no cookie exists → no-op, still clears client state.
-- Body path with partial creds (only baseUrl, or only apiKey) → 400 as today.
+- Body path with partial creds (only baseUrl, or only apiKey) → falls through to
+  the cookie session; if there is none, ingest returns `401` (not connected).
+- Re-running `POST /api/session` on a still-valid cookie preserves the original
+  7-day expiry rather than extending it (h3 reuses the session `createdAt`). This
+  errs toward a shorter lifetime, which is acceptable.
+- Remember path where `POST /api/session` succeeds but the follow-up ingest fails
+  leaves a sealed cookie with the client showing disconnected; the next reload
+  (`restoreConnection`) recovers the connection from the cookie.
 
 ## Security properties (summary)
 
