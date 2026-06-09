@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { Handle, Position } from '@vue-flow/core'
-import type { TriggerType } from '#shared/types/graph'
+import type { TriggerType, TriggerKind } from '#shared/types/graph'
 
 type Kind = 'workflow' | 'credential' | 'nodeType' | 'trigger'
 const props = defineProps<{
   data: {
-    kind: Kind; label: string; triggers: TriggerType[]; triggerKind?: TriggerType
+    kind: Kind; label: string; triggers: TriggerType[]; triggerKind?: TriggerKind
     inbound: number; outbound?: number; nodeCount?: number
     dimmed: boolean; selected?: boolean; emphasized?: boolean
   }
