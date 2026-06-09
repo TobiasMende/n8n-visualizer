@@ -33,6 +33,7 @@ describe('fetchAllWorkflows', () => {
     const url = call[0] as string
     const opts = call[1] as { maxResponseBytes?: number }
     expect(url).toContain('limit=100')
+    expect(url).toContain('excludePinnedData=true')
     expect(opts.maxResponseBytes).toBeGreaterThanOrEqual(50 * 1024 * 1024)
   })
 
