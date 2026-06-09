@@ -11,6 +11,10 @@ const uploadBaseUrl = ref('')
 const showUnresolved = ref(false)
 
 const tags = computed(() => allTags(store.graph))
+const scopeHint = computed(() => !!store.connection && !!store.graph &&
+  (!store.graph.enrichment.credentials || !store.graph.enrichment.dataTables))
+const scopeHintTitle = computed(() =>
+  'Add credential:list / dataTable:list scopes to this API key to see unused items and extra metadata.')
 const results = computed(() => searchGraph(store.graph, store.searchQuery).slice(0, 10))
 const searchFocused = ref(false)
 
@@ -57,6 +61,7 @@ async function onUpload(e: Event) {
         <div class="row">
           <button class="disconnect" @click="store.disconnect()">Disconnect</button>
           <span class="hint">API key stored for this browser session only.</span>
+          <span v-if="scopeHint" class="scope-hint" :title="scopeHintTitle">⚠ limited API scope</span>
         </div>
       </template>
       <template v-else>
@@ -143,4 +148,5 @@ button:hover { filter: brightness(1.15); }
 .tags button.active { background: var(--accent-dim); color: var(--accent); border-color: transparent; }
 .err { color: var(--danger); font-size: 12px; }
 .unresolved button { background: var(--bg-3); color: var(--text-dim); border: 1px solid var(--border); }
+.scope-hint { font-size: 11px; color: var(--warn); cursor: help; }
 </style>

@@ -23,6 +23,8 @@ const rows = computed(() => credentialRows(store.graph).filter(r =>
   tagsMatch(credTags(r), store.tagFilter) &&
   matchesQuery(`${r.name} ${r.displayType}`, store.searchQuery)))
 
+const showUploadHint = computed(() => store.connection === null && rows.value.length > 0)
+
 function rowKey(r: { type: string; name: string; id: string | null }) { return `${r.type}:${r.name}:${r.id}` }
 function toggle(key: string) { expanded.value = expanded.value === key ? null : key }
 function jump(id: string) { store.selectedId = id; store.view = 'map' }
@@ -30,9 +32,11 @@ function jump(id: string) { store.selectedId = id; store.view = 'map' }
 
 <template>
   <div class="wrap">
+    <p v-if="showUploadHint" class="hint">Connect with an API token to see unused credentials.</p>
     <DataTable :columns="columns" :rows="rows" :row-key="(r) => r.type + ':' + r.name + ':' + r.id">
       <template #cell-name="{ row }">
         <strong>{{ row.name }}</strong>
+        <Badge v-if="row.unused" class="unused">unused</Badge>
         <button class="exp" @click.stop="toggle(rowKey(row))">workflows</button>
         <ul v-if="expanded === rowKey(row)" class="wflist">
           <li v-for="w in credentialWorkflows(store.graph, row.id, row.type, row.name)" :key="w.id"
@@ -54,4 +58,7 @@ function jump(id: string) { store.selectedId = id; store.view = 'map' }
   color: var(--text-dim); border-radius: var(--radius-s); cursor: pointer; padding: 1px 6px; }
 .wflist { margin: 6px 0 0; padding-left: 14px; color: var(--accent); font-size: 12px; }
 .wflist li { cursor: pointer; }
+.hint { font-size: 12px; color: var(--text-dim); background: var(--bg-2); border: 1px solid var(--border);
+  border-radius: var(--radius-s); padding: 6px 10px; margin: 0 0 10px; }
+.unused { margin-left: 8px; background: var(--bg-3); color: var(--text-dim); }
 </style>

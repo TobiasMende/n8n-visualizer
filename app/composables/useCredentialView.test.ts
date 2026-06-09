@@ -10,9 +10,11 @@ const graph: WorkflowGraph = {
       summary: { nodeCount: 0, nodeTypes: [], credentials: [], inbound: 0, outbound: 0 } },
   ],
   edges: [], triggerNodes: [], unresolved: [], skipped: [], webhooks: [], schedules: [],
+  dataTables: [], enrichment: { credentials: true, dataTables: false },
   credentials: [
-    { id: '1', name: 'My API', type: 'httpHeaderAuth', workflowIds: ['a', 'b'] },
-    { id: null, name: 'Slack Bot', type: 'slackApi', workflowIds: ['b'] },
+    { id: '1', name: 'My API', type: 'httpHeaderAuth', workflowIds: ['a', 'b'], source: 'both' },
+    { id: null, name: 'Slack Bot', type: 'slackApi', workflowIds: ['b'], source: 'inferred' },
+    { id: '2', name: 'Orphan', type: 'slackApi', workflowIds: [], source: 'api' },
   ],
 }
 
@@ -21,6 +23,11 @@ describe('credentialRows', () => {
     const rows = credentialRows(graph)
     expect(rows[0]).toMatchObject({ name: 'My API', type: 'httpHeaderAuth', displayType: 'HTTP Header Auth', workflowCount: 2 })
     expect(rows[1]).toMatchObject({ name: 'Slack Bot', displayType: 'Slack API', workflowCount: 1 })
+  })
+  it('flags orphan credentials as unused and surfaces source', () => {
+    const rows = credentialRows(graph)
+    expect(rows.find(r => r.id === '2')).toMatchObject({ unused: true, source: 'api' })
+    expect(rows.find(r => r.id === '1')).toMatchObject({ unused: false, source: 'both' })
   })
   it('returns [] for a null graph', () => {
     expect(credentialRows(null)).toEqual([])
