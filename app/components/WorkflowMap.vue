@@ -68,9 +68,9 @@ const nodes = computed<Node[]>(() => {
     id: t.id, type: 'workflow', position: positions.value.get(t.id) ?? { x: 0, y: 0 },
     data: {
       kind: 'trigger', triggerKind: t.kind, label: t.label, triggers: [],
-      inbound: 0, outbound: 0, nodeCount: 0,
+      workflowId: t.workflowId, inbound: 0, outbound: 0, nodeCount: 0,
       dimmed: focused.value && !flow.value.nodeIds.has(t.workflowId),
-      selected: false,
+      selected: store.selectedId === t.workflowId,
     },
   }))
   const overlayNodes: Node[] = overlay.value.nodes.map(o => ({
@@ -103,6 +103,7 @@ const edges = computed<Edge[]>(() => {
 
 function onNodeClick({ node }: { node: Node }) {
   if (node.data?.kind === 'workflow') { store.selectedId = node.id; store.selectedCredId = null }
+  else if (node.data?.kind === 'trigger') { store.selectedId = node.data.workflowId; store.selectedCredId = null }
   else if (node.data?.kind === 'credential') { store.selectedCredId = node.id; store.selectedId = null }
 }
 
