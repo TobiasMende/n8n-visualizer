@@ -94,3 +94,19 @@ describe('extractWebhookHttpLinks', () => {
     expect(extractWebhookHttpLinks([selfRef]).edges).toEqual([])
   })
 })
+
+describe('extractExecuteLinks – toolWorkflow', () => {
+  it('extracts an execute edge from a toolWorkflow node', () => {
+    const wf: RawWorkflow = { id: 'a', name: 'A', nodes: [
+      { name: 'tool', type: '@n8n/n8n-nodes-langchain.toolWorkflow', parameters: { workflowId: 'x' } },
+    ] }
+    expect(extractExecuteLinks(wf)).toEqual([{ source: 'a', target: 'x', type: 'execute' }])
+  })
+
+  it('extracts an execute edge from toolWorkflow with resource-locator object', () => {
+    const wf: RawWorkflow = { id: 'a', name: 'A', nodes: [
+      { name: 'tool', type: '@n8n/n8n-nodes-langchain.toolWorkflow', parameters: { workflowId: { value: 'y', mode: 'list' } } },
+    ] }
+    expect(extractExecuteLinks(wf)).toEqual([{ source: 'a', target: 'y', type: 'execute' }])
+  })
+})

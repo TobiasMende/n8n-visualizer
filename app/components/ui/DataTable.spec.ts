@@ -18,9 +18,8 @@ describe('DataTable', () => {
     expect(w.findAll('tbody tr')[0].text()).toContain('Alpha')
   })
 
-  it('filters rows by the filter prop', () => {
-    const w = mount(DataTable, { props: { columns, rows, filter: 'alph' } })
-    expect(w.findAll('tbody tr')).toHaveLength(1)
-    expect(w.text()).toContain('Alpha')
+  it('uses rowKey prop for stable row keys', () => {
+    const w = mount(DataTable, { props: { columns, rows, rowKey: (r) => r.name } })
+    expect(w.findAll('tbody tr')).toHaveLength(2)
   })
 })

@@ -32,4 +32,11 @@ describe('credentialWorkflows', () => {
     expect(credentialWorkflows(graph, '1', 'httpHeaderAuth', 'My API'))
       .toEqual([{ id: 'a', name: 'Alpha' }, { id: 'b', name: 'Beta' }])
   })
+  it('resolves workflows for a credential with id null', () => {
+    expect(credentialWorkflows(graph, null, 'slackApi', 'Slack Bot'))
+      .toEqual([{ id: 'b', name: 'Beta' }])
+  })
+  it('returns [] when credential is not found', () => {
+    expect(credentialWorkflows(graph, '999', 'httpHeaderAuth', 'Nonexistent')).toEqual([])
+  })
 })

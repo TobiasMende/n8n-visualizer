@@ -22,6 +22,15 @@ describe('entryKindOf', () => {
     expect(entryKindOf(node('x', ['manual', 'schedule']))).toBe('schedule')
     expect(entryKindOf(node('x', []))).toBe('none')
   })
+  it('returns app for app-triggered nodes', () => {
+    expect(entryKindOf(node('x', ['app']))).toBe('app')
+  })
+  it('returns manual for manual-triggered nodes', () => {
+    expect(entryKindOf(node('x', ['manual']))).toBe('manual')
+  })
+  it('returns none for unknown-only trigger', () => {
+    expect(entryKindOf(node('x', ['unknown']))).toBe('none')
+  })
 })
 
 describe('visibleGraph', () => {
@@ -46,5 +55,19 @@ describe('visibleGraph', () => {
     const v = defaultVisibility(); v.linkTypes.error = false
     const r = visibleGraph(graph, v)
     expect(r.edges.map(e => e.type)).toEqual(['execute'])
+  })
+  it('combines hidden trigger kind and hideErrorHandlers', () => {
+    const v = defaultVisibility(); v.triggerKinds.webhook = false; v.hideErrorHandlers = true
+    const r = visibleGraph(graph, v)
+    // hook (webhook) is hidden; handler is error-handler but also hidden by trigger; sub remains
+    expect(r.nodes.map(n => n.id)).toEqual(['sub'])
+    expect(r.edges).toHaveLength(0)
+  })
+  it('does not drop nodes with an unmapped/unknown trigger kind', () => {
+    const unknownNode = node('unk', ['unknown' as any])
+    const g: WorkflowGraph = { nodes: [unknownNode], edges: [], unresolved: [], skipped: [], webhooks: [], schedules: [], credentials: [] }
+    const v = defaultVisibility()
+    const r = visibleGraph(g, v)
+    expect(r.nodes.map(n => n.id)).toEqual(['unk'])
   })
 })

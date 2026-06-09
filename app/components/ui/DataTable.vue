@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import { onActivate } from '~/composables/useA11yClick'
 
 interface Column { key: string; label: string }
-const props = defineProps<{ columns: Column[]; rows: Record<string, any>[]; filter?: string }>()
-defineEmits<{ rowClick: [row: Record<string, any>] }>()
+const props = defineProps<{ columns: Column[]; rows: Record<string, any>[]; rowKey?: (row: Record<string, any>) => string | number }>()
+const emit = defineEmits<{ rowClick: [row: Record<string, any>] }>()
 
 const sortKey = ref<string | null>(null)
 const sortDir = ref<1 | -1>(1)
@@ -14,14 +15,11 @@ function toggleSort(key: string) {
 }
 
 const view = computed(() => {
-  const f = (props.filter ?? '').trim().toLowerCase()
-  let r = props.rows
-  if (f) r = r.filter(row => props.columns.some(c => String(row[c.key] ?? '').toLowerCase().includes(f)))
   if (sortKey.value) {
     const k = sortKey.value
-    r = [...r].sort((a, b) => String(a[k] ?? '').localeCompare(String(b[k] ?? ''), undefined, { numeric: true }) * sortDir.value)
+    return [...props.rows].sort((a, b) => String(a[k] ?? '').localeCompare(String(b[k] ?? ''), undefined, { numeric: true }) * sortDir.value)
   }
-  return r
+  return props.rows
 })
 </script>
 
@@ -35,7 +33,10 @@ const view = computed(() => {
       </tr>
     </thead>
     <tbody>
-      <tr v-for="(row, i) in view" :key="i" @click="$emit('rowClick', row)">
+      <tr v-for="(row, i) in view" :key="rowKey ? rowKey(row) : i"
+          role="button" tabindex="0"
+          @click="emit('rowClick', row)"
+          @keydown="onActivate(() => emit('rowClick', row))">
         <td v-for="c in columns" :key="c.key"><slot :name="`cell-${c.key}`" :row="row">{{ row[c.key] }}</slot></td>
       </tr>
     </tbody>

@@ -23,7 +23,7 @@ export function defaultVisibility(): Visibility {
 const PRIORITY: TriggerType[] = ['webhook', 'schedule', 'app', 'manual']
 
 export function entryKindOf(node: WorkflowNode): EntryKind {
-  for (const k of PRIORITY) if (node.triggers.includes(k)) return k as EntryKind
+  for (const k of PRIORITY) if (node.triggers.includes(k)) return k
   return 'none'
 }
 
@@ -38,7 +38,8 @@ export function visibleGraph(graph: WorkflowGraph, v: Visibility): {
 } {
   const handlers = errorHandlerIds(graph)
   const nodes = graph.nodes.filter(n => {
-    if (!v.triggerKinds[entryKindOf(n)]) return false
+    const kind = entryKindOf(n)
+    if (v.triggerKinds[kind] === false) return false
     if (v.hideErrorHandlers && handlers.has(n.id)) return false
     return true
   })

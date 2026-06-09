@@ -21,15 +21,16 @@ function parseRule(rule: any): ParsedCadence | null {
     }
     case 'hours': {
       const n = Number(rule.hoursInterval ?? 1)
-      return { cadenceText: `Every ${n} hour${n === 1 ? '' : 's'} at :${String(min).padStart(2, '0')}`, cadenceGroup: 'hourly', cronExpr: `${min} */${n} * * *` }
+      return { cadenceText: `Every ${n} hour${n === 1 ? '' : 's'} at :${String(min).padStart(2, '0')}`, cadenceGroup: 'hourly', cronExpr: n === 1 ? `${min} * * * *` : null }
     }
     case 'days': {
       const n = Number(rule.daysInterval ?? 1)
       const text = n === 1 ? `Every day at ${hhmm(hour, min)}` : `Every ${n} days at ${hhmm(hour, min)}`
-      return { cadenceText: text, cadenceGroup: 'daily', cronExpr: n === 1 ? `${min} ${hour} * * *` : `${min} ${hour} */${n} * *` }
+      return { cadenceText: text, cadenceGroup: 'daily', cronExpr: n === 1 ? `${min} ${hour} * * *` : null }
     }
     case 'weeks': {
-      const days: number[] = Array.isArray(rule.triggerAtDay) ? rule.triggerAtDay.map(Number) : [0]
+      const daysRaw = Array.isArray(rule.triggerAtDay) ? rule.triggerAtDay.map(Number) : []
+      const days = daysRaw.length ? daysRaw : [0]
       const names = days.map(d => DOW[d] ?? `Day ${d}`).join(', ')
       return { cadenceText: `Weekly on ${names} at ${hhmm(hour, min)}`, cadenceGroup: 'weekly', cronExpr: `${min} ${hour} * * ${days.join(',')}` }
     }

@@ -1,5 +1,6 @@
 import type { WorkflowGraph } from '#shared/types/graph'
 import { prettifyType } from '#shared/prettify'
+import { workflowNameMap } from './useGraphLookup'
 
 export interface CredentialRow {
   id: string | null; name: string; type: string; displayType: string
@@ -20,7 +21,7 @@ export function credentialWorkflows(
   if (!graph) return []
   const cred = graph.credentials.find(c => c.type === type && c.name === name && c.id === id)
   if (!cred) return []
-  const nameById = new Map(graph.nodes.map(n => [n.id, n.name]))
+  const nameById = workflowNameMap(graph)
   return cred.workflowIds
     .map(wfId => ({ id: wfId, name: nameById.get(wfId) ?? wfId }))
     .sort((a, b) => a.name.localeCompare(b.name))

@@ -15,6 +15,7 @@ export function diskCatalogCache(): CatalogCache {
       try {
         const raw = await readFile(join(DIR, `node-catalog-${safe(host)}.json`), 'utf8')
         const parsed = JSON.parse(raw) as { savedAt: number; map: Record<string, string> }
+        if (typeof parsed?.savedAt !== 'number' || typeof parsed?.map !== 'object' || !parsed.map) return null
         if (Date.now() - parsed.savedAt > TTL_MS) return null
         return parsed.map
       } catch {

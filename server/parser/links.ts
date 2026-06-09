@@ -10,10 +10,15 @@ function resolveWorkflowId(param: unknown): string | null {
   return null
 }
 
+const EXECUTE_WORKFLOW_TYPES = new Set([
+  'n8n-nodes-base.executeWorkflow',
+  '@n8n/n8n-nodes-langchain.toolWorkflow',
+])
+
 export function extractExecuteLinks(wf: RawWorkflow): WorkflowEdge[] {
   const edges: WorkflowEdge[] = []
   for (const node of wf.nodes ?? []) {
-    if (node.type !== 'n8n-nodes-base.executeWorkflow') continue
+    if (!EXECUTE_WORKFLOW_TYPES.has(node.type)) continue
     const target = resolveWorkflowId(node.parameters?.workflowId)
     if (target) edges.push({ source: wf.id, target, type: 'execute' })
   }

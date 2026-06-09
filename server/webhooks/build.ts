@@ -1,8 +1,9 @@
 import type { RawWorkflow, WebhookEntry } from '#shared/types/graph'
 import { webhookNodeInfo } from './extract'
+import { stripTrailingSlash } from '#shared/url'
 
 export function buildWebhooks(workflows: RawWorkflow[], baseUrl: string | null): WebhookEntry[] {
-  const base = baseUrl ? baseUrl.replace(/\/+$/, '') : null
+  const base = baseUrl ? stripTrailingSlash(baseUrl) : null
   const out: WebhookEntry[] = []
   for (const wf of workflows ?? []) {
     for (const node of wf.nodes ?? []) {

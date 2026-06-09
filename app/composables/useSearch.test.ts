@@ -24,4 +24,9 @@ describe('searchGraph', () => {
   it('returns nothing for a blank query', () => {
     expect(searchGraph(graph, '   ')).toEqual([])
   })
+
+  it('matches a node type and returns a hit with kind node', () => {
+    const hits = searchGraph(graph, 'httprequest')
+    expect(hits).toContainEqual({ workflowId: 'p', label: 'n8n-nodes-base.httpRequest (×1)', kind: 'node' })
+  })
 })

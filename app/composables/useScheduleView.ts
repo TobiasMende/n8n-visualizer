@@ -1,4 +1,5 @@
 import type { WorkflowGraph, CadenceGroup } from '#shared/types/graph'
+import { workflowNameMap } from './useGraphLookup'
 
 const ORDER: CadenceGroup[] = ['sub-minute', 'minutes', 'hourly', 'daily', 'weekly', 'monthly', 'cron']
 
@@ -7,10 +8,10 @@ export interface ScheduleGroupView { group: CadenceGroup; rows: ScheduleRow[] }
 
 export function scheduleGroups(graph: WorkflowGraph | null): ScheduleGroupView[] {
   if (!graph) return []
-  const nameById = new Map(graph.nodes.map(n => [n.id, n]))
+  const nodeById = new Map(graph.nodes.map(n => [n.id, n]))
   const byGroup = new Map<CadenceGroup, ScheduleRow[]>()
   for (const s of graph.schedules) {
-    const wf = nameById.get(s.workflowId)
+    const wf = nodeById.get(s.workflowId)
     const row: ScheduleRow = { workflowId: s.workflowId, workflow: wf?.name ?? s.workflowId, cadenceText: s.cadenceText, nextFire: s.nextFire, active: wf?.active ?? false }
     const list = byGroup.get(s.cadenceGroup) ?? []
     list.push(row)

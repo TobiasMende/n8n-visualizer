@@ -17,4 +17,22 @@ describe('floatingEdgeParams', () => {
     expect(r.sy).toBeCloseTo(40, 0)   // source bottom edge
     expect(r.ty).toBeCloseTo(200, 0)  // target top edge
   })
+
+  it('zero-size source produces no NaN in coordinates', () => {
+    const r = floatingEdgeParams({ x: 10, y: 20, width: 0, height: 0 }, { x: 10, y: 100, width: 100, height: 40 })
+    expect(Number.isFinite(r.sx)).toBe(true)
+    expect(Number.isFinite(r.sy)).toBe(true)
+    expect(Number.isFinite(r.tx)).toBe(true)
+    expect(Number.isFinite(r.ty)).toBe(true)
+  })
+
+  it('coincident centers produce finite coords and defined sides', () => {
+    const r = floatingEdgeParams({ x: 0, y: 0, width: 100, height: 40 }, { x: 0, y: 0, width: 100, height: 40 })
+    expect(Number.isFinite(r.sx)).toBe(true)
+    expect(Number.isFinite(r.sy)).toBe(true)
+    expect(Number.isFinite(r.tx)).toBe(true)
+    expect(Number.isFinite(r.ty)).toBe(true)
+    expect(r.sourcePos).toBeDefined()
+    expect(r.targetPos).toBeDefined()
+  })
 })

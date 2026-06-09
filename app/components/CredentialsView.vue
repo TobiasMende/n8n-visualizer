@@ -3,6 +3,8 @@ import { computed, ref } from 'vue'
 import { useGraphStore } from '~/stores/graph'
 import { credentialRows, credentialWorkflows } from '~/composables/useCredentialView'
 import { matchesQuery, tagsMatch } from '~/composables/useViewFilter'
+import { workflowTagsMap } from '~/composables/useGraphLookup'
+import { onActivate } from '~/composables/useA11yClick'
 
 const store = useGraphStore()
 const expanded = ref<string | null>(null)
@@ -13,7 +15,7 @@ const columns = [
   { key: 'workflowCount', label: 'Workflows' },
 ]
 
-const tagsByWf = computed(() => new Map((store.graph?.nodes ?? []).map(n => [n.id, n.tags])))
+const tagsByWf = computed(() => workflowTagsMap(store.graph))
 function credTags(r: { workflowIds: string[] }) {
   return [...new Set(r.workflowIds.flatMap(id => tagsByWf.value.get(id) ?? []))]
 }
@@ -28,13 +30,15 @@ function jump(id: string) { store.selectedId = id; store.view = 'map' }
 
 <template>
   <div class="wrap">
-    <DataTable :columns="columns" :rows="rows" :filter="''">
+    <DataTable :columns="columns" :rows="rows" :row-key="(r) => r.type + ':' + r.name + ':' + r.id">
       <template #cell-name="{ row }">
         <strong>{{ row.name }}</strong>
         <button class="exp" @click.stop="toggle(rowKey(row))">workflows</button>
         <ul v-if="expanded === rowKey(row)" class="wflist">
           <li v-for="w in credentialWorkflows(store.graph, row.id, row.type, row.name)" :key="w.id"
-              @click.stop="jump(w.id)">↳ {{ w.name }}</li>
+              role="button" tabindex="0"
+              @click.stop="jump(w.id)"
+              @keydown.stop="onActivate(() => jump(w.id))">↳ {{ w.name }}</li>
         </ul>
       </template>
       <template #cell-displayType="{ row }"><Badge>{{ row.displayType }}</Badge></template>
