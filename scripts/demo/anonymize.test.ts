@@ -229,3 +229,14 @@ describe('anonymizeWorkflows — generic name collisions are not false leaks', (
     expect(() => assertNoLeak(wf, out)).toThrow(/leak/i)
   })
 })
+
+describe('anonymizeWorkflows — generic single-word names are not secrets', () => {
+  it('does not abort on a node named "Message" colliding with a sendMessage type', () => {
+    const wf: RawWorkflow[] = [{ id: 'w', name: 'W', nodes: [
+      { id: 'a', name: 'Message', type: 'n8n-nodes-base.set', parameters: { operation: 'sendMessage' } },
+      { id: 'b', name: 'Send', type: 'n8n-nodes-base.telegram', parameters: { operation: 'sendMessage' } },
+    ] }]
+    const out = anonymizeWorkflows(wf)
+    expect(() => assertNoLeak(wf, out)).not.toThrow()
+  })
+})

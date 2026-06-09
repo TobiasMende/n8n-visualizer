@@ -146,11 +146,24 @@ function fakeVocabulary(workflows: RawWorkflow[]): string[] {
   return [...WORKFLOW_NAMES, ...CRED_NAMES, ...TAG_NAMES, ...[...types].map(prettifyType)]
 }
 
+// A name is "identifying" — worth treating as a secret — only if it is unlikely
+// to be a generic dictionary word: it is multi-word, long, or contains a digit.
+// Single short words like "Tool" or "Message" are not sensitive and collide with
+// words inside raw node-type strings and emitted fakes, causing false leaks.
+// (Every name is still scrubbed from parameter strings by replaceStr regardless;
+// this only governs the backstop leak check.)
+function isIdentifying(s: string): boolean {
+  return /\s/.test(s) || s.length >= 12 || /\d/.test(s)
+}
+
 function collectSecrets(workflows: RawWorkflow[]): string[] {
   const vocab = fakeVocabulary(workflows)
   const isBenign = (s: string) => vocab.some(v => v.includes(s))
   const out = new Set<string>()
-  const addName = (s?: string) => { const t = s?.trim(); if (t && t.length >= 4 && !isBenign(t)) out.add(t) }
+  const addName = (s?: string) => {
+    const t = s?.trim()
+    if (t && t.length >= 4 && isIdentifying(t) && !isBenign(t)) out.add(t)
+  }
   const scan = (value: unknown) => {
     if (typeof value === 'string') {
       if (URI_RE.test(value)) {
