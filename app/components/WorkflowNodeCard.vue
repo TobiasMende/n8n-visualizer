@@ -32,10 +32,10 @@ const headIcon = computed(() =>
     <Handle type="target" :position="Position.Left" />
     <div class="accent" :style="{ background: accentColor }" />
     <div class="head">
-      <span class="ico">{{ headIcon }}</span>
+      <span class="ico" aria-hidden="true">{{ headIcon }}</span>
       <span class="label">{{ data.label }}</span>
       <span v-if="data.kind === 'workflow' && entryKind !== 'none'" class="trig" :data-trigger="entryKind"
-        :style="{ background: accentColor }" :title="entryKind">{{ icons[entryKind] }}</span>
+        :style="{ background: accentColor }" :title="entryKind" aria-hidden="true">{{ icons[entryKind] }}</span>
     </div>
     <div v-if="data.kind === 'workflow'" class="meta">
       <span v-if="data.nodeCount" class="chip">{{ data.nodeCount }} nodes</span>
@@ -43,7 +43,7 @@ const headIcon = computed(() =>
       <span v-if="data.inbound" class="chip">← {{ data.inbound }}</span>
     </div>
     <div class="tip">
-      <span v-for="t in data.triggers" :key="t" :data-trigger="t">{{ icons[t] }} {{ t }}</span>
+      <span v-for="t in data.triggers" :key="t" :data-trigger="t"><span aria-hidden="true">{{ icons[t] }}</span> {{ t }}</span>
       <span v-if="data.nodeCount != null">{{ data.nodeCount }} nodes · ←{{ data.inbound }} →{{ data.outbound ?? 0 }}</span>
     </div>
     <Handle type="source" :position="Position.Right" />

@@ -3,6 +3,8 @@ import { computed, ref } from 'vue'
 import { useGraphStore } from '~/stores/graph'
 import { webhookRows, callersOf } from '~/composables/useWebhookView'
 import { matchesQuery, tagsMatch } from '~/composables/useViewFilter'
+import { workflowTagsMap } from '~/composables/useGraphLookup'
+import { onActivate } from '~/composables/useA11yClick'
 
 const store = useGraphStore()
 const expanded = ref<string | null>(null)
@@ -15,7 +17,7 @@ const columns = [
   { key: 'active', label: 'State' },
 ]
 
-const tagsByWf = computed(() => new Map((store.graph?.nodes ?? []).map(n => [n.id, n.tags])))
+const tagsByWf = computed(() => workflowTagsMap(store.graph))
 const rows = computed(() => webhookRows(store.graph).filter(r =>
   tagsMatch(tagsByWf.value.get(r.workflowId) ?? [], store.tagFilter) &&
   matchesQuery(`${r.method} ${r.url} ${r.workflow} ${r.path}`, store.searchQuery)))
@@ -30,14 +32,20 @@ function toggle(id: string) { expanded.value = expanded.value === id ? null : id
     <DataTable :columns="columns" :rows="rows" :row-key="(r) => r.workflowId + '|' + r.path" @row-click="jump">
       <template #cell-method="{ row }"><Badge :tone="row.method === 'POST' ? 'accent' : 'warn'">{{ row.method }}</Badge></template>
       <template #cell-url="{ row }">
-        <code class="url" @click.stop="copy(row.url)" :title="'Click to copy: ' + row.url">{{ row.url }}</code>
+        <code class="url" role="button" tabindex="0" aria-label="Copy URL"
+          @click.stop="copy(row.url)" :title="'Click to copy: ' + row.url"
+          @keydown.stop="onActivate(() => copy(row.url))">{{ row.url }}</code>
         <button class="callers" @click.stop="toggle(row.workflowId)">callers</button>
         <ul v-if="expanded === row.workflowId" class="callerlist">
           <li v-for="c in expandedCallers" :key="c.id">↳ {{ c.name }}</li>
           <li v-if="!expandedCallers.length" class="none">no internal callers</li>
         </ul>
       </template>
-      <template #cell-workflow="{ row }"><a class="wf" @click.stop="jump(row)">{{ row.workflow }}</a></template>
+      <template #cell-workflow="{ row }">
+        <a class="wf" role="button" tabindex="0"
+          @click.stop="jump(row)"
+          @keydown.stop="onActivate(() => jump(row))">{{ row.workflow }}</a>
+      </template>
       <template #cell-active="{ row }"><span :class="row.active ? 'on' : 'off'">●</span></template>
     </DataTable>
     <EmptyState v-if="!rows.length" title="No webhooks" hint="No webhook triggers found in this instance." />

@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import type { WorkflowNode } from '#shared/types/graph'
 import type { LinkItem } from '~/composables/useWorkflowLinks'
+import { onActivate } from '~/composables/useA11yClick'
+import BasePanel from './BasePanel.vue'
 
 withDefaults(defineProps<{ node: WorkflowNode; links?: { inbound: LinkItem[]; outbound: LinkItem[] } }>(), {
   links: () => ({ inbound: [], outbound: [] }),
@@ -9,12 +11,7 @@ defineEmits<{ close: []; select: [id: string] }>()
 </script>
 
 <template>
-  <aside class="panel">
-    <header>
-      <h2>{{ node.name }}</h2>
-      <button @click="$emit('close')">×</button>
-    </header>
-
+  <BasePanel :title="node.name" @close="$emit('close')">
     <p class="meta">
       <span :class="['badge', node.active ? 'on' : 'off']">{{ node.active ? 'active' : 'inactive' }}</span>
       <span v-for="t in node.triggers" :key="t" class="badge">{{ t }}</span>
@@ -48,28 +45,28 @@ defineEmits<{ close: []; select: [id: string] }>()
       <h3>Links</h3>
       <div v-if="links.inbound.length" class="lgroup">
         <div class="lsub">Inbound ({{ links.inbound.length }})</div>
-        <ul><li v-for="(l, i) in links.inbound" :key="'in' + i" class="link" @click="$emit('select', l.id)">
+        <ul><li v-for="(l, i) in links.inbound" :key="'in' + i" class="link"
+            role="button" tabindex="0"
+            @click="$emit('select', l.id)"
+            @keydown="onActivate(() => $emit('select', l.id))">
           <span class="lt" :data-lt="l.type">{{ l.type }}</span> {{ l.name }}
         </li></ul>
       </div>
       <div v-if="links.outbound.length" class="lgroup">
         <div class="lsub">Outbound ({{ links.outbound.length }})</div>
-        <ul><li v-for="(l, i) in links.outbound" :key="'out' + i" class="link" @click="$emit('select', l.id)">
+        <ul><li v-for="(l, i) in links.outbound" :key="'out' + i" class="link"
+            role="button" tabindex="0"
+            @click="$emit('select', l.id)"
+            @keydown="onActivate(() => $emit('select', l.id))">
           {{ l.name }} <span class="lt" :data-lt="l.type">{{ l.type }}</span>
         </li></ul>
       </div>
       <p v-if="!links.inbound.length && !links.outbound.length" class="muted">No links.</p>
     </section>
-  </aside>
+  </BasePanel>
 </template>
 
 <style scoped>
-.panel {
-  position: absolute; top: 0; right: 0; width: 320px; height: 100%; overflow-y: auto;
-  background: var(--bg-2); border-left: 1px solid var(--border); color: var(--text);
-  padding: 16px; box-shadow: -2px 0 8px rgba(0,0,0,.06);
-}
-header { display: flex; justify-content: space-between; align-items: center; }
 .badge {
   display: inline-block; padding: 2px 8px; margin: 2px; border-radius: 10px;
   background: var(--bg-3); font-size: 12px;

@@ -3,6 +3,8 @@ import { computed, ref, onMounted, onUnmounted } from 'vue'
 import { useGraphStore } from '~/stores/graph'
 import { scheduleGroups, formatCountdown } from '~/composables/useScheduleView'
 import { matchesQuery, tagsMatch } from '~/composables/useViewFilter'
+import { workflowTagsMap } from '~/composables/useGraphLookup'
+import { onActivate } from '~/composables/useA11yClick'
 
 const store = useGraphStore()
 const activeOnly = ref(false)
@@ -11,7 +13,7 @@ let timer: ReturnType<typeof setInterval> | undefined
 onMounted(() => { timer = setInterval(() => { now.value = new Date().toISOString() }, 30000) })
 onUnmounted(() => clearInterval(timer))
 
-const tagsByWf = computed(() => new Map((store.graph?.nodes ?? []).map(n => [n.id, n.tags])))
+const tagsByWf = computed(() => workflowTagsMap(store.graph))
 const groups = computed(() => scheduleGroups(store.graph)
   .map(g => ({ group: g.group, rows: g.rows.filter(r =>
     (!activeOnly.value || r.active) &&
@@ -34,7 +36,10 @@ function jump(id: string) { store.selectedId = id; store.view = 'map' }
     <div v-for="g in groups" :key="g.group" class="group">
       <div class="ghead">{{ labels[g.group] }}</div>
       <Panel>
-        <div v-for="r in g.rows" :key="r.workflowId + r.cadenceText" class="row" @click="jump(r.workflowId)">
+        <div v-for="r in g.rows" :key="r.workflowId + r.cadenceText" class="row"
+            role="button" tabindex="0"
+            @click="jump(r.workflowId)"
+            @keydown="onActivate(() => jump(r.workflowId))">
           <span class="dot" :class="r.active ? 'on' : 'off'">●</span>
           <span class="wf">{{ r.workflow }}</span>
           <span class="cadence">{{ r.cadenceText }}</span>

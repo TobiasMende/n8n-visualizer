@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import { onActivate } from '~/composables/useA11yClick'
 
 interface Column { key: string; label: string }
 const props = defineProps<{ columns: Column[]; rows: Record<string, any>[]; rowKey?: (row: Record<string, any>) => string | number }>()
-defineEmits<{ rowClick: [row: Record<string, any>] }>()
+const emit = defineEmits<{ rowClick: [row: Record<string, any>] }>()
 
 const sortKey = ref<string | null>(null)
 const sortDir = ref<1 | -1>(1)
@@ -32,7 +33,10 @@ const view = computed(() => {
       </tr>
     </thead>
     <tbody>
-      <tr v-for="(row, i) in view" :key="rowKey ? rowKey(row) : i" @click="$emit('rowClick', row)">
+      <tr v-for="(row, i) in view" :key="rowKey ? rowKey(row) : i"
+          role="button" tabindex="0"
+          @click="emit('rowClick', row)"
+          @keydown="onActivate(() => emit('rowClick', row))">
         <td v-for="c in columns" :key="c.key"><slot :name="`cell-${c.key}`" :row="row">{{ row[c.key] }}</slot></td>
       </tr>
     </tbody>

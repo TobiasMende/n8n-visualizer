@@ -15,11 +15,11 @@ function toggleLock() {
 
 <template>
   <div class="ctrl">
-    <button @click="zoomIn()"><span class="i">＋</span><span class="t">Zoom in</span></button>
-    <button @click="zoomOut()"><span class="i">－</span><span class="t">Zoom out</span></button>
-    <button @click="fitView({ padding: 0.2, duration: 300 })"><span class="i">⤢</span><span class="t">Fit view</span></button>
-    <button :class="{ on: locked }" @click="toggleLock"><span class="i">{{ locked ? '🔒' : '🔓' }}</span><span class="t">{{ locked ? 'Locked' : 'Lock' }}</span></button>
-    <button :class="{ on: minimap }" @click="emit('update:minimap', !minimap)"><span class="i">🗺</span><span class="t">Minimap</span></button>
+    <button aria-label="Zoom in" @click="zoomIn()"><span class="i">＋</span><span class="t">Zoom in</span></button>
+    <button aria-label="Zoom out" @click="zoomOut()"><span class="i">－</span><span class="t">Zoom out</span></button>
+    <button aria-label="Fit view" @click="fitView({ padding: 0.2, duration: 300 })"><span class="i">⤢</span><span class="t">Fit view</span></button>
+    <button :aria-label="locked ? 'Locked' : 'Lock'" :class="{ on: locked }" @click="toggleLock"><span class="i">{{ locked ? '🔒' : '🔓' }}</span><span class="t">{{ locked ? 'Locked' : 'Lock' }}</span></button>
+    <button :aria-label="minimap ? 'Hide minimap' : 'Show minimap'" :class="{ on: minimap }" @click="emit('update:minimap', !minimap)"><span class="i">🗺</span><span class="t">Minimap</span></button>
   </div>
 </template>
 
