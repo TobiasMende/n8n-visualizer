@@ -32,7 +32,6 @@ export async function fetchAllWorkflows(
 
     const url = new URL(`${base}/api/v1/workflows`)
     url.searchParams.set('limit', String(PAGE_SIZE))
-    url.searchParams.set('excludeArchived', 'true')
     if (cursor) url.searchParams.set('cursor', cursor)
 
     const res: SafeResponse = await fetchImpl(url.toString(), {
@@ -50,7 +49,8 @@ export async function fetchAllWorkflows(
     }
     assertN8nListResponse(res.status, body)
 
-    all.push(...(body!.data ?? []))
+    // Archived workflows are inactive — no live webhooks/triggers. Drop them.
+    all.push(...(body!.data ?? []).filter(w => !w.isArchived))
     cursor = body!.nextCursor ?? undefined
     page++
     if (page >= PAGE_CAP) break

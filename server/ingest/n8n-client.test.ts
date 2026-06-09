@@ -33,8 +33,21 @@ describe('fetchAllWorkflows', () => {
     const url = call[0] as string
     const opts = call[1] as { maxResponseBytes?: number }
     expect(url).toContain('limit=100')
-    expect(url).toContain('excludeArchived=true')
     expect(opts.maxResponseBytes).toBeGreaterThanOrEqual(50 * 1024 * 1024)
+  })
+
+  it('drops archived workflows', async () => {
+    const page = {
+      data: [
+        { id: 'a', name: 'A', nodes: [] },
+        { id: 'b', name: 'B', nodes: [], isArchived: true },
+        { id: 'c', name: 'C', nodes: [], isArchived: false },
+      ],
+      nextCursor: null,
+    }
+    const fetchImpl = vi.fn().mockResolvedValue(resp(200, page))
+    const got = await fetchAllWorkflows('https://n8n.example.com', 'key', fetchImpl)
+    expect(got.map(w => w.id)).toEqual(['a', 'c'])
   })
 
   it('bounds the whole pagination with one shared deadline, not a fresh timeout per page', async () => {

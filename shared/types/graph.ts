@@ -15,6 +15,7 @@ export interface RawWorkflow {
   id: string
   name: string
   active?: boolean
+  isArchived?: boolean
   nodes: RawNode[]
   connections?: Record<string, any>
   settings?: { errorWorkflow?: string; [k: string]: any }
