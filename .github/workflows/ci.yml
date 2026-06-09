@@ -39,6 +39,10 @@ jobs:
     env:
       VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
       VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+      # Force Nuxt's Vercel preset so the build emits .vercel/output (Build
+      # Output API) instead of the default .output/ — otherwise `vercel build`
+      # produces a node-server bundle and fails looking for a static dist dir.
+      NITRO_PRESET: vercel
     steps:
       - uses: actions/checkout@v4
 
