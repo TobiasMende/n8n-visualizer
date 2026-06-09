@@ -42,8 +42,15 @@ describe('extractTriggerNodes', () => {
       { name: 'hook', type: 'n8n-nodes-base.webhook', parameters: { path: 'orders', httpMethod: 'POST' } },
     ]), cat)
     expect(got).toEqual([
-      { id: 'trig:w1:hook#0', workflowId: 'w1', kind: 'webhook', label: 'POST /orders' },
+      { id: 'trig:w1:hook#0', workflowId: 'w1', kind: 'webhook', label: 'POST /orders', secured: false },
     ])
+  })
+
+  it('marks a secured webhook trigger node', () => {
+    const got = extractTriggerNodes(wfFull([
+      { name: 'hook', type: 'n8n-nodes-base.webhook', parameters: { path: 'orders', httpMethod: 'POST', authentication: 'headerAuth' } },
+    ]), cat)
+    expect(got[0]).toMatchObject({ kind: 'webhook', secured: true })
   })
 
   it('emits one schedule trigger node per cadence', () => {
@@ -75,7 +82,7 @@ describe('extractTriggerNodes', () => {
     const got = extractTriggerNodes(wfFull([
       { name: 'f', type: 'n8n-nodes-base.formTrigger', parameters: { path: 'signup' } },
     ]), cat)
-    expect(got).toEqual([{ id: 'trig:w1:f#0', workflowId: 'w1', kind: 'form', label: 'Form /signup' }])
+    expect(got).toEqual([{ id: 'trig:w1:f#0', workflowId: 'w1', kind: 'form', label: 'Form /signup', secured: false }])
   })
 
   it('excludes executeWorkflowTrigger and non-trigger nodes', () => {

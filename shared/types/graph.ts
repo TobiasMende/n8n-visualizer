@@ -30,6 +30,8 @@ export interface WebhookEntry {
   workflowId: string
   method: string
   path: string
+  auth: string
+  secured: boolean
   prodUrl: string | null
   testUrl: string | null
 }
@@ -95,6 +97,7 @@ export interface TriggerNode {
   workflowId: string
   kind: TriggerKind
   label: string
+  secured?: boolean
 }
 
 export interface UnresolvedLink { workflowId: string; nodeName: string; reason: string }

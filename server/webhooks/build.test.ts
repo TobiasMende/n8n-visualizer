@@ -12,10 +12,10 @@ describe('buildWebhooks', () => {
   it('builds prod/test URLs and defaults method to GET', () => {
     const got = buildWebhooks([wf], 'https://n8n.example.com/')
     expect(got).toEqual([
-      { workflowId: 'a', method: 'POST', path: 'orders',
+      { workflowId: 'a', method: 'POST', path: 'orders', auth: 'none', secured: false,
         prodUrl: 'https://n8n.example.com/webhook/orders',
         testUrl: 'https://n8n.example.com/webhook-test/orders' },
-      { workflowId: 'a', method: 'GET', path: 'health',
+      { workflowId: 'a', method: 'GET', path: 'health', auth: 'none', secured: false,
         prodUrl: 'https://n8n.example.com/webhook/health',
         testUrl: 'https://n8n.example.com/webhook-test/health' },
     ])

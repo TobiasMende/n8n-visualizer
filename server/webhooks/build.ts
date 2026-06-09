@@ -13,6 +13,8 @@ export function buildWebhooks(workflows: RawWorkflow[], baseUrl: string | null):
         workflowId: wf.id,
         method: info.method,
         path: info.path,
+        auth: info.auth,
+        secured: info.secured,
         prodUrl: base ? `${base}/webhook/${info.path}` : null,
         testUrl: base ? `${base}/webhook-test/${info.path}` : null,
       })
