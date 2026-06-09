@@ -13,11 +13,13 @@ import { parseSchedule } from '../schedule/parse'
 import { nextFire } from '../schedule/next-fire'
 import { extractCredentials } from './credentials'
 import { extractDataTables } from './data-tables'
+import { mergeCredentials, mergeDataTables } from './merge'
+import type { ApiCredential, ApiDataTable } from '../ingest/n8n-client'
 
 export function buildGraph(
   workflows: RawWorkflow[],
   baseUrl: string | null,
-  opts: { from?: string; catalog?: NodeCatalog } = {},
+  opts: { from?: string; catalog?: NodeCatalog; apiCredentials?: ApiCredential[] | null; apiDataTables?: ApiDataTable[] | null } = {},
 ): WorkflowGraph {
   const catalog: NodeCatalog = opts.catalog ?? { displayName: prettifyType }
   const from = opts.from ?? null
@@ -91,11 +93,16 @@ export function buildGraph(
       for (const c of parseSchedule(node))
         schedules.push({ workflowId: wf.id, cadenceText: c.cadenceText, cadenceGroup: c.cadenceGroup, nextFire: from ? nextFire(c.cronExpr, from, tz) : null })
   }
-  const credentials = extractCredentials(valid)
-  const dataTables = extractDataTables(valid)
+  const inferredCredentials = extractCredentials(valid)
+  const inferredDataTables = extractDataTables(valid)
+  const apiCredentials = opts.apiCredentials ?? null
+  const apiDataTables = opts.apiDataTables ?? null
+  const credentials = mergeCredentials(inferredCredentials, apiCredentials)
+  const dataTables = mergeDataTables(inferredDataTables, apiDataTables)
 
   return {
     nodes, edges: keptEdges, triggerNodes, unresolved, skipped, webhooks, schedules,
-    credentials, dataTables, enrichment: { credentials: false, dataTables: false },
+    credentials, dataTables,
+    enrichment: { credentials: apiCredentials !== null, dataTables: apiDataTables !== null },
   }
 }
