@@ -3,28 +3,26 @@ import { computed } from 'vue'
 import { Handle, Position } from '@vue-flow/core'
 import type { TriggerType } from '#shared/types/graph'
 
-type Kind = 'workflow' | 'credential' | 'nodeType'
+type Kind = 'workflow' | 'credential' | 'nodeType' | 'trigger'
 const props = defineProps<{
   data: {
-    kind: Kind; label: string; triggers: TriggerType[]
+    kind: Kind; label: string; triggers: TriggerType[]; triggerKind?: TriggerType
     inbound: number; outbound?: number; nodeCount?: number
     dimmed: boolean; selected?: boolean; emphasized?: boolean
   }
 }>()
 
-const icons: Record<TriggerType, string> = { webhook: '⚡', schedule: '⏰', manual: '▶', app: '🧩', unknown: '•' }
-const kindIcon: Record<Kind, string> = { workflow: '🗂', credential: '🔑', nodeType: '◆' }
-const accent: Record<string, string> = {
-  webhook: 'var(--accent)', schedule: 'var(--link)', app: '#b794f6', manual: 'var(--text-dim)', none: 'var(--text-faint)',
-}
-const PRIORITY: TriggerType[] = ['webhook', 'schedule', 'app', 'manual']
-const entryKind = computed(() => PRIORITY.find(k => props.data.triggers.includes(k)) ?? 'none')
+const triggerIcons: Record<string, string> = { webhook: '⚡', schedule: '⏰', manual: '▶', app: '🧩', form: '📝' }
+const kindIcon: Record<Kind, string> = { workflow: '🗂', credential: '🔑', nodeType: '◆', trigger: '⚡' }
 const accentColor = computed(() =>
   props.data.kind === 'credential' ? 'var(--warn)'
   : props.data.kind === 'nodeType' ? 'var(--link)'
-  : accent[entryKind.value])
+  : props.data.kind === 'trigger' ? '#f5a623'
+  : 'var(--accent)')
 const headIcon = computed(() =>
-  props.data.kind === 'workflow' ? '🗂' : kindIcon[props.data.kind])
+  props.data.kind === 'trigger' ? (triggerIcons[props.data.triggerKind ?? ''] ?? '⚡')
+  : props.data.kind === 'workflow' ? '🗂'
+  : kindIcon[props.data.kind])
 </script>
 
 <template>
@@ -34,16 +32,13 @@ const headIcon = computed(() =>
     <div class="head">
       <span class="ico" aria-hidden="true">{{ headIcon }}</span>
       <span class="label">{{ data.label }}</span>
-      <span v-if="data.kind === 'workflow' && entryKind !== 'none'" class="trig" :data-trigger="entryKind"
-        :style="{ background: accentColor }" :title="entryKind" aria-hidden="true">{{ icons[entryKind] }}</span>
     </div>
     <div v-if="data.kind === 'workflow'" class="meta">
       <span v-if="data.nodeCount" class="chip">{{ data.nodeCount }} nodes</span>
       <span v-if="data.outbound" class="chip">→ {{ data.outbound }}</span>
       <span v-if="data.inbound" class="chip">← {{ data.inbound }}</span>
     </div>
-    <div class="tip">
-      <span v-for="t in data.triggers" :key="t" :data-trigger="t"><span aria-hidden="true">{{ icons[t] }}</span> {{ t }}</span>
+    <div v-if="data.kind === 'workflow'" class="tip">
       <span v-if="data.nodeCount != null">{{ data.nodeCount }} nodes · ←{{ data.inbound }} →{{ data.outbound ?? 0 }}</span>
     </div>
     <Handle type="source" :position="Position.Right" />
@@ -69,12 +64,13 @@ const headIcon = computed(() =>
 .kind-nodeType { border-style: dashed; border-color: var(--link); }
 .kind-nodeType .accent { display: none; }
 .kind-credential .head, .kind-nodeType .head { padding: 8px 12px; }
+.kind-trigger { border-color: #f5a623; min-width: 0; }
+.kind-trigger .head { padding: 6px 10px; }
+.kind-trigger .label { font-size: 12px; }
 .tip { position: absolute; left: 50%; bottom: calc(100% + 8px); transform: translateX(-50%);
   display: none; flex-direction: column; gap: 2px; white-space: nowrap;
   background: var(--bg-0); border: 1px solid var(--border); border-radius: var(--radius-s); box-shadow: var(--shadow-1);
   padding: 6px 8px; font-size: 11px; color: var(--text-dim); z-index: 50; pointer-events: none; }
 .node:hover .tip { display: flex; }
 :deep(.vue-flow__handle) { opacity: 0; width: 1px; height: 1px; min-width: 0; min-height: 0; border: none; }
-.trig { margin-left: auto; font-size: 11px; line-height: 1; padding: 2px 5px; border-radius: 6px;
-  filter: saturate(1.2); }
 </style>
