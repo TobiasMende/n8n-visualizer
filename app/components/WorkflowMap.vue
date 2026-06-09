@@ -97,6 +97,7 @@ const nodes = computed<Node[]>(() => {
     data: {
       kind: 'trigger', triggerKind: t.kind, label: t.label, triggers: [],
       workflowId: t.workflowId, inbound: 0, outbound: 0, nodeCount: 0,
+      secured: t.secured,
       dimmed: (focused.value && !flow.value.nodeIds.has(t.workflowId)) || (resFocused.value && !resFocus.value!.has(t.workflowId)),
       selected: store.selectedId === t.workflowId,
     },

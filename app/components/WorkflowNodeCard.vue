@@ -8,7 +8,7 @@ const props = defineProps<{
   data: {
     kind: Kind; label: string; triggers: TriggerType[]; triggerKind?: TriggerKind
     inbound: number; outbound?: number; nodeCount?: number
-    dimmed: boolean; selected?: boolean; emphasized?: boolean
+    dimmed: boolean; selected?: boolean; emphasized?: boolean; secured?: boolean
   }
 }>()
 
@@ -20,6 +20,10 @@ const accentColor = computed(() =>
   : props.data.kind === 'trigger' ? '#f5a623'
   : props.data.kind === 'dataTable' ? '#b48cff'
   : 'var(--accent)')
+const showUnsecured = computed(() =>
+  props.data.kind === 'trigger'
+  && (props.data.triggerKind === 'webhook' || props.data.triggerKind === 'form')
+  && props.data.secured === false)
 const headIcon = computed(() =>
   props.data.kind === 'trigger' ? (triggerIcons[props.data.triggerKind ?? ''] ?? '⚡')
   : props.data.kind === 'workflow' ? '🗂'
@@ -28,6 +32,7 @@ const headIcon = computed(() =>
 
 <template>
   <div class="node" :class="[`kind-${data.kind}`, { dimmed: data.dimmed, selected: data.selected, emphasized: data.emphasized }]">
+    <span v-if="showUnsecured" class="unsecured" title="Unsecured webhook — no authentication" aria-label="Unsecured webhook">🔓</span>
     <Handle type="target" :position="Position.Left" />
     <div class="accent" :style="{ background: accentColor }" />
     <div class="head">
@@ -76,5 +81,7 @@ const headIcon = computed(() =>
   background: var(--bg-0); border: 1px solid var(--border); border-radius: var(--radius-s); box-shadow: var(--shadow-1);
   padding: 6px 8px; font-size: 11px; color: var(--text-dim); z-index: 50; pointer-events: none; }
 .node:hover .tip { display: flex; }
+.unsecured { position: absolute; top: -8px; right: -8px; z-index: 2; font-size: 13px;
+  background: var(--bg-0); border: 1px solid var(--warn); border-radius: 999px; padding: 0 3px; line-height: 1.4; }
 :deep(.vue-flow__handle) { opacity: 0; width: 1px; height: 1px; min-width: 0; min-height: 0; border: none; }
 </style>
