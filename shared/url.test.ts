@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { stripTrailingSlash, isHttpUrl, safeExternalHref } from './url'
+import { stripTrailingSlash, isHttpUrl, safeExternalHref, hostOf } from './url'
 
 describe('stripTrailingSlash', () => {
   it('removes trailing slashes', () => {
@@ -36,5 +36,14 @@ describe('safeExternalHref', () => {
   it('returns null for unsafe schemes', () => {
     expect(safeExternalHref('javascript:alert(1)')).toBeNull()
     expect(safeExternalHref(null)).toBeNull()
+  })
+})
+
+describe('hostOf', () => {
+  it('extracts the host', () => {
+    expect(hostOf('https://n8n.example.com/x')).toBe('n8n.example.com')
+  })
+  it('falls back to the raw string when not a URL', () => {
+    expect(hostOf('not a url')).toBe('not a url')
   })
 })
