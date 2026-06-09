@@ -7,6 +7,7 @@ const MAX_AGE = 60 * 60 * 24 * 7 // 7 days
 export interface AppSessionConfig {
   password: string
   name: string
+  maxAge: number
   cookie: { httpOnly: true; secure: boolean; sameSite: 'strict'; maxAge: number }
 }
 
@@ -14,6 +15,7 @@ export function sessionConfig(password: string, dev: boolean): AppSessionConfig 
   return {
     password,
     name: COOKIE_NAME,
+    maxAge: MAX_AGE,
     cookie: { httpOnly: true, secure: !dev, sameSite: 'strict', maxAge: MAX_AGE },
   }
 }

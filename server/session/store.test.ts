@@ -9,6 +9,7 @@ describe('sessionConfig', () => {
     expect(c.cookie).toMatchObject({
       httpOnly: true, secure: true, sameSite: 'strict', maxAge: 60 * 60 * 24 * 7,
     })
+    expect(c.maxAge).toBe(60 * 60 * 24 * 7)
   })
   it('drops the Secure flag in dev (no TLS on localhost)', () => {
     expect(sessionConfig('x'.repeat(32), true).cookie.secure).toBe(false)
