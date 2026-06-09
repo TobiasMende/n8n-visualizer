@@ -24,6 +24,7 @@ function miniColor(node: Node) {
   return node.data?.kind === 'credential' ? '#ffb454'
     : node.data?.kind === 'nodeType' ? '#6aa0ff'
     : node.data?.kind === 'trigger' ? '#f5a623'
+    : node.data?.kind === 'dataTable' ? '#b48cff'
     : '#3ddc97'
 }
 
@@ -87,7 +88,7 @@ const nodes = computed<Node[]>(() => {
   }))
   const overlayNodes: Node[] = overlay.value.nodes.map(o => ({
     id: o.id, type: 'workflow', position: { x: o.x, y: o.y },
-    data: { kind: o.kind, label: o.label, triggers: [], inbound: 0, outbound: 0, nodeCount: 0, dimmed: focused.value, selected: o.id === store.selectedCredId },
+    data: { kind: o.kind, label: o.label, triggers: [], inbound: 0, outbound: 0, nodeCount: 0, dimmed: focused.value, selected: o.id === store.selectedCredId || o.id === store.selectedDataTableId },
   }))
   return [...base, ...trigNodes, ...overlayNodes]
 })
@@ -108,18 +109,19 @@ const edges = computed<Edge[]>(() => {
   }))
   const overlayEdges: Edge[] = overlay.value.edges.map(o => ({
     id: o.id, source: o.source, target: o.target,
-    style: { stroke: o.kind === 'uses' ? '#ffb454' : '#6aa0ff', strokeDasharray: '4 4', opacity: focused.value ? 0.05 : 0.6 },
+    style: { stroke: o.id.includes(':datatable:') ? '#b48cff' : o.kind === 'uses' ? '#ffb454' : '#6aa0ff', strokeDasharray: '4 4', opacity: focused.value ? 0.05 : 0.6 },
   }))
   return [...baseEdges, ...trigEdges, ...overlayEdges]
 })
 
 function onNodeClick({ node }: { node: Node }) {
-  if (node.data?.kind === 'workflow') { store.selectedId = node.id; store.selectedCredId = null }
-  else if (node.data?.kind === 'trigger') { store.selectedId = node.data.workflowId; store.selectedCredId = null }
-  else if (node.data?.kind === 'credential') { store.selectedCredId = node.id; store.selectedId = null }
+  if (node.data?.kind === 'workflow') { store.selectedId = node.id; store.selectedCredId = null; store.selectedDataTableId = null }
+  else if (node.data?.kind === 'trigger') { store.selectedId = node.data.workflowId; store.selectedCredId = null; store.selectedDataTableId = null }
+  else if (node.data?.kind === 'credential') { store.selectedCredId = node.id; store.selectedId = null; store.selectedDataTableId = null }
+  else if (node.data?.kind === 'dataTable') { store.selectedDataTableId = node.id; store.selectedId = null; store.selectedCredId = null }
 }
 
-function onPaneClick() { store.selectedId = null; store.selectedCredId = null }
+function onPaneClick() { store.selectedId = null; store.selectedCredId = null; store.selectedDataTableId = null }
 
 function onNodeEnter({ node }: { node: Node }) { if (node.data?.kind === 'workflow') hoveredId.value = node.id }
 function onNodeLeave() { hoveredId.value = null }
