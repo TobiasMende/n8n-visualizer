@@ -15,28 +15,24 @@ export async function runTour(page: Page, jsonPath: string): Promise<void> {
   await page.waitForSelector('.vue-flow__node', { timeout: 30_000 })
   await pause(1500)
 
-  // 3. Map + the trace-flow "magic": fit the whole graph, then click a real
-  // workflow node the way a user would. A node click (not a search pick) is what
-  // triggers the app's centre-on-click, the side panel, and the trace-flow
-  // highlight where the workflow plus its triggers and connected workflows light
-  // up while the rest dim. Falls back to search selection if no node is hittable.
-  await page.click('button[aria-label="Fit view"]')
-  await pause(1500)
+  // 3. Map + the trace-flow "magic". The map auto-fits on load; clicking a real
+  // workflow node (not a search pick) is what triggers the app's centre-on-click,
+  // the side panel, and the trace-flow highlight where the workflow plus its
+  // triggers and connected workflows light up while the rest dim. The view stays
+  // at the fit-all zoom (centre-on-click keeps the zoom), so nodes remain
+  // clickable. Falls back to search selection if no node is hittable.
+  await pause(2000)
   if (!(await clickNodeByKind(page, 'kind-workflow'))) await selectViaSearch(page, 'a')
   await pause(3500)
-  await page.click('button[aria-label="Fit view"]')
-  await pause(1200)
 
   // 3b. First-class resources: data tables already show as nodes; open the
   // Layers panel and switch on Credentials so they join the map as nodes too.
   await showResourcesLayer(page)
-  await page.click('button[aria-label="Fit view"]')
   await pause(1500)
   // Click a data table node — it centres and opens its panel (columns + the
   // workflows that use it).
   if (await clickNodeByKind(page, 'kind-dataTable')) await pause(3000)
-  await page.click('button[aria-label="Fit view"]')
-  await pause(1500)
+  await pause(800)
 
   // 4. Webhooks
   await page.click('nav.rail button[title="Webhooks"]')
@@ -57,10 +53,9 @@ export async function runTour(page: Page, jsonPath: string): Promise<void> {
   const expand = page.locator('button.exp').first()
   if (await expand.count()) { await expand.click().catch(() => {}); await pause(2500) }
 
-  // 8. Back to map beauty shot
+  // 8. Back to map beauty shot — remounting the map auto-fits the whole graph.
   await page.click('nav.rail button[title="Map"]')
-  await page.click('button[aria-label="Fit view"]')
-  await pause(2000)
+  await pause(2500)
 }
 
 // Select a workflow by typing into the search box and clicking the first result.
