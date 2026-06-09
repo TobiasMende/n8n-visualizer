@@ -8,10 +8,11 @@ const store = useGraphStore()
 const baseUrl = ref('')
 const apiKey = ref('')
 const uploadBaseUrl = ref('')
+const remember = ref(false)
 const showUnresolved = ref(false)
 
 const tags = computed(() => allTags(store.graph))
-const scopeHint = computed(() => !!store.connection && !!store.graph &&
+const scopeHint = computed(() => store.connected && !!store.graph &&
   (!store.graph.enrichment.credentials || !store.graph.enrichment.dataTables))
 const scopeHintTitle = computed(() =>
   'Add credential:list / dataTable:list scopes to this API key to see unused items and extra metadata.')
@@ -60,7 +61,7 @@ async function onUpload(e: Event) {
       <template v-if="store.connectedHost">
         <div class="row">
           <button class="disconnect" @click="store.disconnect()">Disconnect</button>
-          <span class="hint">API key stored for this browser session only.</span>
+          <span class="hint">By default the API key is used once and never stored. "Remember" keeps it in an encrypted, server-only cookie.</span>
           <span v-if="scopeHint" class="scope-hint" :title="scopeHintTitle">⚠ limited API scope</span>
         </div>
       </template>
@@ -77,8 +78,12 @@ async function onUpload(e: Event) {
                 views with unused items and extra metadata. No write access is ever needed.</span>
             </span>
           </span>
-          <button :disabled="store.loading" @click="store.loadFromApi(baseUrl, apiKey)">Load via API</button>
+          <button :disabled="store.loading" @click="store.loadFromApi(baseUrl, apiKey, remember)">Load via API</button>
         </div>
+        <label class="remember">
+          <input type="checkbox" v-model="remember" />
+          Remember on this device (7 days)
+        </label>
         <div class="row">
           <input v-model="uploadBaseUrl" placeholder="instance URL (optional, for links)" />
           <label class="file">
@@ -161,4 +166,6 @@ button:hover { filter: brightness(1.15); }
 .file:focus-within { outline: 2px solid var(--accent); outline-offset: 1px; }
 .file input { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
 .file .i { color: var(--text-dim); }
+.remember { display: inline-flex; align-items: center; gap: 6px; margin-top: 8px; color: var(--text-dim); font-size: 12px; cursor: pointer; }
+.remember input { accent-color: var(--accent); }
 </style>
