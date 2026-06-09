@@ -81,7 +81,10 @@ async function onUpload(e: Event) {
         </div>
         <div class="row">
           <input v-model="uploadBaseUrl" placeholder="instance URL (optional, for links)" />
-          <input type="file" accept="application/json" @change="onUpload" />
+          <label class="file">
+            <input type="file" accept="application/json" @change="onUpload" />
+            <span class="i">↥</span> Upload workflows JSON
+          </label>
         </div>
       </template>
       <p v-if="store.error" class="err">{{ store.error }}</p>
@@ -151,4 +154,11 @@ button:hover { filter: brightness(1.15); }
 .err { color: var(--danger); font-size: 12px; }
 .unresolved button { background: var(--bg-3); color: var(--text-dim); border: 1px solid var(--border); }
 .scope-hint { font-size: 11px; color: var(--warn); cursor: help; }
+.file { display: inline-flex; align-items: center; gap: 6px; background: var(--bg-3); color: var(--text);
+  border: 1px solid var(--border); border-radius: var(--radius-m); padding: 7px 12px; font-size: 12px; cursor: pointer;
+  transition: background var(--dur) var(--ease), border-color var(--dur) var(--ease); }
+.file:hover { background: var(--bg-2); border-color: var(--accent); }
+.file:focus-within { outline: 2px solid var(--accent); outline-offset: 1px; }
+.file input { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+.file .i { color: var(--text-dim); }
 </style>

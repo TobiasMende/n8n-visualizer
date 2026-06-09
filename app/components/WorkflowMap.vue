@@ -77,6 +77,11 @@ const resFocus = computed(() => {
 })
 const resFocused = computed(() => resFocus.value != null)
 
+// A side panel (320px, right edge) overlays the map's bottom-right corner where
+// the minimap lives. Shift the minimap clear of it while a panel is open.
+const panelOpen = computed(() =>
+  !!(store.selected || store.selectedCredential || store.selectedDataTable))
+
 const hoveredId = ref<string | null>(null)
 const hover = computed(() => neighbors(scoped.value.edges, focused.value ? null : hoveredId.value))
 const hovering = computed(() => !focused.value && hoveredId.value != null && hover.value.nodeIds.size > 0)
@@ -196,7 +201,7 @@ watch(() => scoped.value.nodes, (nodes) => {
 </script>
 
 <template>
-  <VueFlow :id="FLOW_ID" :nodes="nodes" :edges="edges" :fit-view-on-init="!hasFocusTarget" @node-click="onNodeClick" @pane-click="onPaneClick" @nodeMouseEnter="onNodeEnter" @nodeMouseLeave="onNodeLeave">
+  <VueFlow :id="FLOW_ID" :class="{ 'panel-open': panelOpen }" :nodes="nodes" :edges="edges" :fit-view-on-init="!hasFocusTarget" @node-click="onNodeClick" @pane-click="onPaneClick" @nodeMouseEnter="onNodeEnter" @nodeMouseLeave="onNodeLeave">
     <template #node-workflow="props">
       <WorkflowNodeCard :data="props.data" />
     </template>
@@ -208,3 +213,8 @@ watch(() => scoped.value.nodes, (nodes) => {
     <MapControls :flow-id="FLOW_ID" v-model:minimap="showMinimap" />
   </VueFlow>
 </template>
+
+<style scoped>
+:deep(.vue-flow__panel.bottom.right) { transition: transform var(--dur) var(--ease); }
+.panel-open :deep(.vue-flow__panel.bottom.right) { transform: translateX(-336px); }
+</style>
