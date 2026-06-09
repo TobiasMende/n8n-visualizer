@@ -11,14 +11,17 @@ const graph: WorkflowGraph = {
   ],
   edges: [{ source: 'c', target: 'p', type: 'webhookHttp' }],
   triggerNodes: [], unresolved: [], skipped: [],
-  webhooks: [{ workflowId: 'p', method: 'POST', path: 'orders', prodUrl: 'https://h/webhook/orders', testUrl: 'https://h/webhook-test/orders' }],
+  webhooks: [{ workflowId: 'p', method: 'POST', path: 'orders', auth: 'headerAuth', secured: true, prodUrl: 'https://h/webhook/orders', testUrl: 'https://h/webhook-test/orders' }],
   schedules: [], credentials: [],
 }
 
 describe('webhookRows', () => {
-  it('joins each webhook to its workflow name and active state', () => {
+  it('joins each webhook to its workflow name, active state, and security', () => {
     const rows = webhookRows(graph)
-    expect(rows[0]).toMatchObject({ workflowId: 'p', workflow: 'Producer', method: 'POST', url: 'https://h/webhook/orders', active: true })
+    expect(rows[0]).toMatchObject({ workflowId: 'p', workflow: 'Producer', method: 'POST', url: 'https://h/webhook/orders', active: true, secured: true })
+  })
+  it('maps the auth value to a human label', () => {
+    expect(webhookRows(graph)[0].authLabel).toBe('Header Auth')
   })
 })
 
