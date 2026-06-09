@@ -2,9 +2,9 @@
 import { computed, ref } from 'vue'
 import { useGraphStore } from '~/stores/graph'
 import { credentialRows, credentialWorkflows } from '~/composables/useCredentialView'
+import { matchesQuery, tagsMatch } from '~/composables/useViewFilter'
 
 const store = useGraphStore()
-const filter = ref('')
 const expanded = ref<string | null>(null)
 
 const columns = [
@@ -12,7 +12,14 @@ const columns = [
   { key: 'displayType', label: 'Type' },
   { key: 'workflowCount', label: 'Workflows' },
 ]
-const rows = computed(() => credentialRows(store.graph))
+
+const tagsByWf = computed(() => new Map((store.graph?.nodes ?? []).map(n => [n.id, n.tags])))
+function credTags(r: { workflowIds: string[] }) {
+  return [...new Set(r.workflowIds.flatMap(id => tagsByWf.value.get(id) ?? []))]
+}
+const rows = computed(() => credentialRows(store.graph).filter(r =>
+  tagsMatch(credTags(r), store.tagFilter) &&
+  matchesQuery(`${r.name} ${r.displayType}`, store.searchQuery)))
 
 function rowKey(r: { type: string; name: string; id: string | null }) { return `${r.type}:${r.name}:${r.id}` }
 function toggle(key: string) { expanded.value = expanded.value === key ? null : key }
@@ -21,8 +28,7 @@ function jump(id: string) { store.selectedId = id; store.view = 'map' }
 
 <template>
   <div class="wrap">
-    <div class="bar"><input v-model="filter" class="search" placeholder="Filter credentials…" /></div>
-    <DataTable :columns="columns" :rows="rows" :filter="filter">
+    <DataTable :columns="columns" :rows="rows" :filter="''">
       <template #cell-name="{ row }">
         <strong>{{ row.name }}</strong>
         <button class="exp" @click.stop="toggle(rowKey(row))">workflows</button>
@@ -40,9 +46,6 @@ function jump(id: string) { store.selectedId = id; store.view = 'map' }
 
 <style scoped>
 .wrap { position: relative; height: 100%; overflow: auto; padding: 12px; }
-.bar { margin-bottom: 10px; }
-.search { width: 280px; background: var(--bg-2); border: 1px solid var(--border); color: var(--text);
-  border-radius: var(--radius-m); padding: 8px 10px; }
 .exp { margin-left: 8px; font-size: 11px; background: none; border: 1px solid var(--border);
   color: var(--text-dim); border-radius: var(--radius-s); cursor: pointer; padding: 1px 6px; }
 .wflist { margin: 6px 0 0; padding-left: 14px; color: var(--accent); font-size: 12px; }

@@ -8,11 +8,10 @@ const store = useGraphStore()
 const baseUrl = ref('')
 const apiKey = ref('')
 const uploadBaseUrl = ref('')
-const query = ref('')
 const showUnresolved = ref(false)
 
 const tags = computed(() => allTags(store.graph))
-const results = computed(() => searchGraph(store.graph, query.value).slice(0, 10))
+const results = computed(() => searchGraph(store.graph, store.searchQuery).slice(0, 10))
 
 function toggleTag(tag: string) {
   store.tagFilter = store.tagFilter.includes(tag)
@@ -20,7 +19,7 @@ function toggleTag(tag: string) {
     : [...store.tagFilter, tag]
 }
 
-function pick(id: string) { store.selectedId = id; query.value = '' }
+function pick(id: string) { store.selectedId = id; store.searchQuery = '' }
 
 async function onUpload(e: Event) {
   const input = e.target as HTMLInputElement
@@ -64,7 +63,7 @@ async function onUpload(e: Event) {
     </details>
 
     <div v-if="store.graph" class="row search">
-      <input v-model="query" placeholder="Search workflows / webhooks…" />
+      <input v-model="store.searchQuery" placeholder="Search workflows / webhooks…" />
       <ul v-if="results.length" class="results">
         <li v-for="r in results" :key="r.workflowId + r.label" @click="pick(r.workflowId)">
           <span class="kind">{{ r.kind }}</span> {{ r.label }}
