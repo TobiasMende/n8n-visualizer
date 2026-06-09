@@ -15,31 +15,28 @@ export async function runTour(page: Page, jsonPath: string): Promise<void> {
   await page.waitForSelector('.vue-flow__node', { timeout: 30_000 })
   await pause(1500)
 
-  // 3. Map + the trace-flow "magic": fit the whole graph, then select a workflow
-  // via search. Selecting by clicking a graph node is unreliable on a large
-  // auto-laid-out instance (nodes fall outside the viewport); search selection
-  // is position-independent and drives the same effect — the side panel opens
-  // and the selected workflow plus its triggers and connected workflows light up
-  // while the rest dim. Dwell on that, then select a second one to show it react.
+  // 3. Map + the trace-flow "magic": fit the whole graph, then click a real
+  // workflow node the way a user would. A node click (not a search pick) is what
+  // triggers the app's centre-on-click, the side panel, and the trace-flow
+  // highlight where the workflow plus its triggers and connected workflows light
+  // up while the rest dim. Falls back to search selection if no node is hittable.
   await page.click('button[aria-label="Fit view"]')
   await pause(1500)
-  await selectViaSearch(page, 'a')
+  if (!(await clickNodeByKind(page, 'kind-workflow'))) await selectViaSearch(page, 'a')
   await pause(3500)
-  await selectViaSearch(page, 'i')
-  await pause(3000)
-  // Zoom in for visual interest, then fit again.
-  await page.click('button[aria-label="Zoom in"]')
-  await page.click('button[aria-label="Zoom in"]')
-  await pause(1200)
   await page.click('button[aria-label="Fit view"]')
   await pause(1200)
 
   // 3b. First-class resources: data tables already show as nodes; open the
   // Layers panel and switch on Credentials so they join the map as nodes too.
-  // Guarded so a UI change can't break the run.
   await showResourcesLayer(page)
   await page.click('button[aria-label="Fit view"]')
-  await pause(2500)
+  await pause(1500)
+  // Click a data table node — it centres and opens its panel (columns + the
+  // workflows that use it).
+  if (await clickNodeByKind(page, 'kind-dataTable')) await pause(3000)
+  await page.click('button[aria-label="Fit view"]')
+  await pause(1500)
 
   // 4. Webhooks
   await page.click('nav.rail button[title="Webhooks"]')
@@ -74,6 +71,22 @@ async function selectViaSearch(page: Page, query: string): Promise<void> {
   await pause(900)
   const result = page.locator('.search .results li').first()
   if (await result.count()) await result.click()
+}
+
+// Click a map node of a given kind ('kind-workflow' | 'kind-dataTable' |
+// 'kind-credential' | 'kind-trigger') the way a real user does, so the app's
+// onNodeClick fires (centre-on-click + side panel + highlight). All Vue Flow
+// nodes share the same wrapper class; the kind lives on the inner card. We click
+// at the node's bounding-box centre via the mouse, which works even when
+// element-level actionability checks would balk on the transformed canvas.
+// Returns false if no such node is on screen (caller can fall back).
+async function clickNodeByKind(page: Page, kindClass: string, nth = 0): Promise<boolean> {
+  const node = page.locator(`.vue-flow__node:has(.${kindClass})`).nth(nth)
+  if (!(await node.count())) return false
+  const box = await node.boundingBox()
+  if (!box) return false
+  await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2)
+  return true
 }
 
 // Open the Layers panel and enable the Credentials resource layer so credentials
