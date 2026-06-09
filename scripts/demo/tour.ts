@@ -15,16 +15,18 @@ export async function runTour(page: Page, jsonPath: string): Promise<void> {
   await page.waitForSelector('.vue-flow__node', { timeout: 30_000 })
   await pause(1500)
 
-  // 3. Map: fit so the whole graph is in frame, then select a node (auto
-  // trace-flow) while it's still visible. With a large instance, zooming first
-  // would push nodes outside the viewport and make the click un-actionable, so
-  // select right after fitView and use force as a belt-and-suspenders guard.
+  // 3. Map: fit the whole graph in frame, then select a workflow via the search
+  // box. Selecting by clicking a graph node is unreliable on a large
+  // auto-laid-out instance (nodes fall outside the viewport), whereas search
+  // selection is position-independent and still opens the side panel and
+  // triggers the trace-flow highlight (both driven by the selected id).
   await page.click('button[aria-label="Fit view"]')
   await pause(1500)
-  const node = page.locator('.vue-flow__node').first()
-  await node.click({ force: true })
-  await pause(2500)
-  // Zoom in for visual interest after the selection, then fit again.
+  await page.fill('input[placeholder="Search workflows / webhooks…"]', 'e')
+  await pause(900)
+  const result = page.locator('.search .results li').first()
+  if (await result.count()) { await result.click(); await pause(2500) }
+  // Zoom in for visual interest, then fit again.
   await page.click('button[aria-label="Zoom in"]')
   await page.click('button[aria-label="Zoom in"]')
   await pause(1200)
