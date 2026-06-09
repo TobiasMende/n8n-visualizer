@@ -3,17 +3,11 @@ import { computed } from 'vue'
 import type { DataTableRef } from '#shared/types/graph'
 import { onActivate } from '~/composables/useA11yClick'
 import { safeExternalHref } from '#shared/url'
-import { useGraphStore } from '~/stores/graph'
 
 const props = defineProps<{ dataTable: DataTableRef; workflows: { id: string; name: string }[] }>()
 defineEmits<{ close: []; select: [id: string] }>()
 
-const store = useGraphStore()
-const deepLink = computed(() => {
-  const base = store.connection?.baseUrl?.replace(/\/+$/, '')
-  if (!base || !props.dataTable.projectId) return null
-  return safeExternalHref(`${base}/projects/${props.dataTable.projectId}/datatables/${props.dataTable.id}`)
-})
+const deepLink = computed(() => safeExternalHref(props.dataTable.deepLink))
 </script>
 
 <template>

@@ -85,6 +85,16 @@ describe('buildGraph', () => {
     expect(g.dataTables).toEqual([])
     expect(g.enrichment).toEqual({ credentials: false, dataTables: false })
   })
+
+  it('builds a deep link for data tables with a project id', () => {
+    const wf: RawWorkflow = { id: 'w', name: 'W', nodes: [] }
+    const apiDataTables = [{ id: 't1', name: 'T', projectId: 'p1', columns: [] }]
+    const withBase = buildGraph([wf], 'https://n8n.example.com', { apiDataTables })
+    expect(withBase.dataTables.find(d => d.id === 't1')?.deepLink)
+      .toBe('https://n8n.example.com/projects/p1/datatables/t1')
+    const noBase = buildGraph([wf], null, { apiDataTables })
+    expect(noBase.dataTables.find(d => d.id === 't1')?.deepLink).toBeNull()
+  })
 })
 
 const stubCatalog: NodeCatalog = { displayName: (t) => (t === 'n8n-nodes-base.webhook' ? 'Webhook' : t) }

@@ -23,7 +23,7 @@ const rows = computed(() => credentialRows(store.graph).filter(r =>
   tagsMatch(credTags(r), store.tagFilter) &&
   matchesQuery(`${r.name} ${r.displayType}`, store.searchQuery)))
 
-const showUploadHint = computed(() => store.connection === null && rows.value.length > 0)
+const showUploadHint = computed(() => !store.connected && rows.value.length > 0)
 
 function rowKey(r: { type: string; name: string; id: string | null }) { return `${r.type}:${r.name}:${r.id}` }
 function toggle(key: string) { expanded.value = expanded.value === key ? null : key }
