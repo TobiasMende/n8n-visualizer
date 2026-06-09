@@ -21,7 +21,7 @@ const deepLink = computed(() => {
     <template #title><span class="ico" aria-hidden="true">🗄</span> {{ dataTable.name }}</template>
     <p class="meta">
       <span v-for="op in dataTable.operations" :key="op" class="badge">{{ op }}</span>
-      <span v-if="dataTable.source === 'api'" class="badge unused">unused</span>
+      <span v-if="!dataTable.workflowIds.length" class="badge unused">unused</span>
     </p>
 
     <a v-if="deepLink" class="deep-link" :href="deepLink" target="_blank" rel="noopener noreferrer">Open in n8n ↗</a>
