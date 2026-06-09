@@ -8,7 +8,9 @@ live, when schedules fire, and which credentials are shared.
 n8n's own editor shows you one workflow at a time. This shows you all of them at
 once.
 
-<video src="https://github.com/TobiasMende/n8n-visualizer/raw/main/docs/demo.mp4" controls muted width="100%"></video>
+<video controls muted width="100%">
+  <source src="https://github.com/TobiasMende/n8n-visualizer/raw/main/docs/demo.mp4" type="video/mp4">
+</video>
 
 ## Features
 
