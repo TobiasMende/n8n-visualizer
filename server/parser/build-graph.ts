@@ -12,6 +12,7 @@ import { buildWebhooks } from '../webhooks/build'
 import { parseSchedule } from '../schedule/parse'
 import { nextFire } from '../schedule/next-fire'
 import { extractCredentials } from './credentials'
+import { extractDataTables } from './data-tables'
 
 export function buildGraph(
   workflows: RawWorkflow[],
@@ -91,6 +92,10 @@ export function buildGraph(
         schedules.push({ workflowId: wf.id, cadenceText: c.cadenceText, cadenceGroup: c.cadenceGroup, nextFire: from ? nextFire(c.cronExpr, from, tz) : null })
   }
   const credentials = extractCredentials(valid)
+  const dataTables = extractDataTables(valid)
 
-  return { nodes, edges: keptEdges, triggerNodes, unresolved, skipped, webhooks, schedules, credentials }
+  return {
+    nodes, edges: keptEdges, triggerNodes, unresolved, skipped, webhooks, schedules,
+    credentials, dataTables, enrichment: { credentials: false, dataTables: false },
+  }
 }

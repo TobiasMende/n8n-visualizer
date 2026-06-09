@@ -66,6 +66,12 @@ describe('buildGraph', () => {
     const g = buildGraph([sub], null)
     expect(g.triggerNodes).toHaveLength(0)
   })
+
+  it('returns empty dataTables and unset enrichment by default', () => {
+    const g = buildGraph([{ id: 'a', name: 'A', nodes: [] }], null)
+    expect(g.dataTables).toEqual([])
+    expect(g.enrichment).toEqual({ credentials: false, dataTables: false })
+  })
 })
 
 const stubCatalog: NodeCatalog = { displayName: (t) => (t === 'n8n-nodes-base.webhook' ? 'Webhook' : t) }

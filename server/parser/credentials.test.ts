@@ -14,11 +14,11 @@ describe('extractCredentials', () => {
   it('dedupes a shared credential and lists referencing workflows', () => {
     const got = extractCredentials([a, b])
     const api = got.find(c => c.name === 'My API')!
-    expect(api).toEqual({ id: '1', name: 'My API', type: 'httpHeaderAuth', workflowIds: ['a', 'b'] })
+    expect(api).toEqual({ id: '1', name: 'My API', type: 'httpHeaderAuth', workflowIds: ['a', 'b'], source: 'inferred' })
   })
 
   it('captures a credential without an id', () => {
     const got = extractCredentials([b])
-    expect(got.find(c => c.name === 'Slack Bot')).toEqual({ id: null, name: 'Slack Bot', type: 'slackApi', workflowIds: ['b'] })
+    expect(got.find(c => c.name === 'Slack Bot')).toEqual({ id: null, name: 'Slack Bot', type: 'slackApi', workflowIds: ['b'], source: 'inferred' })
   })
 })
