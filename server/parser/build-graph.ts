@@ -4,6 +4,7 @@ import type {
 } from '#shared/types/graph'
 import type { NodeCatalog } from '../catalog/catalog'
 import { prettifyType } from '#shared/prettify'
+import { stripTrailingSlash } from '#shared/url'
 import { classifyTriggers } from './triggers'
 import { extractExecuteLinks, extractErrorLink, extractWebhookHttpLinks } from './links'
 import { summarize, extractTags, extractWebhookPaths } from './summarize'
@@ -58,7 +59,7 @@ export function buildGraph(
     inbound.set(e.target, (inbound.get(e.target) ?? 0) + 1)
   }
 
-  const base = baseUrl ? baseUrl.replace(/\/+$/, '') : null
+  const base = baseUrl ? stripTrailingSlash(baseUrl) : null
   const nodes: WorkflowNode[] = valid.map(wf => {
     const s = summarize(wf)
     return {
