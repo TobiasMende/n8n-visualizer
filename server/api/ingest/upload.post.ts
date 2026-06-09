@@ -15,10 +15,15 @@ export default defineEventHandler(async (event) => {
     // and webhook hrefs, so a javascript:/data: value would be a stored-XSS vector.
     const baseUrl = isHttpUrl(body?.baseUrl) ? body.baseUrl : null
     const workflows = normalizeWorkflows(raw)
+    // Optional enrichment bundled alongside the workflows (used by the demo
+    // recorder, which fetches and anonymizes credentials/data tables too). Only
+    // accept arrays; anything else falls back to null (inference only).
+    const apiCredentials = Array.isArray(body?.apiCredentials) ? body.apiCredentials : null
+    const apiDataTables = Array.isArray(body?.apiDataTables) ? body.apiDataTables : null
     const catalog = await buildCatalog({
       host: null, cache: { get: async () => null, set: async () => {} }, source: { fetch: async () => null }, bundled,
     })
-    return buildGraph(workflows, baseUrl, { from: new Date().toISOString(), catalog })
+    return buildGraph(workflows, baseUrl, { from: new Date().toISOString(), catalog, apiCredentials, apiDataTables })
   } catch (e: any) {
     if (e?.statusCode) throw e
     throw createError({ statusCode: 400, statusMessage: 'Invalid request body' })

@@ -1,5 +1,6 @@
 import type { RawWorkflow, RawNode } from '#shared/types/graph'
-import { Faker, WORKFLOW_NAMES, CRED_NAMES, TAG_NAMES } from './fakes'
+import type { ApiCredential, ApiDataTable } from '../../server/ingest/n8n-client'
+import { Faker, WORKFLOW_NAMES, CRED_NAMES, TAG_NAMES, DATATABLE_NAMES, COLUMN_NAMES } from './fakes'
 import { prettifyType } from '#shared/prettify'
 
 const URL_RE = /^https?:\/\//i
@@ -37,8 +38,15 @@ function anonValue(key: string, value: unknown, faker: Faker, replaceStr: Replac
 
 function anonParams(params: Record<string, unknown>, faker: Faker, replaceStr: Replacer): Record<string, unknown> {
   const out: Record<string, unknown> = {}
+  // Resource locators cache the referenced entity's display name in
+  // `cachedResultName` (a data table name, a Google Sheet title, …) — a leak
+  // vector regardless of length. Replace it with a deterministic fake keyed by
+  // the sibling id (`value`), so a data table's cached name matches the fake we
+  // give the same table elsewhere.
+  const rlId = typeof params.value === 'string' ? params.value : undefined
   for (const [k, v] of Object.entries(params)) {
     if (k === 'path' && typeof v === 'string') { out[k] = faker.webhookPath(v); continue }
+    if (k === 'cachedResultName' && typeof v === 'string') { out[k] = faker.dataTableName(rlId ?? v); continue }
     out[k] = anonValue(k, v, faker, replaceStr)
   }
   return out
@@ -63,8 +71,7 @@ interface Prepared {
   nameMap: Map<string, string>
 }
 
-export function anonymizeWorkflows(workflows: RawWorkflow[]): RawWorkflow[] {
-  const faker = new Faker()
+export function anonymizeWorkflows(workflows: RawWorkflow[], faker: Faker = new Faker()): RawWorkflow[] {
   const replace = new Map<string, string>()
   const remember = (orig: string | undefined, fake: string) => { if (orig) replace.set(orig, fake) }
 
@@ -99,7 +106,17 @@ export function anonymizeWorkflows(workflows: RawWorkflow[]): RawWorkflow[] {
     const nodes = wf.nodes.map((n, i): RawNode => {
       const out: RawNode = { id: n.id, name: nodeFakes[i], type: n.type }
       if (n.webhookId) out.webhookId = faker.webhookId(n.webhookId)
-      if (n.parameters) out.parameters = anonParams(n.parameters, faker, replaceStr)
+      if (n.parameters) {
+        out.parameters = anonParams(n.parameters, faker, replaceStr)
+        // Preserve the data table id so the Data Tables view can link this
+        // workflow to the (separately anonymized) table. The id is an opaque
+        // internal handle, not customer data; its display name is faked above.
+        if (n.type === 'n8n-nodes-base.dataTable') {
+          const orig = n.parameters.dataTableId as Record<string, unknown> | undefined
+          const rl = out.parameters.dataTableId as Record<string, unknown> | undefined
+          if (orig && rl && typeof orig.value === 'string') rl.value = orig.value
+        }
+      }
       if (n.credentials) {
         out.credentials = {}
         for (const [slot, cred] of Object.entries(n.credentials))
@@ -129,6 +146,47 @@ export function anonymizeWorkflows(workflows: RawWorkflow[]): RawWorkflow[] {
   })
 }
 
+// Credentials come from a separate API endpoint. The name is faked keyed by id,
+// which matches the fake given to the same credential where workflow nodes
+// reference it (anonNode keys credName by `cred.id`), so the Credentials view
+// and the map stay consistent. Type is a generic n8n type slug; ids are opaque.
+// Timestamps are dropped (mildly identifying, never needed).
+export function anonymizeCredentials(creds: ApiCredential[], faker: Faker = new Faker()): ApiCredential[] {
+  return creds.map(c => ({ id: c.id, name: faker.credName(c.id ?? c.name), type: c.type }))
+}
+
+// Data tables also come from a separate endpoint. Name is faked keyed by id so
+// it matches the cached name we put on workflow data-table nodes referencing the
+// same id; column names are faked (customer-defined, sensitive), column types
+// kept (generic). Timestamps dropped.
+export function anonymizeDataTables(tables: ApiDataTable[], faker: Faker = new Faker()): ApiDataTable[] {
+  return tables.map(t => ({
+    id: t.id,
+    name: faker.dataTableName(t.id),
+    projectId: t.projectId ?? null,
+    columns: t.columns?.map(c => ({
+      id: c.id, name: faker.columnName(`${t.id}:${c.name}`), type: c.type, index: c.index,
+    })),
+  }))
+}
+
+export interface Bundle {
+  workflows: RawWorkflow[]
+  credentials: ApiCredential[] | null
+  dataTables: ApiDataTable[] | null
+}
+
+// Anonymize workflows and the optional enrichment together, sharing one Faker so
+// credential and data-table names stay consistent across all three.
+export function anonymizeBundle(bundle: Bundle): Bundle {
+  const faker = new Faker()
+  return {
+    workflows: anonymizeWorkflows(bundle.workflows, faker),
+    credentials: bundle.credentials ? anonymizeCredentials(bundle.credentials, faker) : null,
+    dataTables: bundle.dataTables ? anonymizeDataTables(bundle.dataTables, faker) : null,
+  }
+}
+
 // Residual risk (accepted): bare hostnames-without-scheme and opaque tokens in
 // node parameters are neither scrubbed nor netted. Parameter *values* render in
 // no view, so they cannot reach the recorded video; the temp JSON is local-only
@@ -143,7 +201,7 @@ export function anonymizeWorkflows(workflows: RawWorkflow[]): RawWorkflow[] {
 function fakeVocabulary(workflows: RawWorkflow[]): string[] {
   const types = new Set<string>()
   for (const wf of workflows) for (const n of wf.nodes) types.add(n.type)
-  return [...WORKFLOW_NAMES, ...CRED_NAMES, ...TAG_NAMES, ...[...types].map(prettifyType)]
+  return [...WORKFLOW_NAMES, ...CRED_NAMES, ...TAG_NAMES, ...DATATABLE_NAMES, ...COLUMN_NAMES, ...[...types].map(prettifyType)]
 }
 
 // A name is "identifying" — worth treating as a secret — only if it is unlikely
@@ -156,7 +214,11 @@ function isIdentifying(s: string): boolean {
   return /\s/.test(s) || s.length >= 12 || /\d/.test(s)
 }
 
-function collectSecrets(workflows: RawWorkflow[]): string[] {
+function collectSecrets(
+  workflows: RawWorkflow[],
+  credentials: ApiCredential[] | null = null,
+  dataTables: ApiDataTable[] | null = null,
+): string[] {
   const vocab = fakeVocabulary(workflows)
   const isBenign = (s: string) => vocab.some(v => v.includes(s))
   const out = new Set<string>()
@@ -186,12 +248,25 @@ function collectSecrets(workflows: RawWorkflow[]): string[] {
     if (wf.settings) scan(wf.settings)
     for (const t of wf.tags ?? []) addName(typeof t === 'string' ? t : t.name)
   }
+  for (const c of credentials ?? []) addName(c.name)
+  for (const t of dataTables ?? []) {
+    addName(t.name)
+    for (const col of t.columns ?? []) addName(col.name)
+  }
   return [...out]
 }
 
 export function assertNoLeak(original: RawWorkflow[], anonymized: RawWorkflow[]): void {
   const haystack = JSON.stringify(anonymized)
   for (const secret of collectSecrets(original)) {
+    if (haystack.includes(secret))
+      throw new Error(`Anonymization leak: original value "${secret}" found in output`)
+  }
+}
+
+export function assertBundleNoLeak(original: Bundle, anonymized: Bundle): void {
+  const haystack = JSON.stringify(anonymized)
+  for (const secret of collectSecrets(original.workflows, original.credentials, original.dataTables)) {
     if (haystack.includes(secret))
       throw new Error(`Anonymization leak: original value "${secret}" found in output`)
   }

@@ -11,6 +11,14 @@ export const CRED_NAMES = [
   'Storage S3', 'Analytics Key', 'Chat Token', 'CRM Account',
 ]
 export const TAG_NAMES = ['production', 'internal', 'finance', 'marketing', 'ops', 'experimental']
+export const DATATABLE_NAMES = [
+  'Customers', 'Orders', 'Products', 'Subscriptions', 'Tickets', 'Contacts',
+  'Inventory', 'Invoices', 'Sessions', 'Events', 'Leads', 'Accounts',
+]
+export const COLUMN_NAMES = [
+  'id', 'name', 'email', 'status', 'amount', 'created_at', 'updated_at',
+  'quantity', 'category', 'owner', 'region', 'priority',
+]
 const SLUG = 'abcdefghijklmnopqrstuvwxyz0123456789'
 
 function pick(pool: string[], i: number): string {
@@ -23,6 +31,8 @@ export class Faker {
   private tag = new Map<string, string>()
   private hook = new Map<string, string>()
   private hookId = new Map<string, string>()
+  private table = new Map<string, string>()
+  private column = new Map<string, string>()
   private nodeCounts = new Map<string, number>()
 
   private alloc(map: Map<string, string>, key: string, pool: string[]): string {
@@ -36,6 +46,8 @@ export class Faker {
   workflowName(id: string): string { return this.alloc(this.wf, id, WORKFLOW_NAMES) }
   credName(key: string): string { return this.alloc(this.cred, key, CRED_NAMES) }
   tagName(key: string): string { return this.alloc(this.tag, key, TAG_NAMES) }
+  dataTableName(key: string): string { return this.alloc(this.table, key, DATATABLE_NAMES) }
+  columnName(key: string): string { return this.alloc(this.column, key, COLUMN_NAMES) }
 
   nodeName(workflowId: string, type: string): string {
     const base = prettifyType(type)

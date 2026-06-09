@@ -2,9 +2,9 @@ import { mkdtempSync, rmSync, writeFileSync, mkdirSync, readdirSync, renameSync 
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { chromium, type Browser } from 'playwright'
-import { fetchAllWorkflows, type FetchImpl } from '../../server/ingest/n8n-client'
+import { fetchAllWorkflows, fetchAllCredentials, fetchAllDataTables, type FetchImpl } from '../../server/ingest/n8n-client'
 import { safeFetch, type SafeFetchOptions } from '../../server/ingest/safe-fetch'
-import { anonymizeWorkflows, assertNoLeak } from './anonymize'
+import { anonymizeBundle, assertBundleNoLeak } from './anonymize'
 import { startServer } from './serve'
 import { runTour } from './tour'
 import { encodeToMp4, hasFfmpeg } from './encode'
@@ -22,16 +22,28 @@ async function main() {
     return { status: res.status, ok: res.ok, headers: res.headers, text: () => res.text(), json: () => res.json() }
   }
   const fetchImpl = allowLocal ? localFetch : safeFetch
-  const raw = await fetchAllWorkflows(baseUrl, apiKey, fetchImpl)
-  console.log(`Fetched ${raw.length} workflows. Anonymizing…`)
+  // Credentials and data tables come from separate endpoints and are best-effort
+  // (null if the key lacks scope or the n8n version is older).
+  const [raw, credentials, dataTables] = await Promise.all([
+    fetchAllWorkflows(baseUrl, apiKey, fetchImpl),
+    fetchAllCredentials(baseUrl, apiKey, fetchImpl),
+    fetchAllDataTables(baseUrl, apiKey, fetchImpl),
+  ])
+  console.log(`Fetched ${raw.length} workflows, ${credentials?.length ?? 0} credentials, ${dataTables?.length ?? 0} data tables. Anonymizing…`)
 
-  const anon = anonymizeWorkflows(raw)
-  assertNoLeak(raw, anon)
+  const original = { workflows: raw, credentials, dataTables }
+  const anon = anonymizeBundle(original)
+  assertBundleNoLeak(original, anon)
   console.log('Anonymization verified (no leaks).')
 
   const tmp = mkdtempSync(join(tmpdir(), 'n8nviz-demo-'))
   const jsonPath = join(tmp, 'workflows.json')
-  writeFileSync(jsonPath, JSON.stringify({ workflows: anon, baseUrl: 'https://n8n.demo.example' }))
+  writeFileSync(jsonPath, JSON.stringify({
+    workflows: anon.workflows,
+    baseUrl: 'https://n8n.demo.example',
+    apiCredentials: anon.credentials,
+    apiDataTables: anon.dataTables,
+  }))
 
   mkdirSync(OUT_DIR, { recursive: true })
   const server = await startServer()

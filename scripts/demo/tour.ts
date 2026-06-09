@@ -15,17 +15,18 @@ export async function runTour(page: Page, jsonPath: string): Promise<void> {
   await page.waitForSelector('.vue-flow__node', { timeout: 30_000 })
   await pause(1500)
 
-  // 3. Map: fit the whole graph in frame, then select a workflow via the search
-  // box. Selecting by clicking a graph node is unreliable on a large
-  // auto-laid-out instance (nodes fall outside the viewport), whereas search
-  // selection is position-independent and still opens the side panel and
-  // triggers the trace-flow highlight (both driven by the selected id).
+  // 3. Map + the trace-flow "magic": fit the whole graph, then select a workflow
+  // via search. Selecting by clicking a graph node is unreliable on a large
+  // auto-laid-out instance (nodes fall outside the viewport); search selection
+  // is position-independent and drives the same effect — the side panel opens
+  // and the selected workflow plus its triggers and connected workflows light up
+  // while the rest dim. Dwell on that, then select a second one to show it react.
   await page.click('button[aria-label="Fit view"]')
   await pause(1500)
-  await page.fill('input[placeholder="Search workflows / webhooks…"]', 'e')
-  await pause(900)
-  const result = page.locator('.search .results li').first()
-  if (await result.count()) { await result.click(); await pause(2500) }
+  await selectViaSearch(page, 'a')
+  await pause(3500)
+  await selectViaSearch(page, 'i')
+  await pause(3000)
   // Zoom in for visual interest, then fit again.
   await page.click('button[aria-label="Zoom in"]')
   await page.click('button[aria-label="Zoom in"]')
@@ -41,14 +42,29 @@ export async function runTour(page: Page, jsonPath: string): Promise<void> {
   await page.click('nav.rail button[title="Schedules"]')
   await pause(3000)
 
-  // 6. Credentials (+ click first credential row if present)
+  // 6. Credentials
   await page.click('nav.rail button[title="Credentials"]')
-  await pause(1500)
-  const cred = page.locator('table tbody tr, [role="row"]').first()
-  if (await cred.count()) { await cred.click().catch(() => {}); await pause(2500) }
+  await pause(3000)
 
-  // 7. Back to map beauty shot
+  // 7. Data Tables — the table overview, then expand a row to reveal which
+  // workflows use it.
+  await page.click('nav.rail button[title="Data Tables"]')
+  await pause(2500)
+  const expand = page.locator('button.exp').first()
+  if (await expand.count()) { await expand.click().catch(() => {}); await pause(2500) }
+
+  // 8. Back to map beauty shot
   await page.click('nav.rail button[title="Map"]')
   await page.click('button[aria-label="Fit view"]')
   await pause(2000)
+}
+
+// Select a workflow by typing into the search box and clicking the first result.
+// Position-independent; sets the selected id, which opens the side panel and
+// triggers the trace-flow highlight on the map.
+async function selectViaSearch(page: Page, query: string): Promise<void> {
+  await page.fill('input[placeholder="Search workflows / webhooks…"]', query)
+  await pause(900)
+  const result = page.locator('.search .results li').first()
+  if (await result.count()) await result.click()
 }

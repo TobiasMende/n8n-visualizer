@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import type { RawWorkflow } from '#shared/types/graph'
-import { anonymizeWorkflows, assertNoLeak } from './anonymize'
+import { anonymizeWorkflows, assertNoLeak, anonymizeBundle, assertBundleNoLeak } from './anonymize'
 
 const sample: RawWorkflow[] = [{
   id: 'wf-1',
@@ -253,5 +253,69 @@ describe('anonymizeWorkflows — sensitive ids in URL paths are dropped', () => 
     const out = anonymizeWorkflows(wf)
     expect(JSON.stringify(out)).not.toContain(docId)
     expect(() => assertNoLeak(wf, out)).not.toThrow()
+  })
+})
+
+describe('anonymizeBundle — credentials & data tables', () => {
+  it('fakes credential names, keeps type, drops timestamps', () => {
+    const bundle = {
+      workflows: [] as RawWorkflow[],
+      credentials: [{ id: 'c1', name: 'Acme Prod Postgres', type: 'postgres', createdAt: '2020', updatedAt: '2021' }],
+      dataTables: null,
+    }
+    const out = anonymizeBundle(bundle)
+    expect(out.credentials![0].name).not.toBe('Acme Prod Postgres')
+    expect(out.credentials![0].type).toBe('postgres')
+    expect((out.credentials![0] as Record<string, unknown>).createdAt).toBeUndefined()
+  })
+
+  it('keeps credential-name fakes consistent with the workflow nodes (same id)', () => {
+    const bundle = {
+      workflows: [{ id: 'w', name: 'W', nodes: [
+        { id: 'n', name: 'PG', type: 'n8n-nodes-base.postgres', parameters: {},
+          credentials: { postgres: { id: 'c1', name: 'Acme Prod Postgres' } } },
+      ] }] as RawWorkflow[],
+      credentials: [{ id: 'c1', name: 'Acme Prod Postgres', type: 'postgres' }],
+      dataTables: null,
+    }
+    const out = anonymizeBundle(bundle)
+    const nodeCredName = out.workflows[0].nodes[0].credentials!.postgres.name
+    expect(out.credentials![0].name).toBe(nodeCredName)
+  })
+
+  it('fakes data table + column names and keeps the table linked to its workflow', () => {
+    const id = 'dt_abc123'
+    const bundle = {
+      workflows: [{ id: 'w', name: 'W', nodes: [
+        { id: 'n', name: 'DT', type: 'n8n-nodes-base.dataTable', parameters: {
+          operation: 'insert',
+          dataTableId: { __rl: true, mode: 'list', value: id, cachedResultName: 'Customer PII Vault' } } },
+      ] }] as RawWorkflow[],
+      credentials: null,
+      dataTables: [{ id, name: 'Customer PII Vault', columns: [
+        { id: 'col1', name: 'social_security_number', type: 'string', index: 0 },
+      ] }],
+    }
+    const out = anonymizeBundle(bundle)
+    const json = JSON.stringify(out)
+    expect(json).not.toContain('Customer PII Vault')
+    expect(json).not.toContain('social_security_number')
+    // id preserved on both sides so the view can link them
+    expect(out.dataTables![0].id).toBe(id)
+    expect(out.workflows[0].nodes[0].parameters!.dataTableId).toMatchObject({ value: id })
+    // cached name on the workflow node matches the data table's faked name
+    const cached = (out.workflows[0].nodes[0].parameters!.dataTableId as Record<string, unknown>).cachedResultName
+    expect(cached).toBe(out.dataTables![0].name)
+    expect(() => assertBundleNoLeak(bundle, out)).not.toThrow()
+  })
+
+  it('catches a leaked data table name via assertBundleNoLeak', () => {
+    const bundle = {
+      workflows: [] as RawWorkflow[], credentials: null,
+      dataTables: [{ id: 'd', name: 'Quarterly Revenue Ledger', columns: [] }],
+    }
+    const out = anonymizeBundle(bundle)
+    out.dataTables![0].name = 'Quarterly Revenue Ledger'
+    expect(() => assertBundleNoLeak(bundle, out)).toThrow(/leak/i)
   })
 })
