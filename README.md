@@ -45,14 +45,15 @@ n8n API / JSON upload
         │            (links, triggers, credentials, webhooks, schedules)
         ▼
   server/catalog     resolve node type → display name
-        │            (live from instance, cached on disk, bundled fallback)
+        │            (live from instance, bundled fallback — never persisted)
         ▼
    WorkflowGraph  →  Vue Flow map + views
 ```
 
-Node display names are resolved from the connected instance when available,
-cached on disk for 7 days (`.cache/`), and fall back to a bundled catalog
-(`server/catalog/bundled.json`) and finally a prettified type string.
+Node display names are resolved live from the connected instance when available
+(used only for the current request, never written to disk), and fall back to a
+bundled catalog (`server/catalog/bundled.json`) and finally a prettified type
+string. No instance-derived data is persisted server-side.
 
 ## Quick start
 

@@ -1,7 +1,6 @@
 import { fetchAllWorkflows, fetchAllCredentials, fetchAllDataTables } from '../../ingest/n8n-client'
 import { buildGraph } from '../../parser/build-graph'
 import { buildCatalog } from '../../catalog/catalog'
-import { diskCatalogCache } from '../../catalog/disk-cache'
 import { instanceCatalogSource } from '../../catalog/instance-source'
 import { ingestErrorFromSafeFetch } from '../../ingest/validate'
 import { readJsonBodyCapped } from '../../util/body'
@@ -26,8 +25,11 @@ export default defineEventHandler(async (event) => {
   try {
     const workflows = await fetchAllWorkflows(baseUrl, apiKey)
     const [catalog, apiCredentials, apiDataTables] = await Promise.all([
+      // No cache: node display names are resolved live from the instance per
+      // request and never persisted, so nothing instance-derived touches disk.
       buildCatalog({
-        host, cache: diskCatalogCache(), source: instanceCatalogSource(baseUrl, apiKey), bundled,
+        host, cache: { get: async () => null, set: async () => {} },
+        source: instanceCatalogSource(baseUrl, apiKey), bundled,
       }),
       fetchAllCredentials(baseUrl, apiKey),
       fetchAllDataTables(baseUrl, apiKey),
