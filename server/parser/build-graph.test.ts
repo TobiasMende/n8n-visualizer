@@ -51,6 +51,21 @@ describe('buildGraph', () => {
     expect(g.nodes.map(n => n.id)).toEqual(['p'])
     expect(g.skipped).toEqual([{ name: 'no id', reason: 'missing id or nodes' }])
   })
+
+  it('emits standalone trigger nodes pointing at their workflow', () => {
+    const g = buildGraph([producer, consumer], null)
+    const trigs = g.triggerNodes.filter(t => t.workflowId === 'p')
+    expect(trigs).toHaveLength(1)
+    expect(trigs[0]).toMatchObject({ workflowId: 'p', kind: 'webhook', label: 'GET /orders' })
+  })
+
+  it('does not emit a trigger node for executeWorkflowTrigger workflows', () => {
+    const sub: RawWorkflow = { id: 's', name: 'Sub', nodes: [
+      { name: 't', type: 'n8n-nodes-base.executeWorkflowTrigger' },
+    ] }
+    const g = buildGraph([sub], null)
+    expect(g.triggerNodes).toHaveLength(0)
+  })
 })
 
 const stubCatalog: NodeCatalog = { displayName: (t) => (t === 'n8n-nodes-base.webhook' ? 'Webhook' : t) }

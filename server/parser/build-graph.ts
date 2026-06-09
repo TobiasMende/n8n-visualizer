@@ -5,7 +5,7 @@ import type {
 import type { NodeCatalog } from '../catalog/catalog'
 import { prettifyType } from '#shared/prettify'
 import { stripTrailingSlash } from '#shared/url'
-import { classifyTriggers } from './triggers'
+import { classifyTriggers, extractTriggerNodes } from './triggers'
 import { extractExecuteLinks, extractErrorLink, extractWebhookHttpLinks } from './links'
 import { summarize, extractTags, extractWebhookPaths } from './summarize'
 import { buildWebhooks } from '../webhooks/build'
@@ -59,6 +59,8 @@ export function buildGraph(
     inbound.set(e.target, (inbound.get(e.target) ?? 0) + 1)
   }
 
+  const triggerNodes = valid.flatMap(wf => extractTriggerNodes(wf, catalog))
+
   const base = baseUrl ? stripTrailingSlash(baseUrl) : null
   const nodes: WorkflowNode[] = valid.map(wf => {
     const s = summarize(wf)
@@ -90,5 +92,5 @@ export function buildGraph(
   }
   const credentials = extractCredentials(valid)
 
-  return { nodes, edges: keptEdges, unresolved, skipped, webhooks, schedules, credentials }
+  return { nodes, edges: keptEdges, triggerNodes, unresolved, skipped, webhooks, schedules, credentials }
 }
