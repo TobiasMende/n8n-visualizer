@@ -16,7 +16,7 @@ export function selectStoreKind(env: RateLimitEnv): StoreKind {
   return env.UPSTASH_REDIS_REST_URL && env.UPSTASH_REDIS_REST_TOKEN ? 'upstash' : 'memory'
 }
 
-const LIMITED_PATHS = new Set(['/api/ingest/api', '/api/ingest/upload'])
+const LIMITED_PATHS = new Set(['/api/ingest/api', '/api/ingest/upload', '/api/session'])
 
 export function isLimitedPath(path: string): boolean {
   return LIMITED_PATHS.has(path.split('?')[0]!)
