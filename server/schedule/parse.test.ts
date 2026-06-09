@@ -26,6 +26,12 @@ describe('parseSchedule', () => {
     expect(got).toEqual([{ cadenceText: 'Every 30 seconds', cadenceGroup: 'sub-minute', cronExpr: null }])
   })
 
+  it('returns [] when interval is not an array (malformed JSON)', () => {
+    expect(parseSchedule(sched({ interval: 'oops' }))).toEqual([])
+    expect(parseSchedule(sched({ interval: { field: 'minutes' } }))).toEqual([])
+    expect(parseSchedule(sched(undefined))).toEqual([])
+  })
+
   it('returns [] for a non-schedule node', () => {
     expect(parseSchedule({ name: 'x', type: 'n8n-nodes-base.set' })).toEqual([])
   })

@@ -14,8 +14,8 @@ const EXECUTE_TRIGGER = 'n8n-nodes-base.executeWorkflowTrigger'
 export function classifyTriggers(wf: RawWorkflow): TriggerType[] {
   const set = new Set<TriggerType>()
   for (const node of wf.nodes ?? []) {
-    const t = node.type
-    if (t === EXECUTE_TRIGGER) continue
+    const t = node?.type
+    if (typeof t !== 'string' || t === EXECUTE_TRIGGER) continue
     if (t === 'n8n-nodes-base.webhook') set.add('webhook')
     else if (SCHEDULE.has(t)) set.add('schedule')
     else if (t === 'n8n-nodes-base.manualTrigger') set.add('manual')
@@ -31,8 +31,8 @@ function push(out: TriggerNode[], wfId: string, name: string, i: number, kind: T
 export function extractTriggerNodes(wf: RawWorkflow, catalog: NodeCatalog): TriggerNode[] {
   const out: TriggerNode[] = []
   for (const node of wf.nodes ?? []) {
-    const t = node.type
-    if (t === EXECUTE_TRIGGER) continue
+    const t = node?.type
+    if (typeof t !== 'string' || t === EXECUTE_TRIGGER) continue
 
     if (t === 'n8n-nodes-base.formTrigger') {
       const info = webhookNodeInfo(node)

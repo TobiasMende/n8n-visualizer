@@ -33,6 +33,19 @@ describe('buildGraph', () => {
     expect(buildGraph([lone], null).edges).toEqual([])
   })
 
+  it('survives malformed nodes (null, missing type/name) in untrusted JSON', () => {
+    const dirty = { id: 'd', name: 'Dirty', nodes: [
+      null,
+      {},
+      { name: 'noType' },
+      { type: 'n8n-nodes-base.set' },
+      { name: 'ok', type: 'n8n-nodes-base.webhook', parameters: { path: 'p' } },
+    ] } as unknown as RawWorkflow
+    const g = buildGraph([dirty], null)
+    expect(g.skipped).toEqual([])
+    expect(g.nodes.find(n => n.id === 'd')!.summary.nodeCount).toBe(1)
+  })
+
   it('de-duplicates identical edges so counts are not inflated', () => {
     const caller: RawWorkflow = { id: 'a', name: 'A', nodes: [
       { name: 'c1', type: 'n8n-nodes-base.executeWorkflow', parameters: { workflowId: 'b' } },

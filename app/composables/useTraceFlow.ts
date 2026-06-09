@@ -8,21 +8,25 @@ export function traceFlow(
   const edgeIds = new Set<string>()
   if (!selectedId || !nodes.some(n => n.id === selectedId)) return { nodeIds, edgeIds }
 
-  const walk = (start: string, dir: 'down' | 'up') => {
+  const downAdj = new Map<string, string[]>()
+  const upAdj = new Map<string, string[]>()
+  const push = (m: Map<string, string[]>, k: string, v: string) => {
+    const a = m.get(k); if (a) a.push(v); else m.set(k, [v])
+  }
+  for (const e of edges) { push(downAdj, e.source, e.target); push(upAdj, e.target, e.source) }
+
+  const walk = (start: string, adj: Map<string, string[]>) => {
     const stack = [start]
     const seen = new Set<string>([start])
     while (stack.length) {
       const cur = stack.pop()!
       nodeIds.add(cur)
-      for (const e of edges) {
-        const next = dir === 'down' ? (e.source === cur ? e.target : null)
-                                    : (e.target === cur ? e.source : null)
-        if (next && !seen.has(next)) { seen.add(next); stack.push(next) }
-      }
+      for (const next of adj.get(cur) ?? [])
+        if (!seen.has(next)) { seen.add(next); stack.push(next) }
     }
   }
-  walk(selectedId, 'down')
-  walk(selectedId, 'up')
+  walk(selectedId, downAdj)
+  walk(selectedId, upAdj)
 
   for (const e of edges)
     if (nodeIds.has(e.source) && nodeIds.has(e.target)) edgeIds.add(`${e.source}|${e.target}`)

@@ -1,5 +1,5 @@
 import type {
-  RawWorkflow, WorkflowGraph, WorkflowNode, WorkflowEdge,
+  RawWorkflow, RawNode, WorkflowGraph, WorkflowNode, WorkflowEdge,
   UnresolvedLink, SkippedWorkflow, ScheduleEntry,
 } from '#shared/types/graph'
 import type { NodeCatalog } from '../catalog/catalog'
@@ -16,6 +16,14 @@ import { extractDataTables } from './data-tables'
 import { mergeCredentials, mergeDataTables } from './merge'
 import type { ApiCredential, ApiDataTable } from '../ingest/n8n-client'
 
+// n8n JSON is untrusted: a node may be null or missing its string type/name.
+// Drop malformed nodes here so one bad entry can't crash the whole parse.
+function isValidNode(n: unknown): n is RawNode {
+  return !!n && typeof n === 'object'
+    && typeof (n as RawNode).type === 'string'
+    && typeof (n as RawNode).name === 'string'
+}
+
 export function buildGraph(
   workflows: RawWorkflow[],
   baseUrl: string | null,
@@ -31,7 +39,7 @@ export function buildGraph(
       skipped.push({ name: wf?.name, reason: 'missing id or nodes' })
       continue
     }
-    valid.push(wf)
+    valid.push({ ...wf, nodes: wf.nodes.filter(isValidNode) })
   }
 
   const edges: WorkflowEdge[] = []

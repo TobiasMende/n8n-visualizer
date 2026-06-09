@@ -40,6 +40,9 @@ export const useGraphStore = defineStore('graph', () => {
     selectedId.value = null
     selectedCredId.value = null
     selectedDataTableId.value = null
+    focusNodeId.value = null
+    tagFilter.value = []
+    searchQuery.value = ''
     error.value = null
     view.value = 'map'
     if (import.meta.client) clearConnection(sessionStorage)

@@ -8,8 +8,10 @@ import { onActivate } from '~/composables/useA11yClick'
 import { triggerNodeId } from '~/composables/useTriggerFocus'
 
 const store = useGraphStore()
+const rowKey = (row: { workflowId: string; path: string }) => row.workflowId + '|' + row.path
 const expanded = ref<string | null>(null)
-const expandedCallers = computed(() => expanded.value ? callersOf(store.graph, expanded.value) : [])
+const expandedCallers = computed(() =>
+  expanded.value ? callersOf(store.graph, expanded.value.split('|')[0]!) : [])
 
 const columns = [
   { key: 'method', label: 'Method' },
@@ -32,13 +34,13 @@ function jump(row: { workflowId: string; method: string; path: string }) {
 }
 function jumpWorkflow(id: string) { store.goToMapNode({ focusId: id, workflowId: id }) }
 function copy(url: string) { if (import.meta.client) navigator.clipboard?.writeText(url) }
-function toggle(id: string) { expanded.value = expanded.value === id ? null : id }
+function toggle(key: string) { expanded.value = expanded.value === key ? null : key }
 </script>
 
 <template>
   <div class="wrap">
     <p v-if="openCount" class="open-summary">{{ openCount }} of {{ rows.length }} webhooks open</p>
-    <DataTable :columns="columns" :rows="rows" :row-key="(r) => r.workflowId + '|' + r.path" @row-click="jump">
+    <DataTable :columns="columns" :rows="rows" :row-key="rowKey" @row-click="jump">
       <template #cell-method="{ row }"><Badge :tone="row.method === 'POST' ? 'accent' : 'warn'">{{ row.method }}</Badge></template>
       <template #cell-security="{ row }">
         <Badge :tone="row.secured ? 'accent' : 'warn'" :title="row.secured ? row.authLabel : 'No authentication'">
@@ -49,8 +51,8 @@ function toggle(id: string) { expanded.value = expanded.value === id ? null : id
         <code class="url" role="button" tabindex="0" aria-label="Copy URL"
           @click.stop="copy(row.url)" :title="'Click to copy: ' + row.url"
           @keydown.stop="onActivate(() => copy(row.url))">{{ row.url }}</code>
-        <button class="callers" @click.stop="toggle(row.workflowId)">callers</button>
-        <ul v-if="expanded === row.workflowId" class="callerlist">
+        <button class="callers" @click.stop="toggle(rowKey(row))">callers</button>
+        <ul v-if="expanded === rowKey(row)" class="callerlist">
           <li v-for="c in expandedCallers" :key="c.id">↳ {{ c.name }}</li>
           <li v-if="!expandedCallers.length" class="none">no internal callers</li>
         </ul>

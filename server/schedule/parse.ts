@@ -50,7 +50,8 @@ function parseRule(rule: any): ParsedCadence | null {
 
 export function parseSchedule(node: RawNode): ParsedCadence[] {
   if (node.type === 'n8n-nodes-base.scheduleTrigger') {
-    const rules: any[] = node.parameters?.rule?.interval ?? []
+    const interval = node.parameters?.rule?.interval
+    const rules: any[] = Array.isArray(interval) ? interval : []
     return rules.map(parseRule).filter((r): r is ParsedCadence => r !== null)
   }
   if (node.type === 'n8n-nodes-base.cron') {

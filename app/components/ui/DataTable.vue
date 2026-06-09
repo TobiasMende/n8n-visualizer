@@ -27,7 +27,11 @@ const view = computed(() => {
   <table class="dt">
     <thead>
       <tr>
-        <th v-for="c in columns" :key="c.key" @click="toggleSort(c.key)">
+        <th v-for="c in columns" :key="c.key"
+            role="button" tabindex="0"
+            :aria-sort="sortKey === c.key ? (sortDir === 1 ? 'ascending' : 'descending') : 'none'"
+            @click="toggleSort(c.key)"
+            @keydown="onActivate(() => toggleSort(c.key))">
           {{ c.label }}<span v-if="sortKey === c.key">{{ sortDir === 1 ? ' ▲' : ' ▼' }}</span>
         </th>
       </tr>
