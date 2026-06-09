@@ -24,7 +24,7 @@ const rows = computed(() => dataTableRows(store.graph).filter(r =>
   tagsMatch(tableTags(r), store.tagFilter) &&
   matchesQuery(`${r.name} ${r.operations.join(' ')}`, store.searchQuery)))
 
-const showUploadHint = computed(() => store.connection === null && rows.value.length > 0)
+const showUploadHint = computed(() => !store.connected && rows.value.length > 0)
 
 function toggle(id: string) { expanded.value = expanded.value === id ? null : id }
 function jumpWorkflow(id: string) { store.goToMapNode({ focusId: id, workflowId: id }) }

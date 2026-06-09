@@ -1,5 +1,5 @@
 import type { WorkflowGraph } from '#shared/types/graph'
-import { saveConnection, loadConnection, clearConnection, hostOf, type Conn } from '~/composables/useConnectionStorage'
+import { hostOf } from '#shared/url'
 import { defaultVisibility, type Visibility } from '~/composables/useVisibility'
 
 export const useGraphStore = defineStore('graph', () => {
@@ -12,18 +12,25 @@ export const useGraphStore = defineStore('graph', () => {
   const focusNodeId = ref<string | null>(null)
   const tagFilter = ref<string[]>([])
   const searchQuery = ref('')
-  const connection = ref<Conn | null>(null)
+  const connected = ref(false)
+  const connectedHost = ref<string | null>(null)
 
   function extractError(e: any): string {
     return e?.data?.statusMessage ?? e?.statusMessage ?? e?.message ?? 'Request failed'
   }
 
-  async function loadFromApi(baseUrl: string, apiKey: string) {
+  async function loadFromApi(baseUrl: string, apiKey: string, remember = false) {
     loading.value = true; error.value = null
     try {
-      graph.value = await $fetch<WorkflowGraph>('/api/ingest/api', { method: 'POST', body: { baseUrl, apiKey } })
-      connection.value = { baseUrl, apiKey }
-      if (import.meta.client) saveConnection(sessionStorage, connection.value)
+      if (remember) {
+        const { host } = await $fetch<{ host: string }>('/api/session', { method: 'POST', body: { baseUrl, apiKey } })
+        graph.value = await $fetch<WorkflowGraph>('/api/ingest/api', { method: 'POST', body: {} })
+        connectedHost.value = host
+      } else {
+        graph.value = await $fetch<WorkflowGraph>('/api/ingest/api', { method: 'POST', body: { baseUrl, apiKey } })
+        connectedHost.value = hostOf(baseUrl)
+      }
+      connected.value = true
     } catch (e) { error.value = extractError(e) } finally { loading.value = false }
   }
 
@@ -34,8 +41,27 @@ export const useGraphStore = defineStore('graph', () => {
     } catch (e) { error.value = extractError(e) } finally { loading.value = false }
   }
 
-  function disconnect() {
-    connection.value = null
+  async function restoreConnection() {
+    if (!import.meta.client) return
+    let status: { connected: boolean; host?: string }
+    try { status = await $fetch('/api/session') } catch { return }
+    if (!status.connected) return
+    connectedHost.value = status.host ?? null
+    loading.value = true; error.value = null
+    try {
+      graph.value = await $fetch<WorkflowGraph>('/api/ingest/api', { method: 'POST', body: {} })
+      connected.value = true
+    } catch (e) {
+      error.value = extractError(e)
+      await $fetch('/api/session', { method: 'DELETE' }).catch(() => {})
+      connectedHost.value = null
+    } finally { loading.value = false }
+  }
+
+  async function disconnect() {
+    if (import.meta.client) await $fetch('/api/session', { method: 'DELETE' }).catch(() => {})
+    connected.value = false
+    connectedHost.value = null
     graph.value = null
     selectedId.value = null
     selectedCredId.value = null
@@ -45,19 +71,7 @@ export const useGraphStore = defineStore('graph', () => {
     searchQuery.value = ''
     error.value = null
     view.value = 'map'
-    if (import.meta.client) clearConnection(sessionStorage)
   }
-
-  async function restoreConnection() {
-    if (!import.meta.client) return
-    const c = loadConnection(sessionStorage)
-    if (!c) return
-    connection.value = c
-    await loadFromApi(c.baseUrl, c.apiKey)
-    if (error.value) { connection.value = null; clearConnection(sessionStorage) }
-  }
-
-  const connectedHost = computed(() => connection.value ? hostOf(connection.value.baseUrl) : null)
 
   const selected = computed(() => graph.value?.nodes.find(n => n.id === selectedId.value) ?? null)
 
@@ -113,5 +127,5 @@ export const useGraphStore = defineStore('graph', () => {
     }, { deep: true })
   }
 
-  return { graph, loading, error, selectedId, selected, selectedCredId, selectedCredential, selectedDataTableId, selectedDataTable, focusNodeId, tagFilter, searchQuery, loadFromApi, loadFromUpload, view, visibility, goToMapNode, connection, connectedHost, disconnect, restoreConnection }
+  return { graph, loading, error, selectedId, selected, selectedCredId, selectedCredential, selectedDataTableId, selectedDataTable, focusNodeId, tagFilter, searchQuery, loadFromApi, loadFromUpload, view, visibility, goToMapNode, connected, connectedHost, disconnect, restoreConnection }
 })

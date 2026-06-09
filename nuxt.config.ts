@@ -1,5 +1,13 @@
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
+  runtimeConfig: {
+    // Iron-sealing password for the remember-me session cookie. MUST be set
+    // (>=32 chars) in production via NUXT_SESSION_PASSWORD. The dev-only default
+    // keeps local runs working and is never used once the env var is set.
+    sessionPassword:
+      process.env.NUXT_SESSION_PASSWORD ||
+      (process.env.NODE_ENV === 'production' ? '' : 'dev-only-insecure-session-password-change-me'),
+  },
   modules: ['@pinia/nuxt', 'nuxt-security', '@nuxt/eslint'],
   components: [{ path: '~/components', pathPrefix: false }],
   app: {

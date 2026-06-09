@@ -106,7 +106,10 @@ export function buildGraph(
   const apiCredentials = opts.apiCredentials ?? null
   const apiDataTables = opts.apiDataTables ?? null
   const credentials = mergeCredentials(inferredCredentials, apiCredentials)
-  const dataTables = mergeDataTables(inferredDataTables, apiDataTables)
+  const dataTables = mergeDataTables(inferredDataTables, apiDataTables).map(d => ({
+    ...d,
+    deepLink: base && d.projectId ? `${base}/projects/${d.projectId}/datatables/${d.id}` : null,
+  }))
 
   return {
     nodes, edges: keptEdges, triggerNodes, unresolved, skipped, webhooks, schedules,

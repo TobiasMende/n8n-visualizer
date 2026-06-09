@@ -64,6 +64,7 @@ export interface DataTableRef {
   workflowIds: string[]
   operations: string[]
   source: EntitySource
+  deepLink?: string | null
   columns?: DataTableColumn[]
   createdAt?: string
   updatedAt?: string

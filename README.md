@@ -8,6 +8,8 @@ live, when schedules fire, and which credentials are shared.
 n8n's own editor shows you one workflow at a time. This shows you all of them at
 once.
 
+<video src="https://github.com/TobiasMende/n8n-visualizer/raw/main/docs/demo.mp4" controls muted width="100%"></video>
+
 ## Features
 
 - **Workflow map** — every workflow as a node, edges drawn between workflows
@@ -73,11 +75,26 @@ In the toolbar, either:
 - **Connect via API** — enter your instance base URL (e.g.
   `https://n8n.example.com`) and an n8n API key
   ([create one](https://docs.n8n.io/api/authentication/) under
-  Settings → API). The key is sent to this app's server only to fetch your
-  workflows and is kept in the browser `sessionStorage` for the session — it is
-  never persisted server-side.
+  Settings → API). By default the key is sent to this app's server, used once to
+  fetch your workflows, and never stored anywhere. Tick **Remember on this device
+  (7 days)** to keep it in an encrypted, httpOnly cookie (sealed server-side, not
+  readable by JavaScript) so the connection survives a reload.
 - **Upload JSON** — drop an exported workflow (or array of workflows) to explore
   without connecting anything.
+
+### Session secret (remember-me)
+
+The "Remember on this device" option seals the n8n API key into an encrypted,
+httpOnly cookie. Set a strong sealing password in production:
+
+```
+NUXT_SESSION_PASSWORD=<random string, at least 32 characters>
+```
+
+On Vercel, add it under Project → Settings → Environment Variables. If it is
+unset in production, remember-me is disabled and the app falls back to the
+default behavior (the key is used once per request and never stored). By default
+— without remembering — no API key is ever persisted client- or server-side.
 
 ## Scripts
 

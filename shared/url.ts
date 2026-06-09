@@ -13,3 +13,7 @@ export function isHttpUrl(url: unknown): url is string {
 export function safeExternalHref(url: unknown): string | null {
   return isHttpUrl(url) ? url : null
 }
+
+export function hostOf(baseUrl: string): string {
+  try { return new URL(baseUrl).host } catch { return baseUrl }
+}

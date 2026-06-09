@@ -21,6 +21,10 @@ describe('isLimitedPath', () => {
     expect(isLimitedPath('/api/ingest/upload')).toBe(true)
   })
 
+  it('limits the session connect route', () => {
+    expect(isLimitedPath('/api/session')).toBe(true)
+  })
+
   test('does not limit other routes', () => {
     expect(isLimitedPath('/')).toBe(false)
     expect(isLimitedPath('/api/_nuxt_icon')).toBe(false)

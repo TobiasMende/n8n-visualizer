@@ -5,13 +5,20 @@ import { instanceCatalogSource } from '../../catalog/instance-source'
 import { ingestErrorFromSafeFetch } from '../../ingest/validate'
 import { readJsonBodyCapped } from '../../util/body'
 import bundled from '../../catalog/bundled.json'
+import { resolveIngestCreds } from '../../session/creds'
+import { sessionConfig, readSession } from '../../session/store'
+import { resolveSessionPassword } from '../../session/password'
 
 const MAX_BODY_BYTES = 64 * 1024 // 64 KB — this endpoint only needs a small JSON object
 
 export default defineEventHandler(async (event) => {
-  const { baseUrl, apiKey } = (await readJsonBodyCapped(event, MAX_BODY_BYTES)) ?? {}
-  if (!baseUrl || !apiKey)
-    throw createError({ statusCode: 400, statusMessage: 'baseUrl and apiKey are required' })
+  const body = (await readJsonBodyCapped(event, MAX_BODY_BYTES)) ?? {}
+  const password = resolveSessionPassword(event)
+  const session = password ? await readSession(event, sessionConfig(password, import.meta.dev)) : null
+  const creds = resolveIngestCreds(body, session)
+  if (!creds)
+    throw createError({ statusCode: 401, statusMessage: 'Not connected — provide baseUrl and apiKey' })
+  const { baseUrl, apiKey } = creds
 
   let host: string
   try {
