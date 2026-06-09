@@ -8,6 +8,8 @@ live, when schedules fire, and which credentials are shared.
 n8n's own editor shows you one workflow at a time. This shows you all of them at
 once.
 
+https://github.com/user-attachments/assets/82ca52b6-0eb6-4f71-9ae2-a24763053106
+
 ## Features
 
 - **Workflow map** — every workflow as a node, edges drawn between workflows
