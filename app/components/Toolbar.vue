@@ -12,6 +12,17 @@ const showUnresolved = ref(false)
 
 const tags = computed(() => allTags(store.graph))
 const results = computed(() => searchGraph(store.graph, store.searchQuery).slice(0, 10))
+const searchFocused = ref(false)
+
+function onSearchKey(e: KeyboardEvent) {
+  if (e.key === 'Escape') {
+    store.searchQuery = ''
+    searchFocused.value = false;
+    (e.target as HTMLElement).blur()
+  } else if (e.key === 'Enter' && results.value.length) {
+    pick(results.value[0]!.workflowId)
+  }
+}
 
 function toggleTag(tag: string) {
   store.tagFilter = store.tagFilter.includes(tag)
@@ -51,7 +62,14 @@ async function onUpload(e: Event) {
       <template v-else>
         <div class="row">
           <input v-model="baseUrl" placeholder="https://n8n.example.com" />
-          <input v-model="apiKey" type="password" placeholder="API key" />
+          <span class="apikey">
+            <input v-model="apiKey" type="password" placeholder="API key" />
+            <span class="help" tabindex="0" aria-label="API key permissions">?
+              <span class="tip">This app only reads workflows. Create the n8n API key with read-only
+                scopes: <strong>Workflow: List</strong> and <strong>Workflow: Read</strong>. No
+                credential, write, or other access is needed.</span>
+            </span>
+          </span>
           <button :disabled="store.loading" @click="store.loadFromApi(baseUrl, apiKey)">Load via API</button>
         </div>
         <div class="row">
@@ -63,9 +81,10 @@ async function onUpload(e: Event) {
     </details>
 
     <div v-if="store.graph" class="row search">
-      <input v-model="store.searchQuery" placeholder="Search workflows / webhooks…" />
-      <ul v-if="results.length" class="results">
-        <li v-for="r in results" :key="r.workflowId + r.label" @click="pick(r.workflowId)">
+      <input v-model="store.searchQuery" placeholder="Search workflows / webhooks…"
+             @focus="searchFocused = true" @blur="searchFocused = false" @keydown="onSearchKey" />
+      <ul v-if="results.length && searchFocused" class="results">
+        <li v-for="r in results" :key="r.workflowId + r.label" @mousedown.prevent="pick(r.workflowId)">
           <span class="kind">{{ r.kind }}</span> {{ r.label }}
         </li>
       </ul>
@@ -102,6 +121,16 @@ button { background: var(--accent-dim); color: var(--accent); border: 1px solid 
 button:hover { filter: brightness(1.15); }
 .disconnect { background: var(--bg-3); color: var(--text); border: 1px solid var(--border); }
 .hint { color: var(--text-faint); font-size: 11px; }
+.apikey { position: relative; display: inline-flex; align-items: center; gap: 6px; }
+.help { display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px;
+  border-radius: 50%; background: var(--bg-3); color: var(--text-dim); border: 1px solid var(--border);
+  font-size: 11px; cursor: help; position: relative; }
+.help:hover, .help:focus { color: var(--text); outline: none; }
+.help .tip { display: none; position: absolute; top: 100%; left: 0; margin-top: 6px; width: 240px;
+  background: var(--bg-2); border: 1px solid var(--border); border-radius: var(--radius-m);
+  padding: 8px 10px; font-size: 11px; line-height: 1.5; color: var(--text-dim);
+  box-shadow: var(--shadow-1); z-index: 50; cursor: default; }
+.help:hover .tip, .help:focus .tip { display: block; }
 .search { position: relative; }
 .search input { width: 280px; }
 .search .results { position: absolute; top: 100%; left: 0; margin-top: 4px; background: var(--bg-2); border: 1px solid var(--border);
