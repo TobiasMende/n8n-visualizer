@@ -34,6 +34,13 @@ export async function runTour(page: Page, jsonPath: string): Promise<void> {
   await page.click('button[aria-label="Fit view"]')
   await pause(1200)
 
+  // 3b. First-class resources: data tables already show as nodes; open the
+  // Layers panel and switch on Credentials so they join the map as nodes too.
+  // Guarded so a UI change can't break the run.
+  await showResourcesLayer(page)
+  await page.click('button[aria-label="Fit view"]')
+  await pause(2500)
+
   // 4. Webhooks
   await page.click('nav.rail button[title="Webhooks"]')
   await pause(3000)
@@ -67,4 +74,20 @@ async function selectViaSearch(page: Page, query: string): Promise<void> {
   await pause(900)
   const result = page.locator('.search .results li').first()
   if (await result.count()) await result.click()
+}
+
+// Open the Layers panel and enable the Credentials resource layer so credentials
+// appear as first-class nodes on the map (data tables are on by default). Best
+// effort: any missing control is skipped rather than failing the tour.
+async function showResourcesLayer(page: Page): Promise<void> {
+  try {
+    const layers = page.locator('button:has-text("Layers")').first()
+    if (!(await layers.count())) return
+    await layers.click()
+    await pause(800)
+    const credToggle = page.locator('label:has-text("Credentials") input[type="checkbox"]').first()
+    if (await credToggle.count()) { await credToggle.check().catch(() => {}); await pause(1500) }
+    await layers.click().catch(() => {})
+    await pause(500)
+  } catch { /* leave the map as-is */ }
 }
