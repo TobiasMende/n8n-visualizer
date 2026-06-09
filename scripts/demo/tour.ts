@@ -15,15 +15,19 @@ export async function runTour(page: Page, jsonPath: string): Promise<void> {
   await page.waitForSelector('.vue-flow__node', { timeout: 30_000 })
   await pause(1500)
 
-  // 3. Map: fit, zoom, pan, select a node (auto trace-flow), dwell
+  // 3. Map: fit so the whole graph is in frame, then select a node (auto
+  // trace-flow) while it's still visible. With a large instance, zooming first
+  // would push nodes outside the viewport and make the click un-actionable, so
+  // select right after fitView and use force as a belt-and-suspenders guard.
   await page.click('button[aria-label="Fit view"]')
-  await pause(1200)
-  await page.click('button[aria-label="Zoom in"]')
-  await page.click('button[aria-label="Zoom in"]')
-  await pause(1000)
+  await pause(1500)
   const node = page.locator('.vue-flow__node').first()
-  await node.click()
+  await node.click({ force: true })
   await pause(2500)
+  // Zoom in for visual interest after the selection, then fit again.
+  await page.click('button[aria-label="Zoom in"]')
+  await page.click('button[aria-label="Zoom in"]')
+  await pause(1200)
   await page.click('button[aria-label="Fit view"]')
   await pause(1200)
 
