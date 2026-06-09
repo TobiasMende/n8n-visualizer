@@ -32,3 +32,6 @@ logs
 
 # Local n8n export (contains private data)
 workflows.json
+
+scripts/demo/out/*.mp4
+scripts/demo/out/*.webm
