@@ -1,5 +1,5 @@
 import type { RawWorkflow, RawNode } from '#shared/types/graph'
-import { Faker } from './fakes'
+import { Faker, WORKFLOW_NAMES, CRED_NAMES, TAG_NAMES } from './fakes'
 import { prettifyType } from '#shared/prettify'
 
 const URL_RE = /^https?:\/\//i
@@ -133,9 +133,24 @@ export function anonymizeWorkflows(workflows: RawWorkflow[]): RawWorkflow[] {
 // node parameters are neither scrubbed nor netted. Parameter *values* render in
 // no view, so they cannot reach the recorded video; the temp JSON is local-only
 // and deleted on exit. Detecting them generically risks false-positive aborts.
+// The vocabulary our fakes are built from: the pools plus every type-derived
+// display name present in the dataset. A name that is a substring of any of
+// these can legitimately appear inside an emitted fake (a node named "Tool"
+// collides with the fake "Tool Workflow"; a default name equals its type's
+// display name), so it must NOT be treated as a leaked secret — only as a
+// coincidental, non-identifying overlap. This is self-consistent: if such a
+// word shows up in the output it came from one of these fakes.
+function fakeVocabulary(workflows: RawWorkflow[]): string[] {
+  const types = new Set<string>()
+  for (const wf of workflows) for (const n of wf.nodes) types.add(n.type)
+  return [...WORKFLOW_NAMES, ...CRED_NAMES, ...TAG_NAMES, ...[...types].map(prettifyType)]
+}
+
 function collectSecrets(workflows: RawWorkflow[]): string[] {
+  const vocab = fakeVocabulary(workflows)
+  const isBenign = (s: string) => vocab.some(v => v.includes(s))
   const out = new Set<string>()
-  const add = (s?: string) => { if (s && s.trim().length >= 4) out.add(s.trim()) }
+  const addName = (s?: string) => { const t = s?.trim(); if (t && t.length >= 4 && !isBenign(t)) out.add(t) }
   const scan = (value: unknown) => {
     if (typeof value === 'string') {
       if (URI_RE.test(value)) {
@@ -148,19 +163,15 @@ function collectSecrets(workflows: RawWorkflow[]): string[] {
     if (value && typeof value === 'object') for (const v of Object.values(value)) scan(v)
   }
   for (const wf of workflows) {
-    add(wf.name)
+    addName(wf.name)
     for (const n of wf.nodes) {
-      // Skip default node names that equal (or are a substring of) the
-      // type-derived display name — those are generic and non-identifying, and
-      // their fake legitimately contains them, which would read as a false leak.
-      const def = prettifyType(n.type)
-      if (n.name && !def.includes(n.name)) add(n.name)
-      add(n.webhookId)
-      for (const c of Object.values(n.credentials ?? {})) add(c.name)
+      addName(n.name)
+      if (n.webhookId && n.webhookId.trim().length >= 4) out.add(n.webhookId.trim())
+      for (const c of Object.values(n.credentials ?? {})) addName(c.name)
       if (n.parameters) scan(n.parameters)
     }
     if (wf.settings) scan(wf.settings)
-    for (const t of wf.tags ?? []) add(typeof t === 'string' ? t : t.name)
+    for (const t of wf.tags ?? []) addName(typeof t === 'string' ? t : t.name)
   }
   return [...out]
 }

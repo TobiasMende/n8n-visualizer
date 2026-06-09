@@ -211,3 +211,21 @@ describe('anonymizeWorkflows — drops undeclared API fields (pinData/staticData
     expect(() => assertNoLeak(wf, out)).not.toThrow()
   })
 })
+
+describe('anonymizeWorkflows — generic name collisions are not false leaks', () => {
+  it('does not abort when a node named "Tool" collides with a type-derived fake', () => {
+    const wf: RawWorkflow[] = [{ id: 'w', name: 'W', nodes: [
+      { id: 'a', name: 'Tool', type: 'n8n-nodes-base.set', parameters: {} },
+      { id: 'b', name: 'wf', type: '@n8n/n8n-nodes-langchain.toolWorkflow', parameters: {} },
+    ] }]
+    const out = anonymizeWorkflows(wf)
+    expect(() => assertNoLeak(wf, out)).not.toThrow()
+  })
+
+  it('still catches a genuinely identifying multi-word name that survives', () => {
+    const wf: RawWorkflow[] = [{ id: 'w', name: 'Acme Quarterly Revenue Reconciler', nodes: [] }]
+    const out = anonymizeWorkflows(wf)
+    out[0].name = 'Acme Quarterly Revenue Reconciler'
+    expect(() => assertNoLeak(wf, out)).toThrow(/leak/i)
+  })
+})

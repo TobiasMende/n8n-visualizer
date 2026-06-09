@@ -1,16 +1,16 @@
 import { prettifyType } from '#shared/prettify'
 
-const WORKFLOW_NAMES = [
+export const WORKFLOW_NAMES = [
   'Order Sync', 'Lead Enrichment', 'Invoice Pipeline', 'Support Triage',
   'Daily Digest', 'Inventory Reconcile', 'Signup Onboarding', 'Churn Alert',
   'Payment Retry', 'Report Builder', 'Data Backfill', 'Webhook Relay',
   'Slack Notifier', 'CRM Updater', 'Email Campaign', 'Image Resizer',
 ]
-const CRED_NAMES = [
+export const CRED_NAMES = [
   'Acme API', 'Mailer SMTP', 'Warehouse DB', 'Billing OAuth',
   'Storage S3', 'Analytics Key', 'Chat Token', 'CRM Account',
 ]
-const TAG_NAMES = ['production', 'internal', 'finance', 'marketing', 'ops', 'experimental']
+export const TAG_NAMES = ['production', 'internal', 'finance', 'marketing', 'ops', 'experimental']
 const SLUG = 'abcdefghijklmnopqrstuvwxyz0123456789'
 
 function pick(pool: string[], i: number): string {
