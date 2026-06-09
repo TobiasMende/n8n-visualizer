@@ -101,51 +101,6 @@ server/       Server logic
 shared/       types + utilities shared between app and server
 ```
 
-## Deployment
-
-The app works as a server proxy: the **server** fetches your workflows from the
-n8n API, so a user's API key and workflows pass through it in memory (never
-written to disk, never logged).
-
-**Run it on a Node serverless runtime** (Vercel/Netlify Node functions, a
-container, or a VPS) — **not a true edge runtime** (CF Workers, Vercel Edge).
-The SSRF guard needs Node's DNS resolution and socket pinning, which edge
-runtimes don't provide.
-
-What's already hardened for public hosting:
-
-- **SSRF guard** (`server/ingest/safe-fetch.ts`) — all outbound calls to a
-  user-supplied host resolve DNS first, reject private/loopback/link-local/CGNAT
-  /cloud-metadata addresses, pin the connection to the validated IP (defeats DNS
-  rebinding), re-validate every redirect hop, and cap the response size.
-- **XSS** — `baseUrl` is scheme-checked server-side and deep-link hrefs are
-  validated client-side, so a crafted `javascript:` URL in an upload can't run.
-- **Body-size cap** — uploads over 5 MB are rejected (`413`).
-- **CSP + security headers** via `nuxt-security` (`connect-src 'self'` —
-  the browser only talks to this origin).
-- **Rate limiting** (`server/middleware/ratelimit.ts`) — the expensive
-  `/api/ingest/*` proxy endpoints are limited per client IP (default 30 req /
-  60 s). On a long-lived server (VPS/container) the in-memory store is enough.
-  On serverless (Vercel/Netlify), set `UPSTASH_REDIS_REST_URL` +
-  `UPSTASH_REDIS_REST_TOKEN` for a shared counter — in-memory counters are
-  per-instance and reset on cold start. See [`.env.example`](.env.example).
-
-### Deploy to Vercel
-
-1. Push this repo to GitHub and import it at
-   [vercel.com/new](https://vercel.com/new). Vercel auto-detects Nuxt and builds
-   it as **Node serverless functions** (not Edge — exactly what the SSRF guard
-   needs).
-2. Create a free [Upstash Redis](https://upstash.com) database and add
-   `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` to the Vercel project
-   env. Without them the limiter falls back to a per-instance memory store that
-   resets on every cold start.
-3. Deploy.
-
-Note: the on-disk node-catalog cache (`.cache/`) is a no-op on ephemeral
-serverless disks, so node display names are re-fetched on cold start. Swapping
-it for a KV store is future work.
-
 ## Contributing
 
 Contributions welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) and the
