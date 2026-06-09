@@ -4,6 +4,7 @@ export const EDGE_COLORS: Record<string, string> = {
   error: '#ef4444',
   trigger: '#f5a623',
   dataTable: '#b48cff',
+  credential: '#ffb454',
 }
 
 export const EDGE_FALLBACK = '#6aa0ff'
