@@ -1,9 +1,7 @@
-import type { WorkflowGraph, WorkflowNode, TriggerType } from '#shared/types/graph'
-
-export type EntryKind = 'webhook' | 'schedule' | 'manual' | 'app' | 'none'
+import type { WorkflowGraph, WorkflowNode, TriggerNode, TriggerKind } from '#shared/types/graph'
 
 export interface Visibility {
-  triggerKinds: Record<EntryKind, boolean>
+  triggerKinds: Record<TriggerKind, boolean>
   hideErrorHandlers: boolean
   linkTypes: Record<'execute' | 'webhookHttp' | 'error', boolean>
   overlays: { credentials: boolean; nodeTypes: boolean }
@@ -12,19 +10,12 @@ export interface Visibility {
 
 export function defaultVisibility(): Visibility {
   return {
-    triggerKinds: { webhook: true, schedule: true, manual: true, app: true, none: true },
+    triggerKinds: { webhook: true, schedule: true, manual: true, app: true, form: true },
     hideErrorHandlers: false,
     linkTypes: { execute: true, webhookHttp: true, error: true },
     overlays: { credentials: false, nodeTypes: false },
     hiddenNodeTypes: [],
   }
-}
-
-const PRIORITY: TriggerType[] = ['webhook', 'schedule', 'app', 'manual']
-
-export function entryKindOf(node: WorkflowNode): EntryKind {
-  for (const k of PRIORITY) if (node.triggers.includes(k)) return k
-  return 'none'
 }
 
 export function errorHandlerIds(graph: WorkflowGraph): Set<string> {
@@ -34,17 +25,17 @@ export function errorHandlerIds(graph: WorkflowGraph): Set<string> {
 }
 
 export function visibleGraph(graph: WorkflowGraph, v: Visibility): {
-  nodes: WorkflowNode[]; edges: WorkflowGraph['edges']
+  nodes: WorkflowNode[]; edges: WorkflowGraph['edges']; triggerNodes: TriggerNode[]
 } {
   const handlers = errorHandlerIds(graph)
   const nodes = graph.nodes.filter(n => {
-    const kind = entryKindOf(n)
-    if (v.triggerKinds[kind] === false) return false
     if (v.hideErrorHandlers && handlers.has(n.id)) return false
     return true
   })
   const ids = new Set(nodes.map(n => n.id))
   const edges = graph.edges.filter(e =>
-    v.linkTypes[e.type] && ids.has(e.source) && ids.has(e.target))
-  return { nodes, edges }
+    v.linkTypes[e.type as keyof typeof v.linkTypes] && ids.has(e.source) && ids.has(e.target))
+  const triggerNodes = graph.triggerNodes.filter(t =>
+    v.triggerKinds[t.kind] !== false && ids.has(t.workflowId))
+  return { nodes, edges, triggerNodes }
 }
