@@ -3,9 +3,9 @@ import type { Page } from 'playwright'
 const FAKE_HOST = 'https://n8n.demo.example'
 const pause = (ms: number) => new Promise(r => setTimeout(r, ms))
 
-export async function runTour(page: Page, jsonPath: string): Promise<void> {
+export async function runTour(page: Page, jsonPath: string, appUrl = 'http://localhost:3000'): Promise<void> {
   // 1. Load app
-  await page.goto('http://localhost:3000')
+  await page.goto(appUrl)
   await page.waitForSelector('.toolbar', { timeout: 30_000 })
   await pause(1000)
 

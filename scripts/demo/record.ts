@@ -13,6 +13,18 @@ import { promptCreds } from './prompt'
 const OUT_DIR = join(import.meta.dirname, 'out')
 const keep = process.argv.includes('--keep')
 
+// --app-url <url> / --app-url=<url> points the tour at a specific visualizer
+// instance (e.g. a deployed n8viz). Defaults to the local dev server.
+function argValue(flag: string): string | undefined {
+  const argv = process.argv
+  const eq = argv.find(a => a.startsWith(`${flag}=`))
+  if (eq) return eq.slice(flag.length + 1)
+  const i = argv.indexOf(flag)
+  return i >= 0 ? argv[i + 1] : undefined
+}
+const appUrl = (argValue('--app-url') ?? 'http://localhost:3000').replace(/\/+$/, '')
+const isLocalApp = /^https?:\/\/(localhost|127\.0\.0\.1)(:|\/|$)/.test(appUrl)
+
 async function main() {
   const { baseUrl, apiKey, allowLocal } = await promptCreds(process.argv.slice(2))
 
@@ -46,8 +58,9 @@ async function main() {
   }))
 
   mkdirSync(OUT_DIR, { recursive: true })
-  const server = await startServer()
-  console.log(`App ready at ${server.url} (spawned: ${server.spawned})`)
+  // Only manage a local dev server; a remote app URL is used as-is.
+  const server = isLocalApp ? await startServer(appUrl) : { url: appUrl, stop: () => {}, spawned: false }
+  console.log(`Recording against ${server.url}${server.spawned ? ' (spawned dev server)' : ''}`)
 
   let browser: Browser | null = null
   let webm: string | null = null
@@ -59,7 +72,7 @@ async function main() {
     })
     const page = await context.newPage()
     try {
-      await runTour(page, jsonPath)
+      await runTour(page, jsonPath, server.url)
     } finally {
       await context.close() // flushes the video file
     }

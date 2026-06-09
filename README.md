@@ -104,7 +104,9 @@ with a realistic fake, drives the app through all five views, and writes
 `scripts/demo/out/n8nviz-demo-<timestamp>.mp4`.
 
 Flags: `--keep` (retain temp files for debugging), `--allow-local` (permit a
-loopback/private self-hosted instance, bypassing the SSRF guard).
+loopback/private self-hosted instance, bypassing the SSRF guard), `--app-url
+<url>` (record against a specific visualizer instead of the local dev server,
+e.g. a deployed `https://n8viz.example.com`).
 
 Requires `ffmpeg` (macOS: `brew install ffmpeg`) and a one-time
 `bunx playwright install chromium`.
