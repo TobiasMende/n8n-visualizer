@@ -80,6 +80,7 @@ export const useGraphStore = defineStore('graph', () => {
             triggerKinds: { ...d.triggerKinds, ...(p.visibility.triggerKinds ?? {}) },
             hideErrorHandlers: !!p.visibility.hideErrorHandlers,
             linkTypes: { ...d.linkTypes, ...(p.visibility.linkTypes ?? {}) },
+            resources: { ...d.resources, ...(p.visibility.resources ?? {}) },
             overlays: { ...d.overlays, ...(p.visibility.overlays ?? {}) },
             hiddenNodeTypes: Array.isArray(p.visibility.hiddenNodeTypes) ? p.visibility.hiddenNodeTypes : [],
           }

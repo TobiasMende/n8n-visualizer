@@ -1,13 +1,13 @@
 import type { WorkflowGraph } from '#shared/types/graph'
 
-export interface OverlayNode { id: string; kind: 'credential' | 'nodeType' | 'dataTable'; label: string; x: number; y: number }
+export interface OverlayNode { id: string; kind: 'nodeType'; label: string; x: number; y: number }
 export interface OverlayEdge { id: string; source: string; target: string; kind: 'uses' | 'contains' }
 interface Point { x: number; y: number }
 
 export function overlayNodesAndEdges(
   graph: WorkflowGraph,
   basePos: Map<string, Point>,
-  layers: { credentials: boolean; nodeTypes: boolean; dataTables: boolean },
+  layers: { nodeTypes: boolean },
   hiddenNodeTypes: string[] = [],
 ): { nodes: OverlayNode[]; edges: OverlayEdge[] } {
   const nodes: OverlayNode[] = []
@@ -18,40 +18,6 @@ export function overlayNodesAndEdges(
     const p = basePos.get(parentId) ?? { x: 0, y: 0 }
     const angle = (i % 8) * (Math.PI / 4)
     return { x: p.x + Math.cos(angle) * 90, y: p.y + Math.sin(angle) * 90 }
-  }
-
-  if (layers.credentials) {
-    const baseIds = new Set(graph.nodes.map(n => n.id))
-    for (const c of graph.credentials) {
-      if (c.workflowIds.length === 0) continue
-      const id = `cred:${c.type}:${c.id ?? c.name}`
-      if (!seen.has(id)) {
-        const pos = place(c.workflowIds[0] ?? '', nodes.length)
-        nodes.push({ id, kind: 'credential', label: c.name, x: pos.x, y: pos.y })
-        seen.add(id)
-      }
-      for (const wfId of c.workflowIds) {
-        if (!baseIds.has(wfId)) continue
-        edges.push({ id: `e:${wfId}:${id}`, source: wfId, target: id, kind: 'uses' })
-      }
-    }
-  }
-
-  if (layers.dataTables) {
-    const baseIds = new Set(graph.nodes.map(n => n.id))
-    for (const t of graph.dataTables) {
-      if (t.workflowIds.length === 0) continue
-      const id = `datatable:${t.id}`
-      if (!seen.has(id)) {
-        const pos = place(t.workflowIds[0] ?? '', nodes.length)
-        nodes.push({ id, kind: 'dataTable', label: t.name, x: pos.x, y: pos.y })
-        seen.add(id)
-      }
-      for (const wfId of t.workflowIds) {
-        if (!baseIds.has(wfId)) continue
-        edges.push({ id: `e:${wfId}:${id}`, source: wfId, target: id, kind: 'uses' })
-      }
-    }
   }
 
   if (layers.nodeTypes) {
