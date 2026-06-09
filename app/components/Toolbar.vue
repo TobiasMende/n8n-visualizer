@@ -70,9 +70,11 @@ async function onUpload(e: Event) {
           <span class="apikey">
             <input v-model="apiKey" type="password" placeholder="API key" />
             <span class="help" tabindex="0" aria-label="API key permissions">?
-              <span class="tip">This app only reads workflows. Create the n8n API key with read-only
-                scopes: <strong>Workflow: List</strong> and <strong>Workflow: Read</strong>. No
-                credential, write, or other access is needed.</span>
+              <span class="tip">This app only reads. Required scopes:
+                <strong>Workflow: List</strong> and <strong>Workflow: Read</strong>.
+                Optional read-only scopes <strong>Credential: List</strong> and
+                <strong>Data Table: List</strong> enrich the credential and data-table
+                views with unused items and extra metadata. No write access is ever needed.</span>
             </span>
           </span>
           <button :disabled="store.loading" @click="store.loadFromApi(baseUrl, apiKey)">Load via API</button>
