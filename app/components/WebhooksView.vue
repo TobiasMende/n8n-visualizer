@@ -5,6 +5,7 @@ import { webhookRows, callersOf } from '~/composables/useWebhookView'
 import { matchesQuery, tagsMatch } from '~/composables/useViewFilter'
 import { workflowTagsMap } from '~/composables/useGraphLookup'
 import { onActivate } from '~/composables/useA11yClick'
+import { triggerNodeId } from '~/composables/useTriggerFocus'
 
 const store = useGraphStore()
 const expanded = ref<string | null>(null)
@@ -25,7 +26,11 @@ const rows = computed(() => webhookRows(store.graph).filter(r =>
 
 const openCount = computed(() => rows.value.filter(r => !r.secured).length)
 
-function jump(row: { workflowId: string }) { store.selectedId = row.workflowId; store.view = 'map' }
+function jump(row: { workflowId: string; method: string; path: string }) {
+  const trigId = triggerNodeId(store.graph, row.workflowId, 'webhook', `${row.method} /${row.path}`)
+  store.goToMapNode({ focusId: trigId ?? row.workflowId, workflowId: row.workflowId, ensureTrigger: 'webhook' })
+}
+function jumpWorkflow(id: string) { store.goToMapNode({ focusId: id, workflowId: id }) }
 function copy(url: string) { if (import.meta.client) navigator.clipboard?.writeText(url) }
 function toggle(id: string) { expanded.value = expanded.value === id ? null : id }
 </script>
@@ -52,8 +57,8 @@ function toggle(id: string) { expanded.value = expanded.value === id ? null : id
       </template>
       <template #cell-workflow="{ row }">
         <a class="wf" role="button" tabindex="0"
-          @click.stop="jump(row)"
-          @keydown.stop="onActivate(() => jump(row))">{{ row.workflow }}</a>
+          @click.stop="jumpWorkflow(row.workflowId)"
+          @keydown.stop="onActivate(() => jumpWorkflow(row.workflowId))">{{ row.workflow }}</a>
       </template>
       <template #cell-active="{ row }"><span :class="row.active ? 'on' : 'off'">●</span></template>
     </DataTable>

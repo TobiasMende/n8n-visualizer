@@ -27,13 +27,17 @@ const rows = computed(() => dataTableRows(store.graph).filter(r =>
 const showUploadHint = computed(() => store.connection === null && rows.value.length > 0)
 
 function toggle(id: string) { expanded.value = expanded.value === id ? null : id }
-function jump(id: string) { store.selectedId = id; store.view = 'map' }
+function jumpWorkflow(id: string) { store.goToMapNode({ focusId: id, workflowId: id }) }
+function jumpDataTable(r: { id: string }) {
+  const dtId = `datatable:${r.id}`
+  store.goToMapNode({ focusId: dtId, dataTableId: dtId, ensure: 'dataTables' })
+}
 </script>
 
 <template>
   <div class="wrap">
     <p v-if="showUploadHint" class="hint">Connect with an API token to see unused tables and column details.</p>
-    <DataTable :columns="columns" :rows="rows" :row-key="(r) => r.id">
+    <DataTable :columns="columns" :rows="rows" :row-key="(r) => r.id" @row-click="jumpDataTable">
       <template #cell-name="{ row }">
         <strong>{{ row.name }}</strong>
         <Badge v-if="row.unused" class="unused">unused</Badge>
@@ -41,8 +45,8 @@ function jump(id: string) { store.selectedId = id; store.view = 'map' }
         <ul v-if="expanded === row.id" class="wflist">
           <li v-for="w in dataTableWorkflows(store.graph, row.id)" :key="w.id"
               role="button" tabindex="0"
-              @click.stop="jump(w.id)"
-              @keydown.stop="onActivate(() => jump(w.id))">↳ {{ w.name }}</li>
+              @click.stop="jumpWorkflow(w.id)"
+              @keydown.stop="onActivate(() => jumpWorkflow(w.id))">↳ {{ w.name }}</li>
         </ul>
       </template>
       <template #cell-operations="{ row }">

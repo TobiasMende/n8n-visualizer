@@ -30,19 +30,19 @@ onMounted(() => { store.restoreConnection() })
     <SidePanel v-if="store.selected && store.view === 'map'" :node="store.selected"
       :links="workflowLinks(store.graph, store.selected.id)"
       :resources="workflowResources(store.graph, store.selected.id)"
-      @close="store.selectedId = null" @select="store.selectedId = $event"
-      @select-cred="(id) => { store.selectedCredId = id; store.selectedId = null; store.selectedDataTableId = null; store.focusNodeId = id }"
-      @select-data-table="(id) => { store.selectedDataTableId = id; store.selectedId = null; store.selectedCredId = null; store.focusNodeId = id }"
+      @close="store.selectedId = null" @select="(id) => store.goToMapNode({ focusId: id, workflowId: id })"
+      @select-cred="(id) => store.goToMapNode({ focusId: id, credId: id, ensure: 'credentials' })"
+      @select-data-table="(id) => store.goToMapNode({ focusId: id, dataTableId: id, ensure: 'dataTables' })"
       @select-trigger="(id) => { store.focusNodeId = id }" />
     <CredentialPanel v-if="store.selectedCredential && store.view === 'map'"
       :credential="store.selectedCredential"
       :workflows="credentialWorkflows(store.graph, store.selectedCredential.id, store.selectedCredential.type, store.selectedCredential.name)"
       @close="store.selectedCredId = null"
-      @select="(id) => { store.selectedId = id; store.selectedCredId = null }" />
+      @select="(id) => store.goToMapNode({ focusId: id, workflowId: id })" />
     <DataTablePanel v-if="store.selectedDataTable && store.view === 'map'"
       :data-table="store.selectedDataTable"
       :workflows="dataTableWorkflows(store.graph, store.selectedDataTable.id)"
       @close="store.selectedDataTableId = null"
-      @select="(id) => { store.selectedId = id; store.selectedDataTableId = null }" />
+      @select="(id) => store.goToMapNode({ focusId: id, workflowId: id })" />
   </AppShell>
 </template>

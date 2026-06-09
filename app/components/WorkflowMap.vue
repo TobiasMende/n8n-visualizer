@@ -18,7 +18,7 @@ import { neighbors } from '~/composables/useNeighbors'
 const store = useGraphStore()
 
 const FLOW_ID = 'main'
-const { fitView, setCenter, viewport, findNode } = useVueFlow(FLOW_ID)
+const { fitView, setCenter, viewport, findNode, onNodesInitialized } = useVueFlow(FLOW_ID)
 
 const showMinimap = ref(true)
 function miniColor(node: Node) {
@@ -171,16 +171,24 @@ function focusSelected() {
   }
 }
 
-onMounted(() => nextTick(() => focusSelected()))
+const hasFocusTarget = computed(() =>
+  !!(store.focusNodeId || store.selectedId || store.selectedCredId || store.selectedDataTableId))
 
-watch(() => store.focusNodeId, (id) => {
-  if (!id) return
-  nextTick(() => {
+function focusTarget() {
+  const candidates = [store.focusNodeId, store.selectedId, store.selectedCredId, store.selectedDataTableId]
+    .filter((id): id is string => !!id)
+  store.focusNodeId = null
+  for (const id of candidates) {
     const n = findNode(id)
-    if (n) centerNode(n as unknown as Node)
-    store.focusNodeId = null
-  })
-})
+    if (n) { centerNode(n as unknown as Node); return }
+  }
+  focusSelected()
+}
+
+onNodesInitialized(() => focusTarget())
+onMounted(() => { if (!hasFocusTarget.value) nextTick(() => focusSelected()) })
+
+watch(() => store.focusNodeId, (id) => { if (id) nextTick(() => focusTarget()) })
 
 watch(() => scoped.value.nodes, (nodes) => {
   if (store.selectedId && !nodes.some(n => n.id === store.selectedId)) store.selectedId = null
@@ -188,7 +196,7 @@ watch(() => scoped.value.nodes, (nodes) => {
 </script>
 
 <template>
-  <VueFlow :id="FLOW_ID" :nodes="nodes" :edges="edges" fit-view-on-init @node-click="onNodeClick" @pane-click="onPaneClick" @nodeMouseEnter="onNodeEnter" @nodeMouseLeave="onNodeLeave">
+  <VueFlow :id="FLOW_ID" :nodes="nodes" :edges="edges" :fit-view-on-init="!hasFocusTarget" @node-click="onNodeClick" @pane-click="onPaneClick" @nodeMouseEnter="onNodeEnter" @nodeMouseLeave="onNodeLeave">
     <template #node-workflow="props">
       <WorkflowNodeCard :data="props.data" />
     </template>

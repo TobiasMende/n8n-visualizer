@@ -27,13 +27,17 @@ const showUploadHint = computed(() => store.connection === null && rows.value.le
 
 function rowKey(r: { type: string; name: string; id: string | null }) { return `${r.type}:${r.name}:${r.id}` }
 function toggle(key: string) { expanded.value = expanded.value === key ? null : key }
-function jump(id: string) { store.selectedId = id; store.view = 'map' }
+function jumpWorkflow(id: string) { store.goToMapNode({ focusId: id, workflowId: id }) }
+function jumpCredential(r: { type: string; name: string; id: string | null }) {
+  const credId = `cred:${r.type}:${r.id ?? r.name}`
+  store.goToMapNode({ focusId: credId, credId, ensure: 'credentials' })
+}
 </script>
 
 <template>
   <div class="wrap">
     <p v-if="showUploadHint" class="hint">Connect with an API token to see unused credentials.</p>
-    <DataTable :columns="columns" :rows="rows" :row-key="(r) => r.type + ':' + r.name + ':' + r.id">
+    <DataTable :columns="columns" :rows="rows" :row-key="(r) => r.type + ':' + r.name + ':' + r.id" @row-click="jumpCredential">
       <template #cell-name="{ row }">
         <strong>{{ row.name }}</strong>
         <Badge v-if="row.unused" class="unused">unused</Badge>
@@ -41,8 +45,8 @@ function jump(id: string) { store.selectedId = id; store.view = 'map' }
         <ul v-if="expanded === rowKey(row)" class="wflist">
           <li v-for="w in credentialWorkflows(store.graph, row.id, row.type, row.name)" :key="w.id"
               role="button" tabindex="0"
-              @click.stop="jump(w.id)"
-              @keydown.stop="onActivate(() => jump(w.id))">↳ {{ w.name }}</li>
+              @click.stop="jumpWorkflow(w.id)"
+              @keydown.stop="onActivate(() => jumpWorkflow(w.id))">↳ {{ w.name }}</li>
         </ul>
       </template>
       <template #cell-displayType="{ row }"><Badge>{{ row.displayType }}</Badge></template>

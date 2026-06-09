@@ -68,6 +68,23 @@ export const useGraphStore = defineStore('graph', () => {
   const view = ref<ViewId>('map')
   const visibility = ref<Visibility>(defaultVisibility())
 
+  function goToMapNode(opts: {
+    focusId: string | null
+    workflowId?: string | null
+    credId?: string | null
+    dataTableId?: string | null
+    ensure?: 'credentials' | 'dataTables'
+    ensureTrigger?: keyof Visibility['triggerKinds']
+  }) {
+    selectedId.value = opts.workflowId ?? null
+    selectedCredId.value = opts.credId ?? null
+    selectedDataTableId.value = opts.dataTableId ?? null
+    if (opts.ensure) visibility.value.resources[opts.ensure] = true
+    if (opts.ensureTrigger) visibility.value.triggerKinds[opts.ensureTrigger] = true
+    focusNodeId.value = opts.focusId
+    view.value = 'map'
+  }
+
   if (import.meta.client) {
     const saved = localStorage.getItem('n8nviz.prefs')
     if (saved) {
@@ -93,5 +110,5 @@ export const useGraphStore = defineStore('graph', () => {
     }, { deep: true })
   }
 
-  return { graph, loading, error, selectedId, selected, selectedCredId, selectedCredential, selectedDataTableId, selectedDataTable, focusNodeId, tagFilter, searchQuery, loadFromApi, loadFromUpload, view, visibility, connection, connectedHost, disconnect, restoreConnection }
+  return { graph, loading, error, selectedId, selected, selectedCredId, selectedCredential, selectedDataTableId, selectedDataTable, focusNodeId, tagFilter, searchQuery, loadFromApi, loadFromUpload, view, visibility, goToMapNode, connection, connectedHost, disconnect, restoreConnection }
 })

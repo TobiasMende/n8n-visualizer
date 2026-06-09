@@ -5,6 +5,7 @@ import { scheduleGroups, formatCountdown } from '~/composables/useScheduleView'
 import { matchesQuery, tagsMatch } from '~/composables/useViewFilter'
 import { workflowTagsMap } from '~/composables/useGraphLookup'
 import { onActivate } from '~/composables/useA11yClick'
+import { triggerNodeId } from '~/composables/useTriggerFocus'
 
 const store = useGraphStore()
 const activeOnly = ref(false)
@@ -25,7 +26,10 @@ const labels: Record<string, string> = {
   'sub-minute': 'Sub-minute', minutes: 'Minutes', hourly: 'Hourly',
   daily: 'Daily', weekly: 'Weekly', monthly: 'Monthly', cron: 'Custom cron',
 }
-function jump(id: string) { store.selectedId = id; store.view = 'map' }
+function jump(row: { workflowId: string; cadenceText: string }) {
+  const trigId = triggerNodeId(store.graph, row.workflowId, 'schedule', row.cadenceText)
+  store.goToMapNode({ focusId: trigId ?? row.workflowId, workflowId: row.workflowId, ensureTrigger: 'schedule' })
+}
 </script>
 
 <template>
@@ -38,8 +42,8 @@ function jump(id: string) { store.selectedId = id; store.view = 'map' }
       <Panel>
         <div v-for="r in g.rows" :key="r.workflowId + r.cadenceText" class="row"
             role="button" tabindex="0"
-            @click="jump(r.workflowId)"
-            @keydown="onActivate(() => jump(r.workflowId))">
+            @click="jump(r)"
+            @keydown="onActivate(() => jump(r))">
           <span class="dot" :class="r.active ? 'on' : 'off'">●</span>
           <span class="wf">{{ r.workflow }}</span>
           <span class="cadence">{{ r.cadenceText }}</span>
