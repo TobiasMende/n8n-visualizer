@@ -1,10 +1,11 @@
-import type { WorkflowGraph } from '#shared/types/graph'
+import type { EntitySource, WorkflowGraph } from '#shared/types/graph'
 import { prettifyType } from '#shared/prettify'
 import { workflowNameMap } from './useGraphLookup'
 
 export interface CredentialRow {
   id: string | null; name: string; type: string; displayType: string
   workflowCount: number; workflowIds: string[]
+  source: EntitySource; unused: boolean
 }
 
 export function credentialRows(graph: WorkflowGraph | null): CredentialRow[] {
@@ -12,6 +13,7 @@ export function credentialRows(graph: WorkflowGraph | null): CredentialRow[] {
   return graph.credentials.map(c => ({
     id: c.id, name: c.name, type: c.type, displayType: prettifyType(c.type),
     workflowCount: c.workflowIds.length, workflowIds: c.workflowIds,
+    source: c.source, unused: c.workflowIds.length === 0,
   }))
 }
 

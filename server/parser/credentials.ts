@@ -11,7 +11,7 @@ export function extractCredentials(workflows: RawWorkflow[]): CredentialRef[] {
         if (existing) {
           if (!existing.workflowIds.includes(wf.id)) existing.workflowIds.push(wf.id)
         } else {
-          byKey.set(key, { id: cred.id ?? null, name: cred.name, type, workflowIds: [wf.id] })
+          byKey.set(key, { id: cred.id ?? null, name: cred.name, type, workflowIds: [wf.id], source: 'inferred' })
         }
       }
     }

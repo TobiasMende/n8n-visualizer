@@ -84,3 +84,33 @@ describe('overlayNodesAndEdges credential edge pruning', () => {
     expect(r.edges).toHaveLength(0)
   })
 })
+
+const dtGraph = {
+  nodes: [{ id: 'wf1', name: 'WF1', active: true, triggers: [], tags: [], webhookPaths: [],
+    summary: { nodeCount: 0, nodeTypes: [], credentials: [], inbound: 0, outbound: 0 }, deepLink: null }],
+  edges: [], triggerNodes: [], unresolved: [], skipped: [], webhooks: [], schedules: [],
+  credentials: [],
+  dataTables: [
+    { id: 'tbl1', name: 'Demo', projectId: 'p', workflowIds: ['wf1'], operations: ['insert'], source: 'inferred' as const },
+    { id: 'tbl2', name: 'Orphan', projectId: 'p', workflowIds: [], operations: [], source: 'api' as const },
+  ],
+  enrichment: { credentials: false, dataTables: false },
+} as unknown as WorkflowGraph
+
+const dtPos = new Map([['wf1', { x: 0, y: 0 }]])
+
+describe('overlayNodesAndEdges dataTables layer', () => {
+  it('emits a node + uses edge for used tables and skips orphans', () => {
+    const { nodes, edges } = overlayNodesAndEdges(dtGraph, dtPos,
+      { credentials: false, nodeTypes: false, dataTables: true })
+    expect(nodes.map(n => n.id)).toEqual(['datatable:tbl1'])
+    expect(nodes[0]).toMatchObject({ kind: 'dataTable', label: 'Demo' })
+    expect(edges).toEqual([{ id: 'e:wf1:datatable:tbl1', source: 'wf1', target: 'datatable:tbl1', kind: 'uses' }])
+  })
+
+  it('emits nothing when the layer is off', () => {
+    const { nodes } = overlayNodesAndEdges(dtGraph, dtPos,
+      { credentials: false, nodeTypes: false, dataTables: false })
+    expect(nodes).toEqual([])
+  })
+})

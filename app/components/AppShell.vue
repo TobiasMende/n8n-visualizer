@@ -6,6 +6,7 @@ const views = [
   { id: 'webhooks', icon: '🔗', label: 'Webhooks' },
   { id: 'schedules', icon: '⏰', label: 'Schedules' },
   { id: 'credentials', icon: '🔑', label: 'Credentials' },
+  { id: 'dataTables', icon: '🗄️', label: 'Data Tables' },
 ] as const
 </script>
 <template>

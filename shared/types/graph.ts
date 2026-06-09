@@ -41,12 +41,33 @@ export interface ScheduleEntry {
   nextFire: string | null
 }
 
+export type EntitySource = 'api' | 'inferred' | 'both'
+
 export interface CredentialRef {
   id: string | null
   name: string
   type: string
   workflowIds: string[]
+  source: EntitySource
+  createdAt?: string
+  updatedAt?: string
 }
+
+export interface DataTableColumn { name: string; type: string }
+
+export interface DataTableRef {
+  id: string
+  name: string
+  projectId: string | null
+  workflowIds: string[]
+  operations: string[]
+  source: EntitySource
+  columns?: DataTableColumn[]
+  createdAt?: string
+  updatedAt?: string
+}
+
+export interface EnrichmentStatus { credentials: boolean; dataTables: boolean }
 
 export interface WorkflowSummary {
   nodeCount: number
@@ -88,4 +109,6 @@ export interface WorkflowGraph {
   webhooks: WebhookEntry[]
   schedules: ScheduleEntry[]
   credentials: CredentialRef[]
+  dataTables: DataTableRef[]
+  enrichment: EnrichmentStatus
 }

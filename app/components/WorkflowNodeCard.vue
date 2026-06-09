@@ -3,7 +3,7 @@ import { computed } from 'vue'
 import { Handle, Position } from '@vue-flow/core'
 import type { TriggerType, TriggerKind } from '#shared/types/graph'
 
-type Kind = 'workflow' | 'credential' | 'nodeType' | 'trigger'
+type Kind = 'workflow' | 'credential' | 'nodeType' | 'trigger' | 'dataTable'
 const props = defineProps<{
   data: {
     kind: Kind; label: string; triggers: TriggerType[]; triggerKind?: TriggerKind
@@ -13,11 +13,12 @@ const props = defineProps<{
 }>()
 
 const triggerIcons: Record<string, string> = { webhook: '⚡', schedule: '⏰', manual: '▶', app: '🧩', form: '📝' }
-const kindIcon: Record<Kind, string> = { workflow: '🗂', credential: '🔑', nodeType: '◆', trigger: '⚡' }
+const kindIcon: Record<Kind, string> = { workflow: '🗂', credential: '🔑', nodeType: '◆', trigger: '⚡', dataTable: '🗄' }
 const accentColor = computed(() =>
   props.data.kind === 'credential' ? 'var(--warn)'
   : props.data.kind === 'nodeType' ? 'var(--link)'
   : props.data.kind === 'trigger' ? '#f5a623'
+  : props.data.kind === 'dataTable' ? '#b48cff'
   : 'var(--accent)')
 const headIcon = computed(() =>
   props.data.kind === 'trigger' ? (triggerIcons[props.data.triggerKind ?? ''] ?? '⚡')
@@ -64,6 +65,9 @@ const headIcon = computed(() =>
 .kind-nodeType { border-style: dashed; border-color: var(--link); }
 .kind-nodeType .accent { display: none; }
 .kind-credential .head, .kind-nodeType .head { padding: 8px 12px; }
+.kind-dataTable { border-color: #b48cff; }
+.kind-dataTable .accent { display: none; }
+.kind-dataTable .head { padding: 8px 12px; }
 .kind-trigger { border-color: #f5a623; min-width: 0; }
 .kind-trigger .head { padding: 6px 10px; }
 .kind-trigger .label { font-size: 12px; }
