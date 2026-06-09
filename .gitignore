@@ -25,3 +25,7 @@ logs
 
 # Superpowers
 .superpowers/
+.vercel
+
+# git worktrees
+.worktrees/
