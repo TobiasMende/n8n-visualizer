@@ -29,3 +29,6 @@ logs
 
 # git worktrees
 .worktrees/
+
+scripts/demo/out/*.mp4
+scripts/demo/out/*.webm
