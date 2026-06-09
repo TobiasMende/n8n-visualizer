@@ -86,18 +86,20 @@ const nodes = computed<Node[]>(() => {
 })
 
 const edges = computed<Edge[]>(() => {
+  const tagOkIds = new Set(visible.value.nodes.filter(n => matchesTags(n, store.tagFilter)).map(n => n.id))
   const baseEdges: Edge[] = visible.value.edges.map(e => {
     const inFlow = !focused.value || flow.value.edgeIds.has(`${e.source}|${e.target}`)
+    const tagOk = tagOkIds.has(e.source) && tagOkIds.has(e.target)
     return {
       id: `${e.source}|${e.target}|${e.type}`, source: e.source, target: e.target, type: 'flow',
       markerEnd: { type: MarkerType.ArrowClosed, color: edgeColor(e.type) },
-      data: { type: e.type, dimmed: !inFlow, emphasized: hovering.value && hover.value.edgeIds.has(`${e.source}|${e.target}`) },
+      data: { type: e.type, dimmed: !inFlow || !tagOk, emphasized: hovering.value && hover.value.edgeIds.has(`${e.source}|${e.target}`) },
     }
   })
   const trigEdges: Edge[] = triggerNodes.value.map(t => ({
     id: `trig-edge:${t.id}`, source: t.id, target: t.workflowId, type: 'flow',
     markerEnd: { type: MarkerType.ArrowClosed, color: edgeColor('trigger') },
-    data: { type: 'trigger', dimmed: focused.value && !flow.value.nodeIds.has(t.workflowId), emphasized: false },
+    data: { type: 'trigger', dimmed: !tagOkIds.has(t.workflowId) || (focused.value && !flow.value.nodeIds.has(t.workflowId)), emphasized: false },
   }))
   const overlayEdges: Edge[] = overlay.value.edges.map(o => ({
     id: o.id, source: o.source, target: o.target,
