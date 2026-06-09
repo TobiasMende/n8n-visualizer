@@ -18,7 +18,7 @@ import { neighbors } from '~/composables/useNeighbors'
 const store = useGraphStore()
 
 const FLOW_ID = 'main'
-const { fitView } = useVueFlow(FLOW_ID)
+const { fitView, setCenter, viewport, findNode } = useVueFlow(FLOW_ID)
 
 const showMinimap = ref(true)
 function miniColor(node: Node) {
@@ -69,6 +69,14 @@ const overlay = computed(() => store.graph
 const flow = computed(() => traceFlow(scoped.value.nodes, scoped.value.edges, store.selectedId))
 const focused = computed(() => store.selectedId != null && flow.value.nodeIds.size > 0)
 
+const resSelId = computed(() => store.selectedCredId ?? store.selectedDataTableId)
+const resFocus = computed(() => {
+  if (!resSelId.value) return null
+  const r = resources.value.nodes.find(n => n.id === resSelId.value)
+  return r ? new Set(r.workflowIds) : null
+})
+const resFocused = computed(() => resFocus.value != null)
+
 const hoveredId = ref<string | null>(null)
 const hover = computed(() => neighbors(scoped.value.edges, focused.value ? null : hoveredId.value))
 const hovering = computed(() => !focused.value && hoveredId.value != null && hover.value.nodeIds.size > 0)
@@ -79,7 +87,7 @@ const nodes = computed<Node[]>(() => {
     data: {
       kind: 'workflow', label: n.name, triggers: n.triggers,
       inbound: n.summary.inbound, outbound: n.summary.outbound, nodeCount: n.summary.nodeCount,
-      dimmed: focused.value && !flow.value.nodeIds.has(n.id),
+      dimmed: (focused.value && !flow.value.nodeIds.has(n.id)) || (resFocused.value && !resFocus.value!.has(n.id)),
       selected: store.selectedId === n.id,
       emphasized: hovering.value && hover.value.nodeIds.has(n.id),
     },
@@ -89,7 +97,7 @@ const nodes = computed<Node[]>(() => {
     data: {
       kind: 'trigger', triggerKind: t.kind, label: t.label, triggers: [],
       workflowId: t.workflowId, inbound: 0, outbound: 0, nodeCount: 0,
-      dimmed: focused.value && !flow.value.nodeIds.has(t.workflowId),
+      dimmed: (focused.value && !flow.value.nodeIds.has(t.workflowId)) || (resFocused.value && !resFocus.value!.has(t.workflowId)),
       selected: store.selectedId === t.workflowId,
     },
   }))
@@ -97,20 +105,21 @@ const nodes = computed<Node[]>(() => {
     id: r.id, type: 'workflow', position: positions.value.get(r.id) ?? { x: 0, y: 0 },
     data: {
       kind: r.kind, label: r.label, triggers: [], inbound: 0, outbound: 0, nodeCount: 0,
-      dimmed: focused.value && !r.workflowIds.some(w => flow.value.nodeIds.has(w)),
+      dimmed: (focused.value && !r.workflowIds.some(w => flow.value.nodeIds.has(w))) || (resFocused.value && r.id !== resSelId.value),
       selected: r.id === store.selectedCredId || r.id === store.selectedDataTableId,
     },
   }))
   const overlayNodes: Node[] = overlay.value.nodes.map(o => ({
     id: o.id, type: 'workflow', position: { x: o.x, y: o.y },
-    data: { kind: o.kind, label: o.label, triggers: [], inbound: 0, outbound: 0, nodeCount: 0, dimmed: focused.value, selected: false },
+    data: { kind: o.kind, label: o.label, triggers: [], inbound: 0, outbound: 0, nodeCount: 0, dimmed: focused.value || resFocused.value, selected: false },
   }))
   return [...base, ...trigNodes, ...resNodes, ...overlayNodes]
 })
 
 const edges = computed<Edge[]>(() => {
   const baseEdges: Edge[] = scoped.value.edges.map(e => {
-    const inFlow = !focused.value || flow.value.edgeIds.has(`${e.source}|${e.target}`)
+    const inFlow = (!focused.value || flow.value.edgeIds.has(`${e.source}|${e.target}`))
+      && (!resFocused.value || (resFocus.value!.has(e.source) && resFocus.value!.has(e.target)))
     return {
       id: `${e.source}|${e.target}|${e.type}`, source: e.source, target: e.target, type: 'flow',
       markerEnd: { type: MarkerType.ArrowClosed, color: edgeColor(e.type) },
@@ -120,16 +129,16 @@ const edges = computed<Edge[]>(() => {
   const trigEdges: Edge[] = triggerNodes.value.map(t => ({
     id: `trig-edge:${t.id}`, source: t.id, target: t.workflowId, type: 'flow',
     markerEnd: { type: MarkerType.ArrowClosed, color: edgeColor('trigger') },
-    data: { type: 'trigger', dimmed: focused.value && !flow.value.nodeIds.has(t.workflowId), emphasized: false },
+    data: { type: 'trigger', dimmed: (focused.value && !flow.value.nodeIds.has(t.workflowId)) || (resFocused.value && !resFocus.value!.has(t.workflowId)), emphasized: false },
   }))
   const resEdges: Edge[] = resources.value.edges.map(e => ({
     id: `res-edge:${e.source}:${e.target}`, source: e.source, target: e.target, type: 'flow',
     markerEnd: { type: MarkerType.ArrowClosed, color: edgeColor(e.kind) },
-    data: { type: e.kind, dimmed: focused.value && !flow.value.nodeIds.has(e.source), emphasized: false },
+    data: { type: e.kind, dimmed: (focused.value && !flow.value.nodeIds.has(e.source)) || (resFocused.value && e.target !== resSelId.value), emphasized: false },
   }))
   const overlayEdges: Edge[] = overlay.value.edges.map(o => ({
     id: o.id, source: o.source, target: o.target,
-    style: { stroke: '#6aa0ff', strokeDasharray: '4 4', opacity: focused.value ? 0.05 : 0.6 },
+    style: { stroke: '#6aa0ff', strokeDasharray: '4 4', opacity: (focused.value || resFocused.value) ? 0.05 : 0.6 },
   }))
   return [...baseEdges, ...trigEdges, ...resEdges, ...overlayEdges]
 })
@@ -139,6 +148,14 @@ function onNodeClick({ node }: { node: Node }) {
   else if (node.data?.kind === 'trigger') { store.selectedId = node.data.workflowId; store.selectedCredId = null; store.selectedDataTableId = null }
   else if (node.data?.kind === 'credential') { store.selectedCredId = node.id; store.selectedId = null; store.selectedDataTableId = null }
   else if (node.data?.kind === 'dataTable') { store.selectedDataTableId = node.id; store.selectedId = null; store.selectedCredId = null }
+  centerNode(node)
+}
+
+function centerNode(node: Node) {
+  const pos = node.computedPosition ?? node.position
+  const w = node.dimensions?.width ?? 0
+  const h = node.dimensions?.height ?? 0
+  setCenter(pos.x + w / 2, pos.y + h / 2, { zoom: viewport.value.zoom, duration: 400 })
 }
 
 function onPaneClick() { store.selectedId = null; store.selectedCredId = null; store.selectedDataTableId = null }
@@ -153,8 +170,16 @@ function focusSelected() {
   }
 }
 
-watch(() => store.selectedId, () => focusSelected())
 onMounted(() => nextTick(() => focusSelected()))
+
+watch(() => store.focusNodeId, (id) => {
+  if (!id) return
+  nextTick(() => {
+    const n = findNode(id)
+    if (n) centerNode(n as unknown as Node)
+    store.focusNodeId = null
+  })
+})
 
 watch(() => scoped.value.nodes, (nodes) => {
   if (store.selectedId && !nodes.some(n => n.id === store.selectedId)) store.selectedId = null

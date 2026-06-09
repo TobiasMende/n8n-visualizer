@@ -2,14 +2,20 @@
 import { computed } from 'vue'
 import type { WorkflowNode } from '#shared/types/graph'
 import type { LinkItem } from '~/composables/useWorkflowLinks'
+import type { WorkflowResources } from '~/composables/useWorkflowResources'
 import { onActivate } from '~/composables/useA11yClick'
 import { safeExternalHref } from '#shared/url'
 import BasePanel from './BasePanel.vue'
 
-const props = withDefaults(defineProps<{ node: WorkflowNode; links?: { inbound: LinkItem[]; outbound: LinkItem[] } }>(), {
+const props = withDefaults(defineProps<{
+  node: WorkflowNode
+  links?: { inbound: LinkItem[]; outbound: LinkItem[] }
+  resources?: WorkflowResources
+}>(), {
   links: () => ({ inbound: [], outbound: [] }),
+  resources: () => ({ credentials: [], dataTables: [], triggers: [] }),
 })
-defineEmits<{ close: []; select: [id: string] }>()
+defineEmits<{ close: []; select: [id: string]; selectCred: [id: string]; selectDataTable: [id: string]; selectTrigger: [id: string] }>()
 
 const safeDeepLink = computed(() => safeExternalHref(props.node.deepLink))
 </script>
@@ -18,12 +24,21 @@ const safeDeepLink = computed(() => safeExternalHref(props.node.deepLink))
   <BasePanel :title="node.name" @close="$emit('close')">
     <p class="meta">
       <span :class="['badge', node.active ? 'on' : 'off']">{{ node.active ? 'active' : 'inactive' }}</span>
-      <span v-for="t in node.triggers" :key="t" class="badge">{{ t }}</span>
     </p>
 
     <a v-if="safeDeepLink" class="deep-link" :href="safeDeepLink" target="_blank" rel="noopener noreferrer">
       Open in n8n ↗
     </a>
+
+    <section v-if="resources.triggers.length">
+      <h3>Triggers</h3>
+      <ul><li v-for="t in resources.triggers" :key="t.id" class="link"
+          role="button" tabindex="0"
+          @click="$emit('selectTrigger', t.id)"
+          @keydown="onActivate(() => $emit('selectTrigger', t.id))">
+        <span class="lt" :data-lt="t.kind">{{ t.kind }}</span> {{ t.label }}
+      </li></ul>
+    </section>
 
     <section v-if="node.tags.length">
       <h3>Tags</h3>
@@ -40,9 +55,24 @@ const safeDeepLink = computed(() => safeExternalHref(props.node.deepLink))
       <ul><li v-for="nt in node.summary.nodeTypes" :key="nt.type">{{ nt.count }}× {{ nt.displayName }}</li></ul>
     </section>
 
-    <section v-if="node.summary.credentials.length">
+    <section v-if="resources.credentials.length">
       <h3>Credentials</h3>
-      <ul><li v-for="c in node.summary.credentials" :key="c">{{ c }}</li></ul>
+      <ul><li v-for="c in resources.credentials" :key="c.id" class="link"
+          role="button" tabindex="0"
+          @click="$emit('selectCred', c.id)"
+          @keydown="onActivate(() => $emit('selectCred', c.id))">
+        <span class="lt" :data-lt="c.type">{{ c.type }}</span> {{ c.name }}
+      </li></ul>
+    </section>
+
+    <section v-if="resources.dataTables.length">
+      <h3>Data Tables</h3>
+      <ul><li v-for="d in resources.dataTables" :key="d.id" class="link"
+          role="button" tabindex="0"
+          @click="$emit('selectDataTable', d.id)"
+          @keydown="onActivate(() => $emit('selectDataTable', d.id))">
+        {{ d.name }}
+      </li></ul>
     </section>
 
     <section>
@@ -77,7 +107,13 @@ const safeDeepLink = computed(() => safeExternalHref(props.node.deepLink))
 }
 .badge.on { background: var(--accent-dim); color: var(--accent); }
 .badge.off { background: var(--bg-3); }
-.deep-link { display: inline-block; margin: 8px 0; font-weight: 600; }
+.deep-link {
+  display: inline-block; margin: 8px 0; padding: 5px 12px;
+  font-size: 13px; font-weight: 600; text-decoration: none;
+  color: var(--accent); background: var(--accent-dim);
+  border: 1px solid var(--accent); border-radius: var(--radius-s);
+}
+.deep-link:hover { background: var(--accent); color: var(--bg-1); }
 section h3 { margin: 14px 0 4px; font-size: 13px; text-transform: uppercase; color: var(--text-dim); }
 .lgroup { margin-bottom: 8px; }
 .lsub { font-size: 11px; color: var(--text-faint); margin: 4px 0; }
