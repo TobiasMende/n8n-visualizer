@@ -2,13 +2,13 @@
 import { computed, ref } from 'vue'
 import { useGraphStore } from '~/stores/graph'
 import { allNodeTypes } from '~/composables/useMapLayers'
-import type { EntryKind } from '~/composables/useVisibility'
+import type { TriggerKind } from '#shared/types/graph'
 
 const store = useGraphStore()
 const open = ref(false)
 
-const triggerLabels: Record<EntryKind, string> = {
-  webhook: 'Webhook', schedule: 'Schedule', manual: 'Manual', app: 'App', none: 'Sub-workflow',
+const triggerLabels: Record<TriggerKind, string> = {
+  webhook: 'Webhook', schedule: 'Schedule', manual: 'Manual', app: 'App', form: 'Form',
 }
 const linkLabels: Record<string, string> = { execute: 'Execute', webhookHttp: 'Webhook → HTTP', error: 'Error' }
 const types = computed(() => allNodeTypes(store.graph))
@@ -24,7 +24,7 @@ function toggleType(t: string) {
   <div class="layers">
     <IconButton :active="open" title="Layers" @click="open = !open">☰ Layers</IconButton>
     <div v-if="open" class="panel">
-      <div class="grp">Workflows</div>
+      <div class="grp">Triggers</div>
       <label v-for="(label, kind) in triggerLabels" :key="kind" class="item">
         <input type="checkbox" v-model="store.visibility.triggerKinds[kind]" /> {{ label }}
       </label>
