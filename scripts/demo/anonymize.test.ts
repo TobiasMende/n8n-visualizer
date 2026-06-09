@@ -167,3 +167,28 @@ describe('assertNoLeak', () => {
     expect(() => assertNoLeak(sample, leaked)).toThrow(/leak/i)
   })
 })
+
+describe('anonymizeWorkflows — names embedded in parameters (cachedResultName)', () => {
+  it('scrubs a workflow name referenced in another workflow’s resource locator', () => {
+    const wf: RawWorkflow[] = [
+      { id: 'wf-target', name: 'Map Refresh Read Replica', nodes: [] },
+      { id: 'wf-caller', name: 'Caller', nodes: [
+        { id: 'n', name: 'Exec', type: 'n8n-nodes-base.executeWorkflow',
+          parameters: { workflowId: { __rl: true, mode: 'list', value: 'wf-target', cachedResultName: 'Map Refresh Read Replica' } } },
+      ] },
+    ]
+    const out = anonymizeWorkflows(wf)
+    expect(JSON.stringify(out)).not.toContain('Map Refresh Read Replica')
+    expect(() => assertNoLeak(wf, out)).not.toThrow()
+  })
+
+  it('scrubs a node name (≤24 chars) referenced in an expression', () => {
+    const wf: RawWorkflow[] = [{ id: 'w', name: 'W', nodes: [
+      { id: 'a', name: 'Read Replica', type: 'n8n-nodes-base.set', parameters: {} },
+      { id: 'b', name: 'Use', type: 'n8n-nodes-base.set', parameters: { ref: "={{ $('Read Replica').item }}" } },
+    ] }]
+    const out = anonymizeWorkflows(wf)
+    expect(JSON.stringify(out)).not.toContain('Read Replica')
+    expect(() => assertNoLeak(wf, out)).not.toThrow()
+  })
+})

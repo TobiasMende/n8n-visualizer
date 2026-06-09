@@ -1,44 +1,45 @@
 import type { RawWorkflow, RawNode } from '#shared/types/graph'
 import { Faker } from './fakes'
+import { prettifyType } from '#shared/prettify'
 
 const URL_RE = /^https?:\/\//i
 const URI_RE = /^[a-z][a-z0-9+.-]*:\/\//i
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const CRON_KEYS = new Set(['rule', 'cronExpression', 'triggerTimes', 'interval'])
 
-function anonValue(key: string, value: unknown, faker: Faker): unknown {
+type Replacer = (s: string) => string
+
+// Single-pass replacement of every known original name with its fake, longest
+// match first. Catches names embedded in node parameters — n8n resource
+// locators store the referenced workflow/credential name in `cachedResultName`,
+// and node expressions reference other nodes by name.
+function buildReplacer(replace: Map<string, string>): Replacer {
+  const keys = [...replace.keys()].filter(k => k.length >= 4).sort((a, b) => b.length - a.length)
+  if (!keys.length) return s => s
+  const re = new RegExp(keys.map(k => k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|'), 'g')
+  return s => s.replace(re, m => replace.get(m) ?? m)
+}
+
+function anonValue(key: string, value: unknown, faker: Faker, replaceStr: Replacer): unknown {
   if (CRON_KEYS.has(key)) return value
   if (typeof value === 'string') {
     if (URL_RE.test(value)) return faker.fakeUrl(value)
     if (URI_RE.test(value)) return 'redacted://demo.example'
     if (EMAIL_RE.test(value)) return 'user@demo.example'
-    return value.length > 24 ? 'Lorem ipsum dolor sit amet.' : value
+    const r = replaceStr(value)
+    return r.length > 24 ? 'Lorem ipsum dolor sit amet.' : r
   }
-  if (Array.isArray(value)) return value.map(v => anonValue(key, v, faker))
+  if (Array.isArray(value)) return value.map(v => anonValue(key, v, faker, replaceStr))
   if (value && typeof value === 'object')
-    return anonParams(value as Record<string, unknown>, faker)
+    return anonParams(value as Record<string, unknown>, faker, replaceStr)
   return value
 }
 
-function anonParams(params: Record<string, unknown>, faker: Faker): Record<string, unknown> {
+function anonParams(params: Record<string, unknown>, faker: Faker, replaceStr: Replacer): Record<string, unknown> {
   const out: Record<string, unknown> = {}
   for (const [k, v] of Object.entries(params)) {
     if (k === 'path' && typeof v === 'string') { out[k] = faker.webhookPath(v); continue }
-    out[k] = anonValue(k, v, faker)
-  }
-  return out
-}
-
-function anonNode(node: RawNode, workflowId: string, faker: Faker): RawNode {
-  const out: RawNode = { ...node, name: faker.nodeName(workflowId, node.type) }
-  if (node.webhookId) out.webhookId = faker.webhookId(node.webhookId)
-  if (node.parameters) out.parameters = anonParams(node.parameters, faker)
-  if (node.credentials) {
-    out.credentials = {}
-    for (const [slot, cred] of Object.entries(node.credentials)) {
-      const key = cred.id ?? cred.name ?? slot
-      out.credentials[slot] = { ...cred, name: faker.credName(key) }
-    }
+    out[k] = anonValue(k, v, faker, replaceStr)
   }
   return out
 }
@@ -55,16 +56,53 @@ function remapConnections(conns: Record<string, any> | undefined, nameMap: Map<s
   return out
 }
 
+interface Prepared {
+  wf: RawWorkflow
+  fakeWfName: string
+  nodeFakes: string[]
+  nameMap: Map<string, string>
+}
+
 export function anonymizeWorkflows(workflows: RawWorkflow[]): RawWorkflow[] {
   const faker = new Faker()
-  const globalNames = new Map<string, string>()
-  for (const wf of workflows) globalNames.set(wf.name, faker.workflowName(wf.id))
-  return workflows.map(wf => {
+  const replace = new Map<string, string>()
+  const remember = (orig: string | undefined, fake: string) => { if (orig) replace.set(orig, fake) }
+
+  // Pass 1: allocate every name fake exactly once, recording original → fake so
+  // names embedded in parameters elsewhere can be scrubbed too.
+  const prepared: Prepared[] = workflows.map(wf => {
+    const fakeWfName = faker.workflowName(wf.id)
+    remember(wf.name, fakeWfName)
     const nameMap = new Map<string, string>()
-    const nodes = wf.nodes.map(n => {
-      const an = anonNode(n, wf.id, faker)
-      nameMap.set(n.name, an.name)
-      return an
+    const nodeFakes = wf.nodes.map(n => {
+      const fake = faker.nodeName(wf.id, n.type)
+      nameMap.set(n.name, fake)
+      remember(n.name, fake)
+      for (const [slot, cred] of Object.entries(n.credentials ?? {}))
+        remember(cred.name, faker.credName(cred.id ?? cred.name ?? slot))
+      return fake
+    })
+    for (const t of wf.tags ?? []) {
+      const orig = typeof t === 'string' ? t : t.name
+      remember(orig, faker.tagName(typeof t === 'string' ? t : (t.id ?? t.name)))
+    }
+    return { wf, fakeWfName, nodeFakes, nameMap }
+  })
+
+  const replaceStr = buildReplacer(replace)
+
+  // Pass 2: build the anonymized output reusing the pre-allocated fakes.
+  return prepared.map(({ wf, fakeWfName, nodeFakes, nameMap }) => {
+    const nodes = wf.nodes.map((n, i): RawNode => {
+      const out: RawNode = { ...n, name: nodeFakes[i] }
+      if (n.webhookId) out.webhookId = faker.webhookId(n.webhookId)
+      if (n.parameters) out.parameters = anonParams(n.parameters, faker, replaceStr)
+      if (n.credentials) {
+        out.credentials = {}
+        for (const [slot, cred] of Object.entries(n.credentials))
+          out.credentials[slot] = { ...cred, name: faker.credName(cred.id ?? cred.name ?? slot) }
+      }
+      return out
     })
     const tags = wf.tags?.map(t =>
       typeof t === 'string'
@@ -72,13 +110,13 @@ export function anonymizeWorkflows(workflows: RawWorkflow[]): RawWorkflow[] {
         : { ...t, name: faker.tagName(t.id ?? t.name) })
     let settings = wf.settings
     if (settings) {
-      settings = anonParams(settings, faker) as typeof wf.settings
+      settings = anonParams(settings, faker, replaceStr) as typeof wf.settings
       const origErr = wf.settings!.errorWorkflow
-      if (typeof origErr === 'string') settings!.errorWorkflow = globalNames.get(origErr) ?? origErr
+      if (typeof origErr === 'string') settings!.errorWorkflow = replace.get(origErr) ?? origErr
     }
     return {
       ...wf,
-      name: faker.workflowName(wf.id),
+      name: fakeWfName,
       nodes,
       connections: remapConnections(wf.connections, nameMap),
       tags,
@@ -108,7 +146,11 @@ function collectSecrets(workflows: RawWorkflow[]): string[] {
   for (const wf of workflows) {
     add(wf.name)
     for (const n of wf.nodes) {
-      add(n.name)
+      // Skip default node names that equal (or are a substring of) the
+      // type-derived display name — those are generic and non-identifying, and
+      // their fake legitimately contains them, which would read as a false leak.
+      const def = prettifyType(n.type)
+      if (n.name && !def.includes(n.name)) add(n.name)
       add(n.webhookId)
       for (const c of Object.values(n.credentials ?? {})) add(c.name)
       if (n.parameters) scan(n.parameters)
