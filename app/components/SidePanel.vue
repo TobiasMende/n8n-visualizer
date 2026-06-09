@@ -1,13 +1,17 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import type { WorkflowNode } from '#shared/types/graph'
 import type { LinkItem } from '~/composables/useWorkflowLinks'
 import { onActivate } from '~/composables/useA11yClick'
+import { safeExternalHref } from '#shared/url'
 import BasePanel from './BasePanel.vue'
 
-withDefaults(defineProps<{ node: WorkflowNode; links?: { inbound: LinkItem[]; outbound: LinkItem[] } }>(), {
+const props = withDefaults(defineProps<{ node: WorkflowNode; links?: { inbound: LinkItem[]; outbound: LinkItem[] } }>(), {
   links: () => ({ inbound: [], outbound: [] }),
 })
 defineEmits<{ close: []; select: [id: string] }>()
+
+const safeDeepLink = computed(() => safeExternalHref(props.node.deepLink))
 </script>
 
 <template>
@@ -17,7 +21,7 @@ defineEmits<{ close: []; select: [id: string] }>()
       <span v-for="t in node.triggers" :key="t" class="badge">{{ t }}</span>
     </p>
 
-    <a v-if="node.deepLink" class="deep-link" :href="node.deepLink" target="_blank" rel="noopener noreferrer">
+    <a v-if="safeDeepLink" class="deep-link" :href="safeDeepLink" target="_blank" rel="noopener noreferrer">
       Open in n8n ↗
     </a>
 

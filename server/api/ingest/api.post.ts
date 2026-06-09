@@ -3,10 +3,14 @@ import { buildGraph } from '../../parser/build-graph'
 import { buildCatalog } from '../../catalog/catalog'
 import { diskCatalogCache } from '../../catalog/disk-cache'
 import { instanceCatalogSource } from '../../catalog/instance-source'
+import { ingestErrorFromSafeFetch } from '../../ingest/validate'
+import { readJsonBodyCapped } from '../../util/body'
 import bundled from '../../catalog/bundled.json'
 
+const MAX_BODY_BYTES = 64 * 1024 // 64 KB — this endpoint only needs a small JSON object
+
 export default defineEventHandler(async (event) => {
-  const { baseUrl, apiKey } = await readBody(event)
+  const { baseUrl, apiKey } = (await readJsonBodyCapped(event, MAX_BODY_BYTES)) ?? {}
   if (!baseUrl || !apiKey)
     throw createError({ statusCode: 400, statusMessage: 'baseUrl and apiKey are required' })
 
@@ -26,7 +30,12 @@ export default defineEventHandler(async (event) => {
     })
     return buildGraph(workflows, baseUrl, { from: new Date().toISOString(), catalog })
   } catch (e: any) {
+    // Match by name, not instanceof: the production bundle can split these
+    // classes across chunks, breaking cross-module instanceof checks.
+    const ingest = e?.name === 'SafeFetchError' ? ingestErrorFromSafeFetch(e) : e
+    if (ingest?.name === 'IngestError' && typeof ingest.statusCode === 'number')
+      throw createError({ statusCode: ingest.statusCode, statusMessage: ingest.message })
     if (e?.statusCode) throw e
-    throw createError({ statusCode: 502, statusMessage: e?.message ?? 'n8n fetch failed' })
+    throw createError({ statusCode: 502, statusMessage: 'n8n fetch failed' })
   }
 })

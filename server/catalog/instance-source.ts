@@ -1,15 +1,17 @@
 import type { CatalogSource } from './catalog'
 import { stripTrailingSlash } from '#shared/url'
+import { safeFetch } from '../ingest/safe-fetch'
 
 // Best-effort: try the instance's node-types description endpoint.
 // Many instances will reject this without editor session auth — that's fine,
 // we return null and the resolver falls back to bundled + prettify.
+// Routed through safeFetch so the SSRF guard applies here too.
 export function instanceCatalogSource(baseUrl: string, apiKey: string): CatalogSource {
   const base = stripTrailingSlash(baseUrl)
   return {
     async fetch(_host) {
       try {
-        const res = await fetch(`${base}/types/nodes.json`, {
+        const res = await safeFetch(`${base}/types/nodes.json`, {
           headers: { 'X-N8N-API-KEY': apiKey, accept: 'application/json' },
           signal: AbortSignal.timeout(8000),
         })

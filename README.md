@@ -101,6 +101,39 @@ server/       Server logic
 shared/       types + utilities shared between app and server
 ```
 
+## Deployment
+
+The app works as a server proxy: the **server** fetches your workflows from the
+n8n API, so a user's API key and workflows pass through it in memory (never
+written to disk, never logged).
+
+**Run it on a Node serverless runtime** (Vercel/Netlify Node functions, a
+container, or a VPS) — **not a true edge runtime** (CF Workers, Vercel Edge).
+The SSRF guard needs Node's DNS resolution and socket pinning, which edge
+runtimes don't provide.
+
+What's already hardened for public hosting:
+
+- **SSRF guard** (`server/ingest/safe-fetch.ts`) — all outbound calls to a
+  user-supplied host resolve DNS first, reject private/loopback/link-local/CGNAT
+  /cloud-metadata addresses, pin the connection to the validated IP (defeats DNS
+  rebinding), re-validate every redirect hop, and cap the response size.
+- **XSS** — `baseUrl` is scheme-checked server-side and deep-link hrefs are
+  validated client-side, so a crafted `javascript:` URL in an upload can't run.
+- **Body-size cap** — uploads over 5 MB are rejected (`413`).
+- **CSP + security headers** via `nuxt-security` (`connect-src 'self'` —
+  the browser only talks to this origin).
+
+Still required before heavy public traffic:
+
+- **Rate limiting.** Not yet implemented. A public proxy is otherwise abusable
+  as free compute. Add a per-IP limiter backed by an external store (e.g.
+  Upstash Redis) — in-memory limiters don't work across serverless invocations.
+
+Note: the on-disk node-catalog cache (`.cache/`) is a no-op on ephemeral
+serverless disks, so node display names are re-fetched on cold start. Swapping
+it for a KV store is future work.
+
 ## Contributing
 
 Contributions welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) and the
