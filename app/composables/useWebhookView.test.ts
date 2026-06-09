@@ -10,7 +10,7 @@ const graph: WorkflowGraph = {
       summary: { nodeCount: 0, nodeTypes: [], credentials: [], inbound: 0, outbound: 1 } },
   ],
   edges: [{ source: 'c', target: 'p', type: 'webhookHttp' }],
-  unresolved: [], skipped: [],
+  triggerNodes: [], unresolved: [], skipped: [],
   webhooks: [{ workflowId: 'p', method: 'POST', path: 'orders', prodUrl: 'https://h/webhook/orders', testUrl: 'https://h/webhook-test/orders' }],
   schedules: [], credentials: [],
 }

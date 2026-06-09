@@ -9,7 +9,7 @@ const graph: WorkflowGraph = {
     { id: 'b', name: 'Beta', active: true, triggers: [], tags: [], webhookPaths: [], deepLink: null,
       summary: { nodeCount: 0, nodeTypes: [], credentials: [], inbound: 0, outbound: 0 } },
   ],
-  edges: [], unresolved: [], skipped: [], webhooks: [], schedules: [],
+  edges: [], triggerNodes: [], unresolved: [], skipped: [], webhooks: [], schedules: [],
   credentials: [
     { id: '1', name: 'My API', type: 'httpHeaderAuth', workflowIds: ['a', 'b'] },
     { id: null, name: 'Slack Bot', type: 'slackApi', workflowIds: ['b'] },
