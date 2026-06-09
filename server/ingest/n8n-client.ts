@@ -32,6 +32,7 @@ export async function fetchAllWorkflows(
 
     const url = new URL(`${base}/api/v1/workflows`)
     url.searchParams.set('limit', String(PAGE_SIZE))
+    url.searchParams.set('excludeArchived', 'true')
     if (cursor) url.searchParams.set('cursor', cursor)
 
     const res: SafeResponse = await fetchImpl(url.toString(), {
