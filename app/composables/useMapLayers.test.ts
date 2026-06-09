@@ -20,8 +20,10 @@ describe('overlayNodesAndEdges', () => {
 
   it('adds a credential node + uses edge when credentials layer on', () => {
     const r = overlayNodesAndEdges(graph, basePos, { credentials: true, nodeTypes: false })
-    expect(r.nodes.some(n => n.kind === 'credential' && n.label === 'My API')).toBe(true)
-    expect(r.edges.some(e => e.source === 'w' && e.target.includes('My API'))).toBe(true)
+    const credNode = r.nodes.find(n => n.kind === 'credential' && n.label === 'My API')
+    expect(credNode).toBeDefined()
+    expect(r.edges.some(e => e.source === 'w' && e.target === credNode!.id)).toBe(true)
+    expect(credNode!.id).toBe('cred:httpHeaderAuth:1')
   })
 
   it('adds a node-type node + contains edge when nodeTypes layer on', () => {
@@ -56,5 +58,29 @@ describe('overlayNodesAndEdges hidden types', () => {
     const r = overlay2(g2, pos2, { credentials: false, nodeTypes: true }, ['n8n-nodes-base.set'])
     const labels = r.nodes.filter(n => n.kind === 'nodeType').map(n => n.label)
     expect(labels).toEqual(['HTTP Request'])
+  })
+})
+
+describe('overlayNodesAndEdges credential edge pruning', () => {
+  it('produces no edge when workflowId is not in the base graph nodes', () => {
+    const graphWithMissing: WorkflowGraph = {
+      nodes: [{ id: 'w', name: 'W', active: true, triggers: [], tags: [], webhookPaths: [], deepLink: null,
+        summary: { nodeCount: 0, nodeTypes: [], credentials: [], inbound: 0, outbound: 0 } }],
+      edges: [], unresolved: [], skipped: [], webhooks: [], schedules: [],
+      credentials: [{ id: '2', name: 'Other API', type: 'httpHeaderAuth', workflowIds: ['missing-wf'] }],
+    }
+    const r = overlayNodesAndEdges(graphWithMissing, new Map([['w', { x: 0, y: 0 }]]), { credentials: true, nodeTypes: false })
+    expect(r.edges).toHaveLength(0)
+  })
+
+  it('produces no node when credential has empty workflowIds', () => {
+    const graphEmpty: WorkflowGraph = {
+      nodes: [],
+      edges: [], unresolved: [], skipped: [], webhooks: [], schedules: [],
+      credentials: [{ id: '3', name: 'Orphan', type: 'httpHeaderAuth', workflowIds: [] }],
+    }
+    const r = overlayNodesAndEdges(graphEmpty, new Map(), { credentials: true, nodeTypes: false })
+    expect(r.nodes).toHaveLength(0)
+    expect(r.edges).toHaveLength(0)
   })
 })

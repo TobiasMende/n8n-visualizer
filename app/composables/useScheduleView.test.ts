@@ -31,4 +31,15 @@ describe('formatCountdown', () => {
   it('handles null nextFire', () => {
     expect(formatCountdown(null, '2026-06-08T02:00:00.000Z')).toBe('—')
   })
+  it('returns due when nextFire is in the past', () => {
+    expect(formatCountdown('2026-06-08T01:00:00.000Z', '2026-06-08T02:00:00.000Z')).toBe('due')
+  })
+  it('formats hours branch correctly', () => {
+    // 90 mins delta: hrs=1, mins%60=30 → "in 1h 30m"
+    expect(formatCountdown('2026-06-08T03:30:00.000Z', '2026-06-08T02:00:00.000Z')).toBe('in 1h 30m')
+  })
+  it('formats days branch correctly', () => {
+    // 25h delta: hrs=25, floor(hrs/24)=1, hrs%24=1 → "in 1d 1h"
+    expect(formatCountdown('2026-06-09T03:00:00.000Z', '2026-06-08T02:00:00.000Z')).toBe('in 1d 1h')
+  })
 })

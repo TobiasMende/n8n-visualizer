@@ -26,6 +26,26 @@ function sideOf(node: Box, p: { x: number; y: number }): Side {
 export function floatingEdgeParams(source: Box, target: Box): {
   sx: number; sy: number; tx: number; ty: number; sourcePos: Side; targetPos: Side
 } {
+  const sc = center(source)
+  const tc = center(target)
+  const dx = tc.x - sc.x
+  const dy = tc.y - sc.y
+
+  if (source.width <= 0 || source.height <= 0 || target.width <= 0 || target.height <= 0
+    || (dx === 0 && dy === 0)) {
+    let sourcePos: Side, targetPos: Side
+    if (dx === 0 && dy === 0) {
+      sourcePos = 'bottom'; targetPos = 'top'
+    } else if (Math.abs(dx) >= Math.abs(dy)) {
+      sourcePos = dx > 0 ? 'right' : 'left'
+      targetPos = dx > 0 ? 'left' : 'right'
+    } else {
+      sourcePos = dy > 0 ? 'bottom' : 'top'
+      targetPos = dy > 0 ? 'top' : 'bottom'
+    }
+    return { sx: sc.x, sy: sc.y, tx: tc.x, ty: tc.y, sourcePos, targetPos }
+  }
+
   const sp = intersection(source, target)
   const tp = intersection(target, source)
   return { sx: sp.x, sy: sp.y, tx: tp.x, ty: tp.y, sourcePos: sideOf(source, sp), targetPos: sideOf(target, tp) }

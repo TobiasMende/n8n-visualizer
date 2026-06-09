@@ -21,14 +21,19 @@ export function overlayNodesAndEdges(
   }
 
   if (layers.credentials) {
+    const baseIds = new Set(graph.nodes.map(n => n.id))
     for (const c of graph.credentials) {
-      const id = `cred:${c.type}:${c.name}`
+      if (c.workflowIds.length === 0) continue
+      const id = `cred:${c.type}:${c.id ?? c.name}`
       if (!seen.has(id)) {
         const pos = place(c.workflowIds[0] ?? '', nodes.length)
         nodes.push({ id, kind: 'credential', label: c.name, x: pos.x, y: pos.y })
         seen.add(id)
       }
-      for (const wfId of c.workflowIds) edges.push({ id: `e:${wfId}:${id}`, source: wfId, target: id, kind: 'uses' })
+      for (const wfId of c.workflowIds) {
+        if (!baseIds.has(wfId)) continue
+        edges.push({ id: `e:${wfId}:${id}`, source: wfId, target: id, kind: 'uses' })
+      }
     }
   }
 

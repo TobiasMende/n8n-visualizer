@@ -1,10 +1,11 @@
 import type { WorkflowGraph } from '#shared/types/graph'
+import { workflowNameMap } from './useGraphLookup'
 
 export interface LinkItem { id: string; name: string; type: string }
 
 export function workflowLinks(graph: WorkflowGraph | null, id: string): { inbound: LinkItem[]; outbound: LinkItem[] } {
   if (!graph) return { inbound: [], outbound: [] }
-  const nameById = new Map(graph.nodes.map(n => [n.id, n.name]))
+  const nameById = workflowNameMap(graph)
   const inbound: LinkItem[] = []
   const outbound: LinkItem[] = []
   for (const e of graph.edges) {

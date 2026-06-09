@@ -1,4 +1,5 @@
 import type { WorkflowGraph, WorkflowNode } from '#shared/types/graph'
+import { tagsMatch } from './useViewFilter'
 
 export function allTags(graph: WorkflowGraph | null): string[] {
   if (!graph) return []
@@ -6,6 +7,5 @@ export function allTags(graph: WorkflowGraph | null): string[] {
 }
 
 export function matchesTags(node: WorkflowNode, selected: string[]): boolean {
-  if (selected.length === 0) return true
-  return node.tags.some(t => selected.includes(t))
+  return tagsMatch(node.tags, selected)
 }
