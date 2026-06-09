@@ -148,7 +148,9 @@ const defaultPinnedFetch: PinnedFetch = async (url, init) => {
       dispatcher: agent,
     })) as unknown as Response
   } finally {
-    agent.close().catch(() => {})
+    // agent.close exists on Node's undici; Bun's undici shim omits it. Guard so
+    // the standalone demo script (run under Bun) doesn't crash on cleanup.
+    Promise.resolve(agent.close?.()).catch(() => {})
   }
 }
 
