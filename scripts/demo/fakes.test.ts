@@ -39,4 +39,11 @@ describe('Faker', () => {
     expect(out).toContain('demo.example')
     expect(out).not.toContain('secret.corp.internal')
   })
+
+  it('disambiguates repeated node types within a workflow', () => {
+    const f = new Faker()
+    expect(f.nodeName('wf1', 'n8n-nodes-base.httpRequest')).toBe('HTTP Request')
+    expect(f.nodeName('wf1', 'n8n-nodes-base.httpRequest')).toBe('HTTP Request 2')
+    expect(f.nodeName('wf2', 'n8n-nodes-base.httpRequest')).toBe('HTTP Request')
+  })
 })
