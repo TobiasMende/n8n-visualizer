@@ -2,6 +2,7 @@ export const EDGE_COLORS: Record<string, string> = {
   execute: '#3ddc97',
   webhookHttp: '#10b981',
   error: '#ef4444',
+  trigger: '#f5a623',
 }
 
 export const EDGE_FALLBACK = '#6aa0ff'
