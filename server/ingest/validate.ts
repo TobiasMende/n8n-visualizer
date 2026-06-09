@@ -1,4 +1,4 @@
-import { SafeFetchError } from './safe-fetch'
+import type { SafeFetchError } from './safe-fetch'
 
 export type IngestErrorKind =
   | 'bad_url'

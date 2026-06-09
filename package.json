@@ -9,7 +9,9 @@
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix"
   },
   "dependencies": {
     "@dagrejs/dagre": "^3.0.0",
@@ -26,8 +28,10 @@
     "vue-router": "^5.1.0"
   },
   "devDependencies": {
+    "@nuxt/eslint": "^1.15.2",
     "@vitejs/plugin-vue": "^6.0.7",
     "@vue/test-utils": "^2.4.11",
+    "eslint": "^10.4.1",
     "happy-dom": "^20.10.2",
     "vitest": "^4.1.8"
   }
