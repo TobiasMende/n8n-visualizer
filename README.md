@@ -1,75 +1,116 @@
-# Nuxt Minimal Starter
+# n8n Visualizer
 
-Look at the [Nuxt documentation](https://nuxt.com/docs/getting-started/introduction) to learn more.
+Visualize an entire [n8n](https://n8n.io) instance as a map. Connect to the n8n
+public API (or drop in a workflow JSON export) and explore how your workflows
+fit together: which ones call each other, what they trigger on, where webhooks
+live, when schedules fire, and which credentials are shared.
 
-## Setup
+n8n's own editor shows you one workflow at a time. This shows you all of them at
+once.
 
-Make sure to install dependencies:
+## Features
 
-```bash
-# npm
-npm install
+- **Workflow map** — every workflow as a node, edges drawn between workflows
+  that link to each other (sub-workflow `execute`, HTTP-to-webhook calls, error
+  workflows). Auto-laid-out with a layered (Dagre) layout and floating edges.
+- **Webhooks view** — every webhook path across the instance, with production
+  and test URLs and HTTP methods.
+- **Schedules view** — every schedule/cron trigger, grouped by cadence
+  (sub-minute → monthly → raw cron) with the next fire time.
+- **Credentials view** — which credentials exist and which workflows share them.
+- **Search, tag filter, and trace flow** — find workflows, filter by tag, and
+  follow how data flows between them.
+- **Deep links** back to the workflow in your n8n editor.
+- **Two ways in**: live API connection, or upload a workflow JSON export — no
+  instance required to try it.
 
-# pnpm
-pnpm install
+## How it works
 
-# yarn
-yarn install
-
-# bun
-bun install
+```
+n8n API / JSON upload
+        │
+        ▼
+  server/ingest      normalize raw workflows
+        │
+        ▼
+  server/parser      build the cross-workflow graph
+        │            (links, triggers, credentials, webhooks, schedules)
+        ▼
+  server/catalog     resolve node type → display name
+        │            (live from instance, cached on disk, bundled fallback)
+        ▼
+   WorkflowGraph  →  Vue Flow map + views
 ```
 
-## Development Server
+Node display names are resolved from the connected instance when available,
+cached on disk for 7 days (`.cache/`), and fall back to a bundled catalog
+(`server/catalog/bundled.json`) and finally a prettified type string.
 
-Start the development server on `http://localhost:3000`:
+## Quick start
+
+Requires [Bun](https://bun.sh) (or npm/pnpm/yarn).
 
 ```bash
-# npm
-npm run dev
-
-# pnpm
-pnpm dev
-
-# yarn
-yarn dev
-
-# bun
+bun install
 bun run dev
 ```
 
-## Production
+Open `http://localhost:3000`.
 
-Build the application for production:
+### Connecting to n8n
 
-```bash
-# npm
-npm run build
+In the toolbar, either:
 
-# pnpm
-pnpm build
+- **Connect via API** — enter your instance base URL (e.g.
+  `https://n8n.example.com`) and an n8n API key
+  ([create one](https://docs.n8n.io/api/authentication/) under
+  Settings → API). The key is sent to this app's server only to fetch your
+  workflows and is kept in the browser `sessionStorage` for the session — it is
+  never persisted server-side.
+- **Upload JSON** — drop an exported workflow (or array of workflows) to explore
+  without connecting anything.
 
-# yarn
-yarn build
+## Scripts
 
-# bun
-bun run build
+| Command | What it does |
+| --- | --- |
+| `bun run dev` | Start the dev server on `http://localhost:3000` |
+| `bun run build` | Build for production |
+| `bun run preview` | Preview the production build |
+| `bun run generate` | Static generate |
+| `bun run test` | Run the test suite (Vitest) |
+| `bun run test:watch` | Run tests in watch mode |
+
+## Tech stack
+
+[Nuxt 4](https://nuxt.com) · [Vue 3](https://vuejs.org) ·
+[Pinia](https://pinia.vuejs.org) · [Vue Flow](https://vueflow.dev) ·
+[Dagre](https://github.com/dagrejs/dagre) · [Vitest](https://vitest.dev)
+
+## Project layout
+
+```
+app/          Nuxt app — pages, components, stores, composables
+server/       Server logic
+  ingest/       fetch from n8n API + normalize uploads
+  parser/       build the cross-workflow graph
+  catalog/      node type → display-name resolution
+  schedule/     cron parsing + next-fire calculation
+  webhooks/     webhook path extraction
+  api/          Nitro endpoints (ingest/api, ingest/upload)
+shared/       types + utilities shared between app and server
 ```
 
-Locally preview production build:
+## Contributing
 
-```bash
-# npm
-npm run preview
+Contributions welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) and the
+[Code of Conduct](CODE_OF_CONDUCT.md).
 
-# pnpm
-pnpm preview
+## License
 
-# yarn
-yarn preview
+[MIT](LICENSE)
 
-# bun
-bun run preview
-```
+---
 
-Check out the [deployment documentation](https://nuxt.com/docs/getting-started/deployment) for more information.
+Not affiliated with or endorsed by n8n GmbH. "n8n" is a trademark of its
+respective owner.
