@@ -2,6 +2,18 @@ export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
   modules: ['@pinia/nuxt', 'nuxt-security', '@nuxt/eslint'],
   components: [{ path: '~/components', pathPrefix: false }],
+  app: {
+    head: {
+      title: 'n8viz — n8n Workflow Visualizer',
+      meta: [
+        { name: 'description', content: 'Visualize n8n workflows, webhooks, schedules, and credentials as interactive maps.' },
+      ],
+      link: [
+        { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' },
+        { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' },
+      ],
+    },
+  },
   css: ['~/assets/tokens.css', '@vue-flow/core/dist/style.css', '@vue-flow/core/dist/theme-default.css'],
   typescript: { strict: true },
   devtools: { enabled: true },
