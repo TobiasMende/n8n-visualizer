@@ -51,3 +51,38 @@ describe('anonymizeWorkflows — names & structure', () => {
     expect(anonymizeWorkflows(sample)).toEqual(anonymizeWorkflows(sample))
   })
 })
+
+describe('anonymizeWorkflows — parameter scrubbing', () => {
+  const out = anonymizeWorkflows(sample)
+
+  it('rewrites url params to the demo host', () => {
+    const url = out[0].nodes[0].parameters!.url as string
+    expect(url).toContain('demo.example')
+    expect(url).not.toContain('secret.corp.internal')
+  })
+
+  it('replaces webhook path params with a slug', () => {
+    const wf: RawWorkflow[] = [{
+      id: 'wf-2', name: 'x', nodes: [
+        { id: 'h', name: 'Hook', type: 'n8n-nodes-base.webhook',
+          parameters: { path: 'super-secret-customer-endpoint', httpMethod: 'POST' } },
+      ],
+    }]
+    const r = anonymizeWorkflows(wf)
+    expect(r[0].nodes[0].parameters!.path).not.toBe('super-secret-customer-endpoint')
+    expect(r[0].nodes[0].parameters!.httpMethod).toBe('POST')
+  })
+
+  it('scrubs long free-text params', () => {
+    const wf: RawWorkflow[] = [{
+      id: 'wf-3', name: 'x', nodes: [
+        { id: 's', name: 'Set', type: 'n8n-nodes-base.set',
+          parameters: { text: 'Confidential: customer Jane Doe, card 4111 1111 1111 1111' } },
+      ],
+    }]
+    const r = anonymizeWorkflows(wf)
+    const t = r[0].nodes[0].parameters!.text as string
+    expect(t).not.toContain('Jane Doe')
+    expect(t).not.toContain('4111')
+  })
+})
