@@ -37,6 +37,7 @@ function toggleType(t: string) {
 
       <div class="grp">Overlays</div>
       <label class="item"><input type="checkbox" v-model="store.visibility.overlays.credentials" /> Credentials</label>
+      <label class="item"><input type="checkbox" v-model="store.visibility.overlays.dataTables" /> Data tables</label>
       <label class="item"><input type="checkbox" v-model="store.visibility.overlays.nodeTypes" /> Node types</label>
       <div v-if="store.visibility.overlays.nodeTypes" class="sub">
         <label v-for="t in types" :key="t.type" class="item">
