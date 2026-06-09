@@ -14,15 +14,23 @@ once.
   that link to each other (sub-workflow `execute`, HTTP-to-webhook calls, error
   workflows). Auto-laid-out with a layered (Dagre) layout and floating edges.
 - **Webhooks view** — every webhook path across the instance, with production
-  and test URLs and HTTP methods.
+  and test URLs, HTTP methods, and a **security indicator**: 🔒 secured vs 🔓
+  open, the auth method (Basic / Header / JWT / None), and a count of how many
+  webhooks are unsecured.
 - **Schedules view** — every schedule/cron trigger, grouped by cadence
-  (sub-minute → monthly → raw cron) with the next fire time.
-- **Credentials view** — which credentials exist and which workflows share them.
+  (sub-minute → monthly → raw cron) with a live next-fire countdown.
+- **Credentials view** — which credentials exist, which workflows share them,
+  and which are unused.
+- **Data tables view** — which n8n data tables are referenced, their operations
+  and column counts, which workflows use them, and which are unused.
 - **Search, tag filter, and trace flow** — find workflows, filter by tag, and
   follow how data flows between them.
 - **Deep links** back to the workflow in your n8n editor.
 - **Two ways in**: live API connection, or upload a workflow JSON export — no
   instance required to try it.
+
+For a full breakdown of use cases and features, see
+[USE_CASES.md](USE_CASES.md).
 
 ## How it works
 
@@ -92,7 +100,7 @@ bun run demo
 
 You'll be prompted for your instance URL and API key (key is hidden, never
 stored). The script fetches your workflows, replaces every name/URL/credential
-with a realistic fake, drives the app through all four views, and writes
+with a realistic fake, drives the app through all five views, and writes
 `scripts/demo/out/n8nviz-demo-<timestamp>.mp4`.
 
 Flags: `--keep` (retain temp files for debugging), `--allow-local` (permit a
