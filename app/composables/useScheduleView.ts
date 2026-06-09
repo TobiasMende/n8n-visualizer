@@ -1,5 +1,4 @@
 import type { WorkflowGraph, CadenceGroup } from '#shared/types/graph'
-import { workflowNameMap } from './useGraphLookup'
 
 const ORDER: CadenceGroup[] = ['sub-minute', 'minutes', 'hourly', 'daily', 'weekly', 'monthly', 'cron']
 
