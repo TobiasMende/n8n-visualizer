@@ -84,6 +84,7 @@ async function onUpload(e: Event) {
           <input type="checkbox" v-model="remember" />
           Remember on this device (7 days)
         </label>
+        <p class="hint remember-hint">By default the API key is used once and never stored. "Remember" seals it in an encrypted, server-only cookie.</p>
         <div class="row">
           <input v-model="uploadBaseUrl" placeholder="instance URL (optional, for links)" />
           <label class="file">
@@ -168,4 +169,5 @@ button:hover { filter: brightness(1.15); }
 .file .i { color: var(--text-dim); }
 .remember { display: inline-flex; align-items: center; gap: 6px; margin-top: 8px; color: var(--text-dim); font-size: 12px; cursor: pointer; }
 .remember input { accent-color: var(--accent); }
+.remember-hint { margin: 4px 0 0; max-width: 420px; }
 </style>
