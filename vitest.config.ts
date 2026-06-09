@@ -10,6 +10,7 @@ export default defineConfig({
   test: { environment: 'happy-dom', globals: true },
   resolve: {
     alias: {
+      '#imports': r('test/stubs/imports'),
       '#shared': r('shared'),
       '~~': root,
       '@@': root,

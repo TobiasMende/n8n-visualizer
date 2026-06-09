@@ -1,5 +1,6 @@
 import { getCookie, unsealSession, useSession, clearSession, type H3Event } from 'h3'
 import type { SessionData } from './creds'
+import { useRuntimeConfig } from '#imports'
 
 const COOKIE_NAME = 'n8nviz_sess'
 const MAX_AGE = 60 * 60 * 24 * 7 // 7 days
@@ -41,4 +42,12 @@ export async function writeSession(event: H3Event, config: AppSessionConfig, dat
 
 export async function destroySession(event: H3Event, config: AppSessionConfig): Promise<void> {
   await clearSession(event, config)
+}
+
+// Returns a usable sealing password, or null when none is configured (e.g.
+// production with NUXT_SESSION_PASSWORD unset). Callers degrade to the
+// no-remember body path when this is null.
+export function resolveSessionPassword(event: H3Event): string | null {
+  const pw = useRuntimeConfig(event).sessionPassword
+  return typeof pw === 'string' && pw.length >= 32 ? pw : null
 }
