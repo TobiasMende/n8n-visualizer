@@ -9,6 +9,7 @@ export const useGraphStore = defineStore('graph', () => {
   const selectedId = ref<string | null>(null)
   const selectedCredId = ref<string | null>(null)
   const tagFilter = ref<string[]>([])
+  const searchQuery = ref('')
   const connection = ref<Conn | null>(null)
 
   function extractError(e: any): string {
@@ -85,5 +86,5 @@ export const useGraphStore = defineStore('graph', () => {
     }, { deep: true })
   }
 
-  return { graph, loading, error, selectedId, selected, selectedCredId, selectedCredential, tagFilter, loadFromApi, loadFromUpload, view, visibility, connection, connectedHost, disconnect, restoreConnection }
+  return { graph, loading, error, selectedId, selected, selectedCredId, selectedCredential, tagFilter, searchQuery, loadFromApi, loadFromUpload, view, visibility, connection, connectedHost, disconnect, restoreConnection }
 })

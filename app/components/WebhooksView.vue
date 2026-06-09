@@ -2,9 +2,9 @@
 import { computed, ref } from 'vue'
 import { useGraphStore } from '~/stores/graph'
 import { webhookRows, callersOf } from '~/composables/useWebhookView'
+import { matchesQuery, tagsMatch } from '~/composables/useViewFilter'
 
 const store = useGraphStore()
-const filter = ref('')
 const expanded = ref<string | null>(null)
 
 const columns = [
@@ -13,7 +13,11 @@ const columns = [
   { key: 'workflow', label: 'Workflow' },
   { key: 'active', label: 'State' },
 ]
-const rows = computed(() => webhookRows(store.graph))
+
+const tagsByWf = computed(() => new Map((store.graph?.nodes ?? []).map(n => [n.id, n.tags])))
+const rows = computed(() => webhookRows(store.graph).filter(r =>
+  tagsMatch(tagsByWf.value.get(r.workflowId) ?? [], store.tagFilter) &&
+  matchesQuery(`${r.method} ${r.url} ${r.workflow} ${r.path}`, store.searchQuery)))
 
 function jump(row: { workflowId: string }) { store.selectedId = row.workflowId; store.view = 'map' }
 function copy(url: string) { if (import.meta.client) navigator.clipboard?.writeText(url) }
@@ -22,8 +26,7 @@ function toggle(id: string) { expanded.value = expanded.value === id ? null : id
 
 <template>
   <div class="wrap">
-    <div class="bar"><input v-model="filter" class="search" placeholder="Filter webhooks…" /></div>
-    <DataTable :columns="columns" :rows="rows" :filter="filter" @row-click="jump">
+    <DataTable :columns="columns" :rows="rows" :filter="''" @row-click="jump">
       <template #cell-method="{ row }"><Badge :tone="row.method === 'POST' ? 'accent' : 'warn'">{{ row.method }}</Badge></template>
       <template #cell-url="{ row }">
         <code class="url" @click.stop="copy(row.url)" :title="'Click to copy: ' + row.url">{{ row.url }}</code>
@@ -42,9 +45,6 @@ function toggle(id: string) { expanded.value = expanded.value === id ? null : id
 
 <style scoped>
 .wrap { position: relative; height: 100%; overflow: auto; padding: 12px; }
-.bar { margin-bottom: 10px; }
-.search { width: 280px; background: var(--bg-2); border: 1px solid var(--border); color: var(--text);
-  border-radius: var(--radius-m); padding: 8px 10px; }
 .url { font-family: var(--font-mono); color: var(--link); cursor: pointer; }
 .callers { margin-left: 8px; font-size: 11px; background: none; border: 1px solid var(--border);
   color: var(--text-dim); border-radius: var(--radius-s); cursor: pointer; padding: 1px 6px; }
