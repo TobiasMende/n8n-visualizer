@@ -28,7 +28,7 @@ function jump(id: string) { store.selectedId = id; store.view = 'map' }
 
 <template>
   <div class="wrap">
-    <DataTable :columns="columns" :rows="rows" :filter="''">
+    <DataTable :columns="columns" :rows="rows" :row-key="(r) => r.type + ':' + r.name + ':' + r.id">
       <template #cell-name="{ row }">
         <strong>{{ row.name }}</strong>
         <button class="exp" @click.stop="toggle(rowKey(row))">workflows</button>

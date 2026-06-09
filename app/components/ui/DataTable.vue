@@ -2,7 +2,7 @@
 import { computed, ref } from 'vue'
 
 interface Column { key: string; label: string }
-const props = defineProps<{ columns: Column[]; rows: Record<string, any>[]; filter?: string }>()
+const props = defineProps<{ columns: Column[]; rows: Record<string, any>[]; rowKey?: (row: Record<string, any>) => string | number }>()
 defineEmits<{ rowClick: [row: Record<string, any>] }>()
 
 const sortKey = ref<string | null>(null)
@@ -14,14 +14,11 @@ function toggleSort(key: string) {
 }
 
 const view = computed(() => {
-  const f = (props.filter ?? '').trim().toLowerCase()
-  let r = props.rows
-  if (f) r = r.filter(row => props.columns.some(c => String(row[c.key] ?? '').toLowerCase().includes(f)))
   if (sortKey.value) {
     const k = sortKey.value
-    r = [...r].sort((a, b) => String(a[k] ?? '').localeCompare(String(b[k] ?? ''), undefined, { numeric: true }) * sortDir.value)
+    return [...props.rows].sort((a, b) => String(a[k] ?? '').localeCompare(String(b[k] ?? ''), undefined, { numeric: true }) * sortDir.value)
   }
-  return r
+  return props.rows
 })
 </script>
 
@@ -35,7 +32,7 @@ const view = computed(() => {
       </tr>
     </thead>
     <tbody>
-      <tr v-for="(row, i) in view" :key="i" @click="$emit('rowClick', row)">
+      <tr v-for="(row, i) in view" :key="rowKey ? rowKey(row) : i" @click="$emit('rowClick', row)">
         <td v-for="c in columns" :key="c.key"><slot :name="`cell-${c.key}`" :row="row">{{ row[c.key] }}</slot></td>
       </tr>
     </tbody>

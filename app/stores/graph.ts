@@ -56,7 +56,7 @@ export const useGraphStore = defineStore('graph', () => {
   const selected = computed(() => graph.value?.nodes.find(n => n.id === selectedId.value) ?? null)
 
   const selectedCredential = computed(() =>
-    graph.value?.credentials.find(c => `cred:${c.type}:${c.name}` === selectedCredId.value) ?? null)
+    graph.value?.credentials.find(c => `cred:${c.type}:${c.id ?? c.name}` === selectedCredId.value) ?? null)
 
   type ViewId = 'map' | 'webhooks' | 'schedules' | 'credentials'
   const view = ref<ViewId>('map')

@@ -6,6 +6,7 @@ import { matchesQuery, tagsMatch } from '~/composables/useViewFilter'
 
 const store = useGraphStore()
 const expanded = ref<string | null>(null)
+const expandedCallers = computed(() => expanded.value ? callersOf(store.graph, expanded.value) : [])
 
 const columns = [
   { key: 'method', label: 'Method' },
@@ -26,14 +27,14 @@ function toggle(id: string) { expanded.value = expanded.value === id ? null : id
 
 <template>
   <div class="wrap">
-    <DataTable :columns="columns" :rows="rows" :filter="''" @row-click="jump">
+    <DataTable :columns="columns" :rows="rows" :row-key="(r) => r.workflowId + '|' + r.path" @row-click="jump">
       <template #cell-method="{ row }"><Badge :tone="row.method === 'POST' ? 'accent' : 'warn'">{{ row.method }}</Badge></template>
       <template #cell-url="{ row }">
         <code class="url" @click.stop="copy(row.url)" :title="'Click to copy: ' + row.url">{{ row.url }}</code>
         <button class="callers" @click.stop="toggle(row.workflowId)">callers</button>
         <ul v-if="expanded === row.workflowId" class="callerlist">
-          <li v-for="c in callersOf(store.graph, row.workflowId)" :key="c.id">↳ {{ c.name }}</li>
-          <li v-if="!callersOf(store.graph, row.workflowId).length" class="none">no internal callers</li>
+          <li v-for="c in expandedCallers" :key="c.id">↳ {{ c.name }}</li>
+          <li v-if="!expandedCallers.length" class="none">no internal callers</li>
         </ul>
       </template>
       <template #cell-workflow="{ row }"><a class="wf" @click.stop="jump(row)">{{ row.workflow }}</a></template>

@@ -19,7 +19,7 @@ function toggleTag(tag: string) {
     : [...store.tagFilter, tag]
 }
 
-function pick(id: string) { store.selectedId = id; store.searchQuery = '' }
+function pick(id: string) { store.selectedId = id; store.selectedCredId = null; store.view = 'map'; store.searchQuery = '' }
 
 async function onUpload(e: Event) {
   const input = e.target as HTMLInputElement

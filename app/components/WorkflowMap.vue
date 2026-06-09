@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, ref, watch, onMounted, nextTick } from 'vue'
 import { VueFlow, useVueFlow, MarkerType } from '@vue-flow/core'
 import type { Edge, Node } from '@vue-flow/core'
 import { Background, BackgroundVariant } from '@vue-flow/background'
@@ -87,12 +87,18 @@ function onPaneClick() { store.selectedId = null; store.selectedCredId = null }
 function onNodeEnter({ node }: { node: Node }) { if (node.data?.kind === 'workflow') hoveredId.value = node.id }
 function onNodeLeave() { hoveredId.value = null }
 
-watch(() => store.selectedId, (id) => {
-  if (id && flow.value.nodeIds.size) {
+function focusSelected() {
+  if (store.selectedId && flow.value.nodeIds.size) {
     const ids = [...flow.value.nodeIds]
-    try { fitView({ nodes: ids, padding: 0.3, duration: 400 }) }
-    catch { fitView({ padding: 0.2 }) }
+    try { fitView({ nodes: ids, padding: 0.3, duration: 400 }) } catch { fitView({ padding: 0.2 }) }
   }
+}
+
+watch(() => store.selectedId, () => focusSelected())
+onMounted(() => nextTick(() => focusSelected()))
+
+watch(() => visible.value.nodes, (nodes) => {
+  if (store.selectedId && !nodes.some(n => n.id === store.selectedId)) store.selectedId = null
 })
 </script>
 
