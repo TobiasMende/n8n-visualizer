@@ -72,3 +72,30 @@ export function anonymizeWorkflows(workflows: RawWorkflow[]): RawWorkflow[] {
     }
   })
 }
+
+function collectSecrets(workflows: RawWorkflow[]): string[] {
+  const out = new Set<string>()
+  const add = (s?: string) => { if (s && s.trim().length >= 4) out.add(s.trim()) }
+  for (const wf of workflows) {
+    add(wf.name)
+    for (const n of wf.nodes) {
+      add(n.name)
+      for (const c of Object.values(n.credentials ?? {})) add(c.name)
+      for (const v of Object.values(n.parameters ?? {})) {
+        if (typeof v === 'string' && URL_RE.test(v)) {
+          try { add(new URL(v).host) } catch { /* ignore */ }
+        }
+      }
+    }
+    for (const t of wf.tags ?? []) add(typeof t === 'string' ? t : t.name)
+  }
+  return [...out]
+}
+
+export function assertNoLeak(original: RawWorkflow[], anonymized: RawWorkflow[]): void {
+  const haystack = JSON.stringify(anonymized)
+  for (const secret of collectSecrets(original)) {
+    if (haystack.includes(secret))
+      throw new Error(`Anonymization leak: original value "${secret}" found in output`)
+  }
+}

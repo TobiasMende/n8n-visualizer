@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import type { RawWorkflow } from '#shared/types/graph'
-import { anonymizeWorkflows } from './anonymize'
+import { anonymizeWorkflows, assertNoLeak } from './anonymize'
 
 const sample: RawWorkflow[] = [{
   id: 'wf-1',
@@ -84,5 +84,23 @@ describe('anonymizeWorkflows — parameter scrubbing', () => {
     const t = r[0].nodes[0].parameters!.text as string
     expect(t).not.toContain('Jane Doe')
     expect(t).not.toContain('4111')
+  })
+})
+
+describe('assertNoLeak', () => {
+  it('passes for properly anonymized output', () => {
+    expect(() => assertNoLeak(sample, anonymizeWorkflows(sample))).not.toThrow()
+  })
+
+  it('throws when an original name survives in the output', () => {
+    const leaked = anonymizeWorkflows(sample)
+    leaked[0].name = 'ACME Secret Order Flow'
+    expect(() => assertNoLeak(sample, leaked)).toThrow(/leak/i)
+  })
+
+  it('throws when an original host survives', () => {
+    const leaked = anonymizeWorkflows(sample)
+    leaked[0].nodes[0].parameters!.url = 'https://secret.corp.internal/orders'
+    expect(() => assertNoLeak(sample, leaked)).toThrow(/leak/i)
   })
 })
