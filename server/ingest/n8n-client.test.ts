@@ -26,6 +26,16 @@ describe('fetchAllWorkflows', () => {
     expect(fetchImpl.mock.calls[0][0]).toContain('/api/v1/workflows')
   })
 
+  it('requests a bounded page size and a raised response cap for large instances', async () => {
+    const fetchImpl = vi.fn().mockResolvedValue(resp(200, { data: [], nextCursor: null }))
+    await fetchAllWorkflows('https://n8n.example.com', 'key', fetchImpl)
+    const call = fetchImpl.mock.calls[0]!
+    const url = call[0] as string
+    const opts = call[1] as { maxResponseBytes?: number }
+    expect(url).toContain('limit=100')
+    expect(opts.maxResponseBytes).toBeGreaterThanOrEqual(50 * 1024 * 1024)
+  })
+
   it('throws an invalid-key error on 401', async () => {
     const fetchImpl = vi.fn().mockResolvedValue(resp(401, {}))
     await expect(fetchAllWorkflows('https://h', 'bad', fetchImpl))
