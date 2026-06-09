@@ -1,4 +1,4 @@
-import { fetchAllWorkflows } from '../../ingest/n8n-client'
+import { fetchAllWorkflows, fetchAllCredentials, fetchAllDataTables } from '../../ingest/n8n-client'
 import { buildGraph } from '../../parser/build-graph'
 import { buildCatalog } from '../../catalog/catalog'
 import { diskCatalogCache } from '../../catalog/disk-cache'
@@ -25,10 +25,16 @@ export default defineEventHandler(async (event) => {
 
   try {
     const workflows = await fetchAllWorkflows(baseUrl, apiKey)
-    const catalog = await buildCatalog({
-      host, cache: diskCatalogCache(), source: instanceCatalogSource(baseUrl, apiKey), bundled,
+    const [catalog, apiCredentials, apiDataTables] = await Promise.all([
+      buildCatalog({
+        host, cache: diskCatalogCache(), source: instanceCatalogSource(baseUrl, apiKey), bundled,
+      }),
+      fetchAllCredentials(baseUrl, apiKey),
+      fetchAllDataTables(baseUrl, apiKey),
+    ])
+    return buildGraph(workflows, baseUrl, {
+      from: new Date().toISOString(), catalog, apiCredentials, apiDataTables,
     })
-    return buildGraph(workflows, baseUrl, { from: new Date().toISOString(), catalog })
   } catch (e: any) {
     // Match by name, not instanceof: the production bundle can split these
     // classes across chunks, breaking cross-module instanceof checks.
