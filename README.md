@@ -106,6 +106,12 @@ shared/       types + utilities shared between app and server
 Contributions welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) and the
 [Code of Conduct](CODE_OF_CONDUCT.md).
 
+## Support
+
+If this saved you some time, you can buy me a coffee:
+
+[![Buy Me A Coffee](https://img.shields.io/badge/Buy%20Me%20A%20Coffee-support-FFDD00?logo=buymeacoffee&logoColor=black)](https://www.buymeacoffee.com/TobiMende)
+
 ## License
 
 [MIT](LICENSE)
