@@ -29,3 +29,6 @@ logs
 
 # git worktrees
 .worktrees/
+
+# Local n8n export (contains private data)
+workflows.json
