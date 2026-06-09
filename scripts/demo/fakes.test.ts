@@ -40,6 +40,16 @@ describe('Faker', () => {
     expect(out).not.toContain('secret.corp.internal')
   })
 
+  it('fakes webhookId deterministically and stably per key', () => {
+    const f = new Faker()
+    const a = f.webhookId('real-uuid-1')
+    expect(f.webhookId('real-uuid-1')).toBe(a)
+    expect(f.webhookId('real-uuid-2')).not.toBe(a)
+    expect(a).not.toBe('real-uuid-1')
+    expect(a).toMatch(/^[a-z0-9]{8}-[a-z0-9]{4}-[a-z0-9]{4}-[a-z0-9]{4}-[a-z0-9]{12}$/)
+    expect(new Faker().webhookId('real-uuid-1')).toBe(a)
+  })
+
   it('disambiguates repeated node types within a workflow', () => {
     const f = new Faker()
     expect(f.nodeName('wf1', 'n8n-nodes-base.httpRequest')).toBe('HTTP Request')

@@ -87,6 +87,69 @@ describe('anonymizeWorkflows — parameter scrubbing', () => {
   })
 })
 
+describe('anonymizeWorkflows — hardening (review fixes)', () => {
+  it('fakes webhookId', () => {
+    const wf: RawWorkflow[] = [{ id: 'w', name: 'n', nodes: [
+      { id: 'h', name: 'Hook', type: 'n8n-nodes-base.webhook', webhookId: 'real-uuid-1234-secret', parameters: { path: '' } },
+    ] }]
+    const out = anonymizeWorkflows(wf)
+    expect(out[0].nodes[0].webhookId).toBeDefined()
+    expect(out[0].nodes[0].webhookId).not.toBe('real-uuid-1234-secret')
+  })
+
+  it('scrubs non-http URIs and emails in params', () => {
+    const wf: RawWorkflow[] = [{ id: 'w', name: 'n', nodes: [
+      { id: 's', name: 'Set', type: 'n8n-nodes-base.set',
+        parameters: { mongo: 'mongodb://prod-db:27017', ftp: 'ftp://files.corp.net', email: 'jane@acme-corp.com' } },
+    ] }]
+    const out = anonymizeWorkflows(wf)
+    const p = out[0].nodes[0].parameters!
+    expect(p.mongo).not.toContain('prod-db')
+    expect(p.ftp).not.toContain('files.corp.net')
+    expect(p.email).not.toContain('acme-corp')
+  })
+
+  it('anonymizes settings and remaps errorWorkflow name', () => {
+    const wf: RawWorkflow[] = [
+      { id: 'wf-err', name: 'Internal Alert Flow', nodes: [] },
+      { id: 'wf-main', name: 'Main', nodes: [],
+        settings: { errorWorkflow: 'Internal Alert Flow', secretField: 'ACME confidential internal note here' } },
+    ]
+    const out = anonymizeWorkflows(wf)
+    const s = out[1].settings!
+    expect(s.errorWorkflow).toBe(out[0].name)            // remapped to faked name
+    expect(s.errorWorkflow).not.toBe('Internal Alert Flow')
+    expect(JSON.stringify(s)).not.toContain('ACME confidential')
+  })
+
+  it('preserves errorWorkflow when it is an id (no matching name)', () => {
+    const wf: RawWorkflow[] = [{ id: 'wf-main', name: 'Main', nodes: [],
+      settings: { errorWorkflow: 'a1b2c3d4-e5f6-7890-abcd-ef0123456789' } }]
+    const out = anonymizeWorkflows(wf)
+    expect(out[0].settings!.errorWorkflow).toBe('a1b2c3d4-e5f6-7890-abcd-ef0123456789')
+  })
+
+  it('assertNoLeak catches a nested-array host leak', () => {
+    const wf: RawWorkflow[] = [{ id: 'w', name: 'n', nodes: [
+      { id: 's', name: 'Set', type: 'n8n-nodes-base.set',
+        parameters: { hosts: ['https://secret.corp.internal/x'] } },
+    ] }]
+    const out = anonymizeWorkflows(wf)
+    // plant the original host back into the output to simulate a scrubbing miss
+    ;(out[0].nodes[0].parameters!.hosts as string[])[0] = 'https://secret.corp.internal/x'
+    expect(() => assertNoLeak(wf, out)).toThrow(/leak/i)
+  })
+
+  it('assertNoLeak catches a surviving webhookId', () => {
+    const wf: RawWorkflow[] = [{ id: 'w', name: 'n', nodes: [
+      { id: 'h', name: 'Hook', type: 'n8n-nodes-base.webhook', webhookId: 'real-uuid-1234-secret', parameters: {} },
+    ] }]
+    const out = anonymizeWorkflows(wf)
+    out[0].nodes[0].webhookId = 'real-uuid-1234-secret'
+    expect(() => assertNoLeak(wf, out)).toThrow(/leak/i)
+  })
+})
+
 describe('assertNoLeak', () => {
   it('passes for properly anonymized output', () => {
     expect(() => assertNoLeak(sample, anonymizeWorkflows(sample))).not.toThrow()

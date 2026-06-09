@@ -22,6 +22,7 @@ export class Faker {
   private cred = new Map<string, string>()
   private tag = new Map<string, string>()
   private hook = new Map<string, string>()
+  private hookId = new Map<string, string>()
   private nodeCounts = new Map<string, number>()
 
   private alloc(map: Map<string, string>, key: string, pool: string[]): string {
@@ -53,6 +54,18 @@ export class Faker {
     for (let j = 0; j < 6; j++) { slug += SLUG[x % SLUG.length]; x = Math.floor(x / SLUG.length) + 7 }
     const v = `hook-${slug}`
     this.hook.set(key, v)
+    return v
+  }
+
+  webhookId(key: string): string {
+    const hit = this.hookId.get(key)
+    if (hit) return hit
+    const i = this.hookId.size + 1
+    let x = i
+    let hex = ''
+    for (let j = 0; j < 32; j++) { hex += SLUG[x % SLUG.length]; x = Math.floor(x / SLUG.length) + 13 }
+    const v = `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20, 32)}`
+    this.hookId.set(key, v)
     return v
   }
 
