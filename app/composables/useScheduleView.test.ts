@@ -9,7 +9,7 @@ const graph: WorkflowGraph = {
     { id: 'b', name: 'Poller', active: true, triggers: ['schedule'], tags: [], webhookPaths: [], deepLink: null,
       summary: { nodeCount: 0, nodeTypes: [], credentials: [], inbound: 0, outbound: 0 } },
   ],
-  edges: [], unresolved: [], skipped: [], webhooks: [], credentials: [],
+  edges: [], triggerNodes: [], unresolved: [], skipped: [], webhooks: [], credentials: [],
   schedules: [
     { workflowId: 'a', cadenceText: 'Every day at 02:00', cadenceGroup: 'daily', nextFire: '2026-06-09T02:00:00.000Z' },
     { workflowId: 'b', cadenceText: 'Every 15 minutes', cadenceGroup: 'minutes', nextFire: '2026-06-08T02:15:00.000Z' },

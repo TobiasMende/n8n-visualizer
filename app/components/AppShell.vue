@@ -11,7 +11,7 @@ const views = [
 <template>
   <div class="shell">
     <nav class="rail">
-      <div class="brand">n8n</div>
+      <div class="brand">n8viz</div>
       <button v-for="v in views" :key="v.id" class="navbtn" :class="{ active: store.view === v.id }"
         :title="v.label" @click="store.view = v.id">
         <span class="i">{{ v.icon }}</span><span class="t">{{ v.label }}</span>

@@ -11,7 +11,7 @@ const graph: WorkflowGraph = {
     { source: 'c', target: 'b', type: 'webhookHttp' },
     { source: 'b', target: 'c', type: 'error' },
   ],
-  unresolved: [], skipped: [], webhooks: [], schedules: [], credentials: [],
+  triggerNodes: [], unresolved: [], skipped: [], webhooks: [], schedules: [], credentials: [],
 }
 
 describe('workflowLinks', () => {

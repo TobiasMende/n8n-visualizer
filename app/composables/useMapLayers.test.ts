@@ -5,7 +5,7 @@ import type { WorkflowGraph } from '#shared/types/graph'
 const graph: WorkflowGraph = {
   nodes: [{ id: 'w', name: 'W', active: true, triggers: [], tags: [], webhookPaths: [], deepLink: null,
     summary: { nodeCount: 1, nodeTypes: [{ type: 'n8n-nodes-base.set', displayName: 'Set', count: 1 }], credentials: ['My API'], inbound: 0, outbound: 0 } }],
-  edges: [], unresolved: [], skipped: [],
+  edges: [], triggerNodes: [], unresolved: [], skipped: [],
   webhooks: [], schedules: [],
   credentials: [{ id: '1', name: 'My API', type: 'httpHeaderAuth', workflowIds: ['w'] }],
 }
@@ -66,7 +66,7 @@ describe('overlayNodesAndEdges credential edge pruning', () => {
     const graphWithMissing: WorkflowGraph = {
       nodes: [{ id: 'w', name: 'W', active: true, triggers: [], tags: [], webhookPaths: [], deepLink: null,
         summary: { nodeCount: 0, nodeTypes: [], credentials: [], inbound: 0, outbound: 0 } }],
-      edges: [], unresolved: [], skipped: [], webhooks: [], schedules: [],
+      edges: [], triggerNodes: [], unresolved: [], skipped: [], webhooks: [], schedules: [],
       credentials: [{ id: '2', name: 'Other API', type: 'httpHeaderAuth', workflowIds: ['missing-wf'] }],
     }
     const r = overlayNodesAndEdges(graphWithMissing, new Map([['w', { x: 0, y: 0 }]]), { credentials: true, nodeTypes: false })
@@ -76,7 +76,7 @@ describe('overlayNodesAndEdges credential edge pruning', () => {
   it('produces no node when credential has empty workflowIds', () => {
     const graphEmpty: WorkflowGraph = {
       nodes: [],
-      edges: [], unresolved: [], skipped: [], webhooks: [], schedules: [],
+      edges: [], triggerNodes: [], unresolved: [], skipped: [], webhooks: [], schedules: [],
       credentials: [{ id: '3', name: 'Orphan', type: 'httpHeaderAuth', workflowIds: [] }],
     }
     const r = overlayNodesAndEdges(graphEmpty, new Map(), { credentials: true, nodeTypes: false })

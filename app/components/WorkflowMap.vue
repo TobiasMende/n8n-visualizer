@@ -21,14 +21,24 @@ const { fitView } = useVueFlow(FLOW_ID)
 
 const showMinimap = ref(true)
 function miniColor(node: Node) {
-  return node.data?.kind === 'credential' ? '#ffb454' : node.data?.kind === 'nodeType' ? '#6aa0ff' : '#3ddc97'
+  return node.data?.kind === 'credential' ? '#ffb454'
+    : node.data?.kind === 'nodeType' ? '#6aa0ff'
+    : node.data?.kind === 'trigger' ? '#f5a623'
+    : '#3ddc97'
 }
 
 const visible = computed(() => store.graph
   ? visibleGraph(store.graph, store.visibility)
-  : { nodes: [], edges: [] })
+  : { nodes: [], edges: [], triggerNodes: [] })
 
-const positions = computed(() => computeLayeredLayout(visible.value.nodes, visible.value.edges))
+const triggerNodes = computed(() => visible.value.triggerNodes ?? [])
+const triggerEdges = computed(() =>
+  triggerNodes.value.map(t => ({ source: t.id, target: t.workflowId })))
+
+const positions = computed(() => computeLayeredLayout(
+  [...visible.value.nodes, ...triggerNodes.value],
+  [...visible.value.edges, ...triggerEdges.value],
+))
 
 const overlay = computed(() => store.graph
   ? overlayNodesAndEdges(
@@ -54,11 +64,20 @@ const nodes = computed<Node[]>(() => {
       emphasized: hovering.value && hover.value.nodeIds.has(n.id),
     },
   }))
+  const trigNodes: Node[] = triggerNodes.value.map(t => ({
+    id: t.id, type: 'workflow', position: positions.value.get(t.id) ?? { x: 0, y: 0 },
+    data: {
+      kind: 'trigger', triggerKind: t.kind, label: t.label, triggers: [],
+      inbound: 0, outbound: 0, nodeCount: 0,
+      dimmed: focused.value && !flow.value.nodeIds.has(t.workflowId),
+      selected: false,
+    },
+  }))
   const overlayNodes: Node[] = overlay.value.nodes.map(o => ({
     id: o.id, type: 'workflow', position: { x: o.x, y: o.y },
     data: { kind: o.kind, label: o.label, triggers: [], inbound: 0, outbound: 0, nodeCount: 0, dimmed: focused.value, selected: o.id === store.selectedCredId },
   }))
-  return [...base, ...overlayNodes]
+  return [...base, ...trigNodes, ...overlayNodes]
 })
 
 const edges = computed<Edge[]>(() => {
@@ -70,11 +89,16 @@ const edges = computed<Edge[]>(() => {
       data: { type: e.type, dimmed: !inFlow, emphasized: hovering.value && hover.value.edgeIds.has(`${e.source}|${e.target}`) },
     }
   })
+  const trigEdges: Edge[] = triggerNodes.value.map(t => ({
+    id: `trig-edge:${t.id}`, source: t.id, target: t.workflowId, type: 'flow',
+    markerEnd: { type: MarkerType.ArrowClosed, color: edgeColor('trigger') },
+    data: { type: 'trigger', dimmed: focused.value && !flow.value.nodeIds.has(t.workflowId), emphasized: false },
+  }))
   const overlayEdges: Edge[] = overlay.value.edges.map(o => ({
     id: o.id, source: o.source, target: o.target,
     style: { stroke: o.kind === 'uses' ? '#ffb454' : '#6aa0ff', strokeDasharray: '4 4', opacity: focused.value ? 0.05 : 0.6 },
   }))
-  return [...baseEdges, ...overlayEdges]
+  return [...baseEdges, ...trigEdges, ...overlayEdges]
 })
 
 function onNodeClick({ node }: { node: Node }) {
