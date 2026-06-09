@@ -36,6 +36,31 @@ describe('fetchAllWorkflows', () => {
     expect(opts.maxResponseBytes).toBeGreaterThanOrEqual(50 * 1024 * 1024)
   })
 
+  it('bounds the whole pagination with one shared deadline, not a fresh timeout per page', async () => {
+    const fetchImpl = vi.fn()
+      .mockResolvedValueOnce(resp(200, { data: [{ id: 'a', name: 'A', nodes: [] }], nextCursor: 'c2' }))
+      .mockResolvedValueOnce(resp(200, { data: [{ id: 'b', name: 'B', nodes: [] }], nextCursor: 'c3' }))
+      .mockResolvedValueOnce(resp(200, { data: [{ id: 'c', name: 'C', nodes: [] }], nextCursor: null }))
+
+    await fetchAllWorkflows('https://n8n.example.com', 'key', fetchImpl)
+
+    const signals = fetchImpl.mock.calls.map(c => (c[1] as { signal?: AbortSignal }).signal)
+    expect(signals).toHaveLength(3)
+    expect(signals[0]).toBeInstanceOf(AbortSignal)
+    expect(signals.every(s => s === signals[0])).toBe(true)
+  })
+
+  it('stops paginating once the shared deadline has aborted', async () => {
+    const fetchImpl = vi.fn().mockImplementation(async (_url, opts) => {
+      if (opts?.signal?.aborted) throw new Error('aborted')
+      return resp(200, { data: [{ id: 'a', name: 'A', nodes: [] }], nextCursor: 'next' })
+    })
+
+    await expect(fetchAllWorkflows('https://n8n.example.com', 'key', fetchImpl, AbortSignal.abort()))
+      .rejects.toThrow()
+    expect(fetchImpl).not.toHaveBeenCalled()
+  })
+
   it('throws an invalid-key error on 401', async () => {
     const fetchImpl = vi.fn().mockResolvedValue(resp(401, {}))
     await expect(fetchAllWorkflows('https://h', 'bad', fetchImpl))

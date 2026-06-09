@@ -12,11 +12,15 @@ const PAGE_SIZE = 100
 // n8n workflow JSON can be large; a full page of complex workflows easily
 // exceeds safe-fetch's default 10 MB cap. Raise it for this trusted endpoint.
 const WORKFLOWS_MAX_RESPONSE_BYTES = 50 * 1024 * 1024 // 50 MB
+// One deadline for the whole pagination, not per page — otherwise a malicious
+// host can stall ~15s on every page and tie a request up for PAGE_CAP × 15s.
+const TOTAL_DEADLINE_MS = 30_000
 
 export async function fetchAllWorkflows(
   baseUrl: string,
   apiKey: string,
   fetchImpl: FetchImpl = safeFetch,
+  deadline: AbortSignal = AbortSignal.timeout(TOTAL_DEADLINE_MS),
 ): Promise<RawWorkflow[]> {
   const base = stripTrailingSlash(baseUrl)
   const all: RawWorkflow[] = []
@@ -24,13 +28,15 @@ export async function fetchAllWorkflows(
   let page = 0
 
   do {
+    deadline.throwIfAborted()
+
     const url = new URL(`${base}/api/v1/workflows`)
     url.searchParams.set('limit', String(PAGE_SIZE))
     if (cursor) url.searchParams.set('cursor', cursor)
 
     const res: SafeResponse = await fetchImpl(url.toString(), {
       headers: { 'X-N8N-API-KEY': apiKey, accept: 'application/json' },
-      signal: AbortSignal.timeout(15000),
+      signal: deadline,
       maxResponseBytes: WORKFLOWS_MAX_RESPONSE_BYTES,
     })
 
