@@ -12,6 +12,7 @@ const expandedCallers = computed(() => expanded.value ? callersOf(store.graph, e
 
 const columns = [
   { key: 'method', label: 'Method' },
+  { key: 'security', label: 'Security' },
   { key: 'url', label: 'URL' },
   { key: 'workflow', label: 'Workflow' },
   { key: 'active', label: 'State' },
@@ -20,7 +21,9 @@ const columns = [
 const tagsByWf = computed(() => workflowTagsMap(store.graph))
 const rows = computed(() => webhookRows(store.graph).filter(r =>
   tagsMatch(tagsByWf.value.get(r.workflowId) ?? [], store.tagFilter) &&
-  matchesQuery(`${r.method} ${r.url} ${r.workflow} ${r.path}`, store.searchQuery)))
+  matchesQuery(`${r.method} ${r.url} ${r.workflow} ${r.path} ${r.secured ? 'secured' : 'unsecured open'} ${r.authLabel}`, store.searchQuery)))
+
+const openCount = computed(() => rows.value.filter(r => !r.secured).length)
 
 function jump(row: { workflowId: string }) { store.selectedId = row.workflowId; store.view = 'map' }
 function copy(url: string) { if (import.meta.client) navigator.clipboard?.writeText(url) }
@@ -29,8 +32,14 @@ function toggle(id: string) { expanded.value = expanded.value === id ? null : id
 
 <template>
   <div class="wrap">
+    <p v-if="openCount" class="open-summary">{{ openCount }} of {{ rows.length }} webhooks open</p>
     <DataTable :columns="columns" :rows="rows" :row-key="(r) => r.workflowId + '|' + r.path" @row-click="jump">
       <template #cell-method="{ row }"><Badge :tone="row.method === 'POST' ? 'accent' : 'warn'">{{ row.method }}</Badge></template>
+      <template #cell-security="{ row }">
+        <Badge :tone="row.secured ? 'accent' : 'warn'" :title="row.secured ? row.authLabel : 'No authentication'">
+          {{ row.secured ? '🔒 Secured' : '🔓 Open' }}
+        </Badge>
+      </template>
       <template #cell-url="{ row }">
         <code class="url" role="button" tabindex="0" aria-label="Copy URL"
           @click.stop="copy(row.url)" :title="'Click to copy: ' + row.url"
@@ -54,6 +63,7 @@ function toggle(id: string) { expanded.value = expanded.value === id ? null : id
 
 <style scoped>
 .wrap { position: relative; height: 100%; overflow: auto; padding: 12px; }
+.open-summary { margin: 0 0 8px; color: var(--warn); font-size: 12px; }
 .url { font-family: var(--font-mono); color: var(--link); cursor: pointer; }
 .callers { margin-left: 8px; font-size: 11px; background: none; border: 1px solid var(--border);
   color: var(--text-dim); border-radius: var(--radius-s); cursor: pointer; padding: 1px 6px; }

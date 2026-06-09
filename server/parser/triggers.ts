@@ -24,8 +24,8 @@ export function classifyTriggers(wf: RawWorkflow): TriggerType[] {
   return [...set]
 }
 
-function push(out: TriggerNode[], wfId: string, name: string, i: number, kind: TriggerNode['kind'], label: string) {
-  out.push({ id: `trig:${wfId}:${name}#${i}`, workflowId: wfId, kind, label })
+function push(out: TriggerNode[], wfId: string, name: string, i: number, kind: TriggerNode['kind'], label: string, secured?: boolean) {
+  out.push({ id: `trig:${wfId}:${name}#${i}`, workflowId: wfId, kind, label, ...(secured !== undefined ? { secured } : {}) })
 }
 
 export function extractTriggerNodes(wf: RawWorkflow, catalog: NodeCatalog): TriggerNode[] {
@@ -36,10 +36,10 @@ export function extractTriggerNodes(wf: RawWorkflow, catalog: NodeCatalog): Trig
 
     if (t === 'n8n-nodes-base.formTrigger') {
       const info = webhookNodeInfo(node)
-      push(out, wf.id, node.name, 0, 'form', info ? `Form /${info.path}` : 'Form')
+      push(out, wf.id, node.name, 0, 'form', info ? `Form /${info.path}` : 'Form', info?.secured ?? false)
     } else if (t === 'n8n-nodes-base.webhook') {
       const info = webhookNodeInfo(node)
-      push(out, wf.id, node.name, 0, 'webhook', info ? `${info.method} /${info.path}` : 'Webhook')
+      push(out, wf.id, node.name, 0, 'webhook', info ? `${info.method} /${info.path}` : 'Webhook', info?.secured ?? false)
     } else if (SCHEDULE.has(t)) {
       const cadences = parseSchedule(node)
       if (cadences.length === 0) push(out, wf.id, node.name, 0, 'schedule', catalog.displayName(t))
