@@ -81,6 +81,26 @@ In the toolbar, either:
 | `bun run test` | Run the test suite (Vitest) |
 | `bun run test:watch` | Run tests in watch mode |
 
+## Recording a demo
+
+Generate a shareable MP4 screencast driven against a real instance, with all
+sensitive data anonymized before anything renders:
+
+```bash
+bun run demo
+```
+
+You'll be prompted for your instance URL and API key (key is hidden, never
+stored). The script fetches your workflows, replaces every name/URL/credential
+with a realistic fake, drives the app through all four views, and writes
+`scripts/demo/out/n8nviz-demo-<timestamp>.mp4`.
+
+Flags: `--keep` (retain temp files for debugging), `--allow-local` (permit a
+loopback/private self-hosted instance, bypassing the SSRF guard).
+
+Requires `ffmpeg` (macOS: `brew install ffmpeg`) and a one-time
+`bunx playwright install chromium`.
+
 ## Tech stack
 
 [Nuxt 4](https://nuxt.com) · [Vue 3](https://vuejs.org) ·
