@@ -3,7 +3,7 @@ import { workflowNameMap } from './useGraphLookup'
 
 export interface WebhookRow {
   workflowId: string; workflow: string; method: string; path: string; url: string; active: boolean
-  secured: boolean; auth: string; authLabel: string
+  secured: boolean; auth: string; authLabel: string; security: string
 }
 
 const AUTH_LABELS: Record<string, string> = {
@@ -29,6 +29,7 @@ export function webhookRows(graph: WorkflowGraph | null): WebhookRow[] {
       secured: w.secured,
       auth: w.auth,
       authLabel: authLabelOf(w.auth),
+      security: w.secured ? 'secured' : 'open',
     }
   })
 }
