@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
-import { fetchAllWorkflows } from './n8n-client'
+import { fetchAllWorkflows, fetchAllCredentials, fetchAllDataTables } from './n8n-client'
 import type { SafeResponse } from './safe-fetch'
 
 const resp = (status: number, json: unknown): SafeResponse => ({
@@ -71,5 +71,48 @@ describe('fetchAllWorkflows', () => {
     const fetchImpl = vi.fn().mockResolvedValue(resp(200, { something: 'else' }))
     await expect(fetchAllWorkflows('https://h', 'key', fetchImpl))
       .rejects.toMatchObject({ kind: 'not_n8n' })
+  })
+})
+
+describe('fetchAllCredentials (best-effort)', () => {
+  it('paginates and returns items on 200', async () => {
+    const fetchImpl = vi.fn()
+      .mockResolvedValueOnce(resp(200, { data: [{ id: '1', name: 'A', type: 'githubApi' }], nextCursor: 'c2' }))
+      .mockResolvedValueOnce(resp(200, { data: [{ id: '2', name: 'B', type: 'slackApi' }], nextCursor: null }))
+    const got = await fetchAllCredentials('https://n8n.example.com', 'key', fetchImpl)
+    expect(got?.map(c => c.id)).toEqual(['1', '2'])
+    expect(fetchImpl.mock.calls[0][0]).toContain('/api/v1/credentials')
+  })
+
+  it('returns null on 403 (missing scope)', async () => {
+    const fetchImpl = vi.fn().mockResolvedValue(resp(403, {}))
+    expect(await fetchAllCredentials('https://h', 'key', fetchImpl)).toBeNull()
+  })
+
+  it('returns null on 404 (endpoint absent)', async () => {
+    const fetchImpl = vi.fn().mockResolvedValue(resp(404, {}))
+    expect(await fetchAllCredentials('https://h', 'key', fetchImpl)).toBeNull()
+  })
+
+  it('returns null when fetch throws', async () => {
+    const fetchImpl = vi.fn().mockRejectedValue(new Error('boom'))
+    expect(await fetchAllCredentials('https://h', 'key', fetchImpl)).toBeNull()
+  })
+})
+
+describe('fetchAllDataTables (best-effort)', () => {
+  it('returns items on 200', async () => {
+    const fetchImpl = vi.fn().mockResolvedValue(resp(200, {
+      data: [{ id: 't1', name: 'Demo', projectId: 'p', columns: [{ id: 'c', name: 'name', type: 'string', index: 0 }] }],
+      nextCursor: null,
+    }))
+    const got = await fetchAllDataTables('https://h', 'key', fetchImpl)
+    expect(got?.[0]).toMatchObject({ id: 't1', name: 'Demo' })
+    expect(fetchImpl.mock.calls[0][0]).toContain('/api/v1/data-tables')
+  })
+
+  it('returns null on 403', async () => {
+    const fetchImpl = vi.fn().mockResolvedValue(resp(403, {}))
+    expect(await fetchAllDataTables('https://h', 'key', fetchImpl)).toBeNull()
   })
 })
