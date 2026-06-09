@@ -86,6 +86,19 @@ describe('extractTriggerNodes', () => {
     expect(got).toEqual([])
   })
 
+  it('emits one node per cadence for multi-rule schedule triggers', () => {
+    const got = extractTriggerNodes(wfFull([
+      { name: 'sched', type: 'n8n-nodes-base.scheduleTrigger', parameters: { rule: { interval: [
+        { field: 'days', triggerAtHour: 9, triggerAtMinute: 0 },
+        { field: 'hours', hoursInterval: 2, triggerAtMinute: 30 },
+      ] } } },
+    ]), cat)
+    expect(got).toEqual([
+      { id: 'trig:w1:sched#0', workflowId: 'w1', kind: 'schedule', label: 'Every day at 09:00' },
+      { id: 'trig:w1:sched#1', workflowId: 'w1', kind: 'schedule', label: 'Every 2 hours at :30' },
+    ])
+  })
+
   it('emits multiple trigger nodes for one workflow', () => {
     const got = extractTriggerNodes(wfFull([
       { name: 'hook', type: 'n8n-nodes-base.webhook', parameters: { path: 'a', httpMethod: 'GET' } },
