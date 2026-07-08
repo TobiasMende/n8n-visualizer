@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useGraphStore } from '~/stores/graph'
 const store = useGraphStore()
+const showLegal = useOfficialHost()
 const views = [
   { id: 'map', icon: '🗺️', label: 'Map' },
   { id: 'webhooks', icon: '🔗', label: 'Webhooks' },
@@ -29,6 +30,10 @@ const views = [
             2.2 0 .21.15.46.55.38A8.01 8.01 0 0016 8c0-4.42-3.58-8-8-8z" />
         </svg><span class="t">GitHub</span>
       </a>
+      <div v-if="showLegal" class="legal">
+        <a href="https://effizienzagent.de/impressum/" target="_blank" rel="noopener noreferrer">Impressum</a>
+        <NuxtLink to="/datenschutz">Datenschutz</NuxtLink>
+      </div>
     </nav>
     <div class="main">
       <header class="topbar">
@@ -56,5 +61,8 @@ const views = [
 .spacer { flex: 1; }
 .ghlink { margin-top: auto; text-decoration: none; }
 .ghlink .i { display: inline-flex; }
+.legal { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 0 2px; }
+.legal a { color: var(--text-faint); font-size: 9px; text-decoration: none; }
+.legal a:hover { color: var(--text-dim); text-decoration: underline; }
 .body { position: relative; flex: 1; min-height: 0; }
 </style>
