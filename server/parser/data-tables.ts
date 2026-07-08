@@ -2,13 +2,14 @@ import type { RawWorkflow, DataTableRef } from '#shared/types/graph'
 
 const PROJECT_RE = /\/projects\/([^/]+)\/datatables\//
 
-function parseRef(param: any): { id: string; name: string; projectId: string | null } | null {
+function parseRef(param: unknown): { id: string; name: string; projectId: string | null } | null {
   if (!param || typeof param !== 'object') return null
-  if (param.mode === 'expression') return null
-  const value = param.value
+  const p = param as { mode?: unknown; value?: unknown; cachedResultName?: unknown; cachedResultUrl?: unknown }
+  if (p.mode === 'expression') return null
+  const value = p.value
   if (typeof value !== 'string' || value === '' || value.startsWith('=')) return null
-  const name = typeof param.cachedResultName === 'string' && param.cachedResultName ? param.cachedResultName : value
-  const url = typeof param.cachedResultUrl === 'string' ? param.cachedResultUrl : ''
+  const name = typeof p.cachedResultName === 'string' && p.cachedResultName ? p.cachedResultName : value
+  const url = typeof p.cachedResultUrl === 'string' ? p.cachedResultUrl : ''
   const projectId = PROJECT_RE.exec(url)?.[1] ?? null
   return { id: value, name, projectId }
 }

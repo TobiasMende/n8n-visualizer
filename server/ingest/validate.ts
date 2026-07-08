@@ -39,7 +39,7 @@ export function assertN8nListResponse(status: number, body: unknown): void {
     throw new IngestError('invalid_key', 401, 'Invalid n8n API key')
 
   if (status >= 200 && status < 300) {
-    if (body && typeof body === 'object' && Array.isArray((body as any).data)) return
+    if (body && typeof body === 'object' && Array.isArray((body as { data?: unknown }).data)) return
     throw new IngestError('not_n8n', 502, 'That URL did not respond like an n8n public API')
   }
 

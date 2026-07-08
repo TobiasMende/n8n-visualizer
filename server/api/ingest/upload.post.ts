@@ -8,24 +8,27 @@ import bundled from '../../catalog/bundled.json'
 const MAX_BODY_BYTES = 5 * 1024 * 1024 // 5 MB
 
 export default defineEventHandler(async (event) => {
-  const body = await readJsonBodyCapped(event, MAX_BODY_BYTES)
+  const body = (await readJsonBodyCapped(event, MAX_BODY_BYTES)) as Record<string, unknown> | null
   try {
     const raw = body?.workflows ?? body
     // Only keep a baseUrl that is a real http(s) URL — it flows into deep-link
     // and webhook hrefs, so a javascript:/data: value would be a stored-XSS vector.
-    const baseUrl = isHttpUrl(body?.baseUrl) ? body.baseUrl : null
+    const rawBase = body?.baseUrl
+    const baseUrl = isHttpUrl(rawBase) ? rawBase : null
     const workflows = normalizeWorkflows(raw)
     // Optional enrichment bundled alongside the workflows (used by the demo
     // recorder, which fetches and anonymizes credentials/data tables too). Only
     // accept arrays; anything else falls back to null (inference only).
-    const apiCredentials = Array.isArray(body?.apiCredentials) ? body.apiCredentials : null
-    const apiDataTables = Array.isArray(body?.apiDataTables) ? body.apiDataTables : null
+    const rawCreds = body?.apiCredentials
+    const apiCredentials = Array.isArray(rawCreds) ? rawCreds : null
+    const rawTables = body?.apiDataTables
+    const apiDataTables = Array.isArray(rawTables) ? rawTables : null
     const catalog = await buildCatalog({
       host: null, cache: { get: async () => null, set: async () => {} }, source: { fetch: async () => null }, bundled,
     })
     return buildGraph(workflows, baseUrl, { from: new Date().toISOString(), catalog, apiCredentials, apiDataTables })
-  } catch (e: any) {
-    if (e?.statusCode) throw e
+  } catch (e) {
+    if ((e as { statusCode?: number } | null)?.statusCode) throw e
     throw createError({ statusCode: 400, statusMessage: 'Invalid request body' })
   }
 })

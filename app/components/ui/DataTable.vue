@@ -1,10 +1,10 @@
-<script setup lang="ts">
+<script setup lang="ts" generic="Row extends object">
 import { computed, ref } from 'vue'
 import { onActivate } from '~/composables/useA11yClick'
 
 interface Column { key: string; label: string }
-const props = defineProps<{ columns: Column[]; rows: Record<string, any>[]; rowKey?: (row: Record<string, any>) => string | number }>()
-const emit = defineEmits<{ rowClick: [row: Record<string, any>] }>()
+const props = defineProps<{ columns: Column[]; rows: Row[]; rowKey?: (row: Row) => string | number }>()
+const emit = defineEmits<{ rowClick: [row: Row] }>()
 
 const sortKey = ref<string | null>(null)
 const sortDir = ref<1 | -1>(1)
@@ -14,10 +14,14 @@ function toggleSort(key: string) {
   else { sortKey.value = key; sortDir.value = 1 }
 }
 
+function cell(row: Row, key: string): unknown {
+  return (row as Record<string, unknown>)[key]
+}
+
 const view = computed(() => {
   if (sortKey.value) {
     const k = sortKey.value
-    return [...props.rows].sort((a, b) => String(a[k] ?? '').localeCompare(String(b[k] ?? ''), undefined, { numeric: true }) * sortDir.value)
+    return [...props.rows].sort((a, b) => String(cell(a, k) ?? '').localeCompare(String(cell(b, k) ?? ''), undefined, { numeric: true }) * sortDir.value)
   }
   return props.rows
 })
@@ -41,7 +45,7 @@ const view = computed(() => {
           role="button" tabindex="0"
           @click="emit('rowClick', row)"
           @keydown="onActivate(() => emit('rowClick', row))">
-        <td v-for="c in columns" :key="c.key"><slot :name="`cell-${c.key}`" :row="row">{{ row[c.key] }}</slot></td>
+        <td v-for="c in columns" :key="c.key"><slot :name="`cell-${c.key}`" :row="row">{{ cell(row, c.key) }}</slot></td>
       </tr>
     </tbody>
   </table>

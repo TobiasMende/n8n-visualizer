@@ -23,7 +23,7 @@ describe('buildGraph', () => {
 
   it('sets deepLink to null when no base URL is given', () => {
     const g = buildGraph([producer], null)
-    expect(g.nodes[0].deepLink).toBeNull()
+    expect(g.nodes[0]!.deepLink).toBeNull()
   })
 
   it('drops edges pointing at unknown workflows', () => {
@@ -109,18 +109,18 @@ describe('buildGraph enrichment', () => {
   it('attaches webhooks, schedules, credentials and readable node-type names', () => {
     const g = buildGraph([wf], 'https://n8n.example.com', { from: '2026-06-08T00:00:00.000Z', catalog: stubCatalog })
     expect(g.webhooks).toHaveLength(1)
-    expect(g.webhooks[0].prodUrl).toBe('https://n8n.example.com/webhook/p')
-    expect(g.schedules[0].cadenceText).toBe('Every day at 02:00')
-    expect(g.schedules[0].nextFire).toBe('2026-06-08T02:00:00.000Z')
+    expect(g.webhooks[0]!.prodUrl).toBe('https://n8n.example.com/webhook/p')
+    expect(g.schedules[0]!.cadenceText).toBe('Every day at 02:00')
+    expect(g.schedules[0]!.nextFire).toBe('2026-06-08T02:00:00.000Z')
     expect(g.credentials.find(c => c.name === 'My API')!.workflowIds).toEqual(['w'])
-    const wh = g.nodes[0].summary.nodeTypes.find(t => t.type === 'n8n-nodes-base.webhook')!
+    const wh = g.nodes[0]!.summary.nodeTypes.find(t => t.type === 'n8n-nodes-base.webhook')!
     expect(wh.displayName).toBe('Webhook')
   })
 
   it('still works with no opts (v1 call style)', () => {
     const g = buildGraph([wf], null)
-    expect(g.webhooks[0].prodUrl).toBeNull()
-    expect(g.schedules[0].nextFire).toBeNull()
-    expect(g.nodes[0].summary.nodeTypes[0].displayName).toBeTypeOf('string')
+    expect(g.webhooks[0]!.prodUrl).toBeNull()
+    expect(g.schedules[0]!.nextFire).toBeNull()
+    expect(g.nodes[0]!.summary.nodeTypes[0]!.displayName).toBeTypeOf('string')
   })
 })

@@ -39,7 +39,7 @@ describe('extractWebhookPaths (unified detector)', () => {
     const wf = { id: 'w', name: 'W', nodes: [
       { name: 'form', type: 'n8n-nodes-base.formTrigger', parameters: { path: 'signup' } },
       { name: 'wh', type: 'n8n-nodes-base.webhook', webhookId: 'abc-123', parameters: { path: '' } },
-    ] } as any
+    ] } as RawWorkflow
     expect(extractWebhookPaths(wf).sort()).toEqual(['abc-123', 'signup'])
   })
 })

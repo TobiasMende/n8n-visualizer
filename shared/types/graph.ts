@@ -7,7 +7,7 @@ export interface RawNode {
   name: string
   type: string
   webhookId?: string
-  parameters?: Record<string, any>
+  parameters?: Record<string, unknown>
   credentials?: Record<string, { id?: string; name?: string }>
 }
 
@@ -17,8 +17,8 @@ export interface RawWorkflow {
   active?: boolean
   isArchived?: boolean
   nodes: RawNode[]
-  connections?: Record<string, any>
-  settings?: { errorWorkflow?: string; [k: string]: any }
+  connections?: Record<string, unknown>
+  settings?: { errorWorkflow?: string; [k: string]: unknown }
   tags?: ({ id?: string; name: string } | string)[]
 }
 

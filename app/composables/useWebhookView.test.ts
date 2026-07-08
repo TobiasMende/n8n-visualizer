@@ -13,6 +13,7 @@ const graph: WorkflowGraph = {
   triggerNodes: [], unresolved: [], skipped: [],
   webhooks: [{ workflowId: 'p', method: 'POST', path: 'orders', auth: 'headerAuth', secured: true, prodUrl: 'https://h/webhook/orders', testUrl: 'https://h/webhook-test/orders' }],
   schedules: [], credentials: [],
+  dataTables: [], enrichment: { credentials: false, dataTables: false },
 }
 
 describe('webhookRows', () => {
@@ -21,7 +22,7 @@ describe('webhookRows', () => {
     expect(rows[0]).toMatchObject({ workflowId: 'p', workflow: 'Producer', method: 'POST', url: 'https://h/webhook/orders', active: true, secured: true })
   })
   it('maps the auth value to a human label', () => {
-    expect(webhookRows(graph)[0].authLabel).toBe('Header Auth')
+    expect(webhookRows(graph)[0]!.authLabel).toBe('Header Auth')
   })
 })
 

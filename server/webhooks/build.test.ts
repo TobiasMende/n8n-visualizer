@@ -23,7 +23,7 @@ describe('buildWebhooks', () => {
 
   it('leaves URLs null when no base is known', () => {
     const got = buildWebhooks([wf], null)
-    expect(got[0].prodUrl).toBeNull()
-    expect(got[0].testUrl).toBeNull()
+    expect(got[0]!.prodUrl).toBeNull()
+    expect(got[0]!.testUrl).toBeNull()
   })
 })

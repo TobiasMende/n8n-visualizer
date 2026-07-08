@@ -26,7 +26,7 @@ describe('classifyTriggers', () => {
   })
 })
 
-const wfFull = (nodes: any[]): RawWorkflow => ({ id: 'w1', name: 'W', nodes })
+const wfFull = (nodes: RawWorkflow['nodes']): RawWorkflow => ({ id: 'w1', name: 'W', nodes })
 
 describe('classifyTriggers — executeWorkflowTrigger', () => {
   it('does NOT classify executeWorkflowTrigger as an app trigger', () => {

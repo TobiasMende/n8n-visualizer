@@ -3,6 +3,7 @@ import { buildGraph } from '../../parser/build-graph'
 import { buildCatalog } from '../../catalog/catalog'
 import { instanceCatalogSource } from '../../catalog/instance-source'
 import { ingestErrorFromSafeFetch } from '../../ingest/validate'
+import type { SafeFetchError } from '../../ingest/safe-fetch'
 import { readJsonBodyCapped } from '../../util/body'
 import bundled from '../../catalog/bundled.json'
 import { resolveIngestCreds } from '../../session/creds'
@@ -12,7 +13,7 @@ import { resolveSessionPassword } from '../../session/password'
 const MAX_BODY_BYTES = 64 * 1024 // 64 KB — this endpoint only needs a small JSON object
 
 export default defineEventHandler(async (event) => {
-  const body = (await readJsonBodyCapped(event, MAX_BODY_BYTES)) ?? {}
+  const body = ((await readJsonBodyCapped(event, MAX_BODY_BYTES)) ?? {}) as Record<string, unknown>
   const password = resolveSessionPassword(event)
   const session = password ? await readSession(event, sessionConfig(password, import.meta.dev)) : null
   const creds = resolveIngestCreds(body, session)
@@ -44,13 +45,14 @@ export default defineEventHandler(async (event) => {
     return buildGraph(workflows, baseUrl, {
       from: new Date().toISOString(), catalog, apiCredentials, apiDataTables,
     })
-  } catch (e: any) {
+  } catch (e) {
     // Match by name, not instanceof: the production bundle can split these
     // classes across chunks, breaking cross-module instanceof checks.
-    const ingest = e?.name === 'SafeFetchError' ? ingestErrorFromSafeFetch(e) : e
+    const err = e as { name?: string; statusCode?: number; message?: string } | null
+    const ingest = err?.name === 'SafeFetchError' ? ingestErrorFromSafeFetch(e as SafeFetchError) : err
     if (ingest?.name === 'IngestError' && typeof ingest.statusCode === 'number')
       throw createError({ statusCode: ingest.statusCode, statusMessage: ingest.message })
-    if (e?.statusCode) throw e
+    if (err?.statusCode) throw e
     throw createError({ statusCode: 502, statusMessage: 'n8n fetch failed' })
   }
 })

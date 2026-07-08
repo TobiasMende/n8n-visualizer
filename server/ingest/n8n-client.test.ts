@@ -23,7 +23,7 @@ describe('fetchAllWorkflows', () => {
     const got = await fetchAllWorkflows('https://n8n.example.com', 'key', fetchImpl)
     expect(got.map(w => w.id)).toEqual(['a', 'b'])
     expect(fetchImpl).toHaveBeenCalledTimes(2)
-    expect(fetchImpl.mock.calls[0][0]).toContain('/api/v1/workflows')
+    expect(fetchImpl.mock.calls[0]![0]).toContain('/api/v1/workflows')
   })
 
   it('requests a bounded page size and a raised response cap for large instances', async () => {
@@ -96,7 +96,7 @@ describe('fetchAllCredentials (best-effort)', () => {
       .mockResolvedValueOnce(resp(200, { data: [{ id: '2', name: 'B', type: 'slackApi' }], nextCursor: null }))
     const got = await fetchAllCredentials('https://n8n.example.com', 'key', fetchImpl)
     expect(got?.map(c => c.id)).toEqual(['1', '2'])
-    expect(fetchImpl.mock.calls[0][0]).toContain('/api/v1/credentials')
+    expect(fetchImpl.mock.calls[0]![0]).toContain('/api/v1/credentials')
   })
 
   it('returns null on 403 (missing scope)', async () => {
@@ -123,7 +123,7 @@ describe('fetchAllDataTables (best-effort)', () => {
     }))
     const got = await fetchAllDataTables('https://h', 'key', fetchImpl)
     expect(got?.[0]).toMatchObject({ id: 't1', name: 'Demo' })
-    expect(fetchImpl.mock.calls[0][0]).toContain('/api/v1/data-tables')
+    expect(fetchImpl.mock.calls[0]![0]).toContain('/api/v1/data-tables')
   })
 
   it('returns null on 403', async () => {

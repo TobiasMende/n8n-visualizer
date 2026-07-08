@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import { BaseEdge, getBezierPath, useVueFlow, Position } from '@vue-flow/core'
 import { edgeColor } from '~/composables/edgeColors'
 import { floatingEdgeParams } from '~/composables/useFloatingEdge'
+import type { LinkType } from '#shared/types/graph'
 
 const props = defineProps<{
   id: string
@@ -15,7 +16,7 @@ const props = defineProps<{
   targetY: number
   targetPosition: Position
   markerEnd?: string
-  data?: Record<string, any>
+  data?: { type?: LinkType; dimmed?: boolean; emphasized?: boolean }
 }>()
 
 const POS: Record<string, Position> = { top: Position.Top, right: Position.Right, bottom: Position.Bottom, left: Position.Left }

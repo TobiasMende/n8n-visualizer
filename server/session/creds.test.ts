@@ -17,6 +17,6 @@ describe('resolveIngestCreds', () => {
     expect(resolveIngestCreds(null, null)).toBeNull()
   })
   it('ignores non-string body fields', () => {
-    expect(resolveIngestCreds({ baseUrl: 1, apiKey: 2 } as any, session)).toEqual(session)
+    expect(resolveIngestCreds({ baseUrl: 1, apiKey: 2 }, session)).toEqual(session)
   })
 })

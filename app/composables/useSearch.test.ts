@@ -6,9 +6,10 @@ const graph: WorkflowGraph = {
   nodes: [
     { id: 'p', name: 'Order Producer', active: true, triggers: ['webhook'], tags: [],
       webhookPaths: ['orders'], deepLink: null,
-      summary: { nodeCount: 1, nodeTypes: [{ type: 'n8n-nodes-base.httpRequest', count: 1 }], credentials: [], inbound: 0, outbound: 0 } },
+      summary: { nodeCount: 1, nodeTypes: [{ type: 'n8n-nodes-base.httpRequest', displayName: 'n8n-nodes-base.httpRequest', count: 1 }], credentials: [], inbound: 0, outbound: 0 } },
   ],
-  edges: [], unresolved: [], skipped: [],
+  edges: [], unresolved: [], skipped: [], triggerNodes: [], webhooks: [], schedules: [], credentials: [],
+  dataTables: [], enrichment: { credentials: false, dataTables: false },
 }
 
 describe('searchGraph', () => {
@@ -18,7 +19,7 @@ describe('searchGraph', () => {
   })
 
   it('matches workflow names case-insensitively', () => {
-    expect(searchGraph(graph, 'producer')[0].workflowId).toBe('p')
+    expect(searchGraph(graph, 'producer')[0]!.workflowId).toBe('p')
   })
 
   it('returns nothing for a blank query', () => {

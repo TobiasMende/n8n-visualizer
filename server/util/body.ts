@@ -8,7 +8,7 @@ import { createError, type H3Event } from 'h3'
 // keep draining the socket so the client still receives a clean response
 // instead of a connection reset. Memory stays bounded because over-limit
 // chunks are discarded, not retained.
-export function readJsonBodyCapped(event: H3Event, maxBytes: number): Promise<any> {
+export function readJsonBodyCapped(event: H3Event, maxBytes: number): Promise<unknown> {
   return new Promise((resolve, reject) => {
     const req = event.node.req
     const chunks: Buffer[] = []

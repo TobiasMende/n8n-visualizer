@@ -79,11 +79,11 @@ export function isBlockedIp(ip: string): boolean {
   if (!addr.includes(':')) return true
 
   // IPv6 (may be zone-suffixed or IPv4-mapped)
-  const bare = addr.split('%')[0].toLowerCase()
+  const bare = (addr.split('%')[0] ?? '').toLowerCase()
 
   // IPv4-mapped / -embedded (e.g. ::ffff:127.0.0.1, ::127.0.0.1)
   const mappedV4 = bare.match(/(?:^|:)((?:\d{1,3}\.){3}\d{1,3})$/)
-  if (mappedV4) return isBlockedIpv4(mappedV4[1])
+  if (mappedV4) return isBlockedIpv4(mappedV4[1]!)
 
   if (bare === '::1') return true // loopback
   if (bare === '::' || bare === '') return true // unspecified
@@ -123,8 +123,12 @@ async function resolveAndValidate(hostname: string, resolve: Resolver): Promise<
 function pinnedAgent(addrs: ResolvedAddr[]): Agent {
   return new Agent({
     connect: {
-      lookup(_hostname: string, options: any, cb: any) {
-        const a = addrs[0]
+      lookup(
+        _hostname: string,
+        options: { all?: boolean },
+        cb: (err: Error | null, address: string | ResolvedAddr[], family?: number) => void,
+      ) {
+        const a = addrs[0]!
         if (options && options.all) cb(null, [{ address: a.address, family: a.family }])
         else cb(null, a.address, a.family)
       },
@@ -184,7 +188,7 @@ export interface SafeResponse {
   ok: boolean
   headers: Headers
   text(): Promise<string>
-  json(): Promise<any>
+  json(): Promise<unknown>
 }
 
 export interface SafeFetchOptions {

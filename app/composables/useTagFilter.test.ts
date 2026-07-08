@@ -9,7 +9,11 @@ const node = (tags: string[]): WorkflowNode => ({
 
 describe('allTags', () => {
   it('returns sorted unique tags across the graph', () => {
-    const graph = { nodes: [node(['b', 'a']), node(['a', 'c'])], edges: [], unresolved: [], skipped: [] } as WorkflowGraph
+    const graph: WorkflowGraph = {
+      nodes: [node(['b', 'a']), node(['a', 'c'])],
+      edges: [], unresolved: [], skipped: [], triggerNodes: [], webhooks: [], schedules: [], credentials: [],
+      dataTables: [], enrichment: { credentials: false, dataTables: false },
+    }
     expect(allTags(graph)).toEqual(['a', 'b', 'c'])
   })
 })

@@ -18,6 +18,7 @@ const graph: WorkflowGraph = {
   ],
   triggerNodes: [trig('t1', 'hook', 'webhook'), trig('t2', 'sub', 'schedule')],
   unresolved: [], skipped: [], webhooks: [], schedules: [], credentials: [],
+  dataTables: [], enrichment: { credentials: false, dataTables: false },
 }
 
 describe('visibleGraph', () => {

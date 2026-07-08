@@ -52,9 +52,9 @@ function anonParams(params: Record<string, unknown>, faker: Faker, replaceStr: R
   return out
 }
 
-function remapConnections(conns: Record<string, any> | undefined, nameMap: Map<string, string>) {
+function remapConnections(conns: Record<string, unknown> | undefined, nameMap: Map<string, string>) {
   if (!conns) return conns
-  const out: Record<string, any> = {}
+  const out: Record<string, unknown> = {}
   for (const [src, val] of Object.entries(conns)) {
     const newSrc = nameMap.get(src) ?? src
     const json = JSON.stringify(val, (_k, v) =>

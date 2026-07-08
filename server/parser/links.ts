@@ -34,7 +34,7 @@ export interface WebhookHttpResult { edges: WorkflowEdge[]; unresolved: Unresolv
 
 function pathFromUrl(url: string): string | null {
   const m = url.match(/\/webhook(?:-test)?\/([^?#\s]+)/)
-  return m ? m[1].replace(/\/+$/, '') : null
+  return m ? m[1]!.replace(/\/+$/, '') : null
 }
 
 export function extractWebhookHttpLinks(workflows: RawWorkflow[]): WebhookHttpResult {

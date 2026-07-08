@@ -14,12 +14,12 @@ describe('DataTable', () => {
 
   it('sorts ascending when a header is clicked', async () => {
     const w = mount(DataTable, { props: { columns, rows } })
-    await w.findAll('th')[0].trigger('click')
-    expect(w.findAll('tbody tr')[0].text()).toContain('Alpha')
+    await w.findAll('th')[0]!.trigger('click')
+    expect(w.findAll('tbody tr')[0]!.text()).toContain('Alpha')
   })
 
   it('uses rowKey prop for stable row keys', () => {
-    const w = mount(DataTable, { props: { columns, rows, rowKey: (r) => r.name } })
+    const w = mount(DataTable, { props: { columns, rows, rowKey: (r: object) => (r as { name: string }).name } })
     expect(w.findAll('tbody tr')).toHaveLength(2)
   })
 })

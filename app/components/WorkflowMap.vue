@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch, onMounted, nextTick } from 'vue'
 import { VueFlow, useVueFlow, MarkerType } from '@vue-flow/core'
-import type { Edge, Node } from '@vue-flow/core'
+import type { Edge, GraphNode, Node } from '@vue-flow/core'
 import { Background, BackgroundVariant } from '@vue-flow/background'
 import { MiniMap } from '@vue-flow/minimap'
 import '@vue-flow/minimap/dist/style.css'
@@ -149,7 +149,7 @@ const edges = computed<Edge[]>(() => {
   return [...baseEdges, ...trigEdges, ...resEdges, ...overlayEdges]
 })
 
-function onNodeClick({ node }: { node: Node }) {
+function onNodeClick({ node }: { node: GraphNode }) {
   if (node.data?.kind === 'workflow') { store.selectedId = node.id; store.selectedCredId = null; store.selectedDataTableId = null }
   else if (node.data?.kind === 'trigger') { store.selectedId = node.data.workflowId; store.selectedCredId = null; store.selectedDataTableId = null }
   else if (node.data?.kind === 'credential') { store.selectedCredId = node.id; store.selectedId = null; store.selectedDataTableId = null }
@@ -157,7 +157,7 @@ function onNodeClick({ node }: { node: Node }) {
   centerNode(node)
 }
 
-function centerNode(node: Node) {
+function centerNode(node: GraphNode) {
   const pos = node.computedPosition ?? node.position
   const w = node.dimensions?.width ?? 0
   const h = node.dimensions?.height ?? 0
@@ -185,7 +185,7 @@ function focusTarget() {
   store.focusNodeId = null
   for (const id of candidates) {
     const n = findNode(id)
-    if (n) { centerNode(n as unknown as Node); return }
+    if (n) { centerNode(n); return }
   }
   focusSelected()
 }

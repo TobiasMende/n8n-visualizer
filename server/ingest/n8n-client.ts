@@ -6,6 +6,7 @@ import { assertN8nListResponse } from './validate'
 export type FetchImpl = typeof safeFetch
 
 interface ListResponse { data: RawWorkflow[]; nextCursor?: string | null }
+interface PagedBody<T> { data?: T[]; nextCursor?: string | null }
 
 const PAGE_CAP = 200
 const PAGE_SIZE = 100
@@ -44,8 +45,8 @@ export async function fetchAllWorkflows(
     let body: ListResponse | null = null
     try {
       body = (await res.json()) as ListResponse
-    } catch (e: any) {
-      if (e?.name === 'SafeFetchError') throw e
+    } catch (e) {
+      if ((e as { name?: string } | null)?.name === 'SafeFetchError') throw e
       body = null
     }
     assertN8nListResponse(res.status, body)
@@ -93,8 +94,8 @@ async function fetchListBestEffort<T>(
         signal: deadline,
       })
       if (res.status < 200 || res.status >= 300) return null
-      let body: { data?: T[]; nextCursor?: string | null } | null = null
-      try { body = (await res.json()) as typeof body } catch { return null }
+      let body: PagedBody<T> | null = null
+      try { body = (await res.json()) as PagedBody<T> | null } catch { return null }
       if (!body || !Array.isArray(body.data)) return null
       all.push(...body.data)
       cursor = body.nextCursor ?? undefined

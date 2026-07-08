@@ -10,7 +10,7 @@ export function webhookNodeInfo(node: RawNode): WebhookNodeInfo | null {
   let path = typeof p.path === 'string' ? p.path.replace(/^\/+|\/+$/g, '') : ''
   if (!path && typeof node.webhookId === 'string' && node.webhookId) path = node.webhookId
   if (!path) return null
-  const raw = p.httpMethod ?? p.options?.httpMethod
+  const raw = p.httpMethod ?? (p.options as { httpMethod?: unknown } | undefined)?.httpMethod
   const method = Array.isArray(raw)
     ? raw.join(',')
     : (typeof raw === 'string' && raw ? raw : 'GET')

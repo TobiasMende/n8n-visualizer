@@ -12,6 +12,7 @@ const graph: WorkflowGraph = {
     { source: 'b', target: 'c', type: 'error' },
   ],
   triggerNodes: [], unresolved: [], skipped: [], webhooks: [], schedules: [], credentials: [],
+  dataTables: [], enrichment: { credentials: false, dataTables: false },
 }
 
 describe('workflowLinks', () => {

@@ -10,6 +10,7 @@ const graph: WorkflowGraph = {
       summary: { nodeCount: 0, nodeTypes: [], credentials: [], inbound: 0, outbound: 0 } },
   ],
   edges: [], triggerNodes: [], unresolved: [], skipped: [], webhooks: [], credentials: [],
+  dataTables: [], enrichment: { credentials: false, dataTables: false },
   schedules: [
     { workflowId: 'a', cadenceText: 'Every day at 02:00', cadenceGroup: 'daily', nextFire: '2026-06-09T02:00:00.000Z' },
     { workflowId: 'b', cadenceText: 'Every 15 minutes', cadenceGroup: 'minutes', nextFire: '2026-06-08T02:15:00.000Z' },
@@ -20,7 +21,7 @@ describe('scheduleGroups', () => {
   it('orders groups coarse-to-fine and joins workflow names', () => {
     const groups = scheduleGroups(graph)
     expect(groups.map(g => g.group)).toEqual(['minutes', 'daily'])
-    expect(groups[0].rows[0]).toMatchObject({ workflow: 'Poller', cadenceText: 'Every 15 minutes' })
+    expect(groups[0]!.rows[0]).toMatchObject({ workflow: 'Poller', cadenceText: 'Every 15 minutes' })
   })
 })
 

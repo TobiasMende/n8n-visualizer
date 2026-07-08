@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { parseSchedule } from './parse'
 import type { RawNode } from '#shared/types/graph'
 
-const sched = (rule: any): RawNode =>
+const sched = (rule: unknown): RawNode =>
   ({ name: 's', type: 'n8n-nodes-base.scheduleTrigger', parameters: { rule } })
 
 describe('parseSchedule', () => {
@@ -43,21 +43,21 @@ describe('parseSchedule', () => {
 
   it('hours interval > 1 yields cronExpr null (*/N is not "every N hours from anchor")', () => {
     const got = parseSchedule(sched({ interval: [{ field: 'hours', hoursInterval: 2, triggerAtMinute: 15 }] }))
-    expect(got[0].cronExpr).toBeNull()
-    expect(got[0].cadenceGroup).toBe('hourly')
-    expect(got[0].cadenceText).toBeTruthy()
+    expect(got[0]!.cronExpr).toBeNull()
+    expect(got[0]!.cadenceGroup).toBe('hourly')
+    expect(got[0]!.cadenceText).toBeTruthy()
   })
 
   it('days interval > 1 yields cronExpr null', () => {
     const got = parseSchedule(sched({ interval: [{ field: 'days', daysInterval: 3, triggerAtHour: 8, triggerAtMinute: 0 }] }))
-    expect(got[0].cronExpr).toBeNull()
-    expect(got[0].cadenceGroup).toBe('daily')
-    expect(got[0].cadenceText).toBeTruthy()
+    expect(got[0]!.cronExpr).toBeNull()
+    expect(got[0]!.cadenceGroup).toBe('daily')
+    expect(got[0]!.cadenceText).toBeTruthy()
   })
 
   it('weeks with empty triggerAtDay falls back to Sunday (day 0)', () => {
     const got = parseSchedule(sched({ interval: [{ field: 'weeks', triggerAtDay: [], triggerAtHour: 9, triggerAtMinute: 0 }] }))
-    expect(got[0].cronExpr).toBe('0 9 * * 0')
-    expect(got[0].cadenceText).toContain('Sunday')
+    expect(got[0]!.cronExpr).toBe('0 9 * * 0')
+    expect(got[0]!.cadenceText).toContain('Sunday')
   })
 })

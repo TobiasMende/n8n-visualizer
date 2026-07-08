@@ -7,10 +7,24 @@ const hhmm = (h: number, m: number) =>
 
 const DOW = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
 
-function parseRule(rule: any): ParsedCadence | null {
-  const min = Number(rule?.triggerAtMinute ?? 0)
-  const hour = Number(rule?.triggerAtHour ?? 0)
-  switch (rule?.field) {
+interface ScheduleRule {
+  field?: string
+  triggerAtMinute?: unknown
+  triggerAtHour?: unknown
+  secondsInterval?: unknown
+  minutesInterval?: unknown
+  hoursInterval?: unknown
+  daysInterval?: unknown
+  triggerAtDay?: unknown
+  triggerAtDayOfMonth?: unknown
+  expression?: unknown
+}
+
+function parseRule(rule: ScheduleRule | null | undefined): ParsedCadence | null {
+  if (!rule) return null
+  const min = Number(rule.triggerAtMinute ?? 0)
+  const hour = Number(rule.triggerAtHour ?? 0)
+  switch (rule.field) {
     case 'seconds': {
       const n = Number(rule.secondsInterval ?? 1)
       return { cadenceText: `Every ${n} second${n === 1 ? '' : 's'}`, cadenceGroup: 'sub-minute', cronExpr: null }
@@ -50,8 +64,8 @@ function parseRule(rule: any): ParsedCadence | null {
 
 export function parseSchedule(node: RawNode): ParsedCadence[] {
   if (node.type === 'n8n-nodes-base.scheduleTrigger') {
-    const interval = node.parameters?.rule?.interval
-    const rules: any[] = Array.isArray(interval) ? interval : []
+    const interval = (node.parameters?.rule as { interval?: unknown } | undefined)?.interval
+    const rules = Array.isArray(interval) ? (interval as ScheduleRule[]) : []
     return rules.map(parseRule).filter((r): r is ParsedCadence => r !== null)
   }
   if (node.type === 'n8n-nodes-base.cron') {

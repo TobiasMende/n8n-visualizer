@@ -15,8 +15,9 @@ export const useGraphStore = defineStore('graph', () => {
   const connected = ref(false)
   const connectedHost = ref<string | null>(null)
 
-  function extractError(e: any): string {
-    return e?.data?.statusMessage ?? e?.statusMessage ?? e?.message ?? 'Request failed'
+  function extractError(e: unknown): string {
+    const err = e as { data?: { statusMessage?: string }; statusMessage?: string; message?: string } | null
+    return err?.data?.statusMessage ?? err?.statusMessage ?? err?.message ?? 'Request failed'
   }
 
   async function loadFromApi(baseUrl: string, apiKey: string, remember = false) {

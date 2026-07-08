@@ -1,4 +1,4 @@
-import { describe, test, expect } from 'vitest'
+import { describe, test, it, expect } from 'vitest'
 import { selectStoreKind, isLimitedPath } from './config'
 
 describe('selectStoreKind', () => {

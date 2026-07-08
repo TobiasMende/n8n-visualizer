@@ -10,7 +10,7 @@ const open = ref(false)
 const triggerLabels: Record<TriggerKind, string> = {
   webhook: 'Webhook', schedule: 'Schedule', manual: 'Manual', app: 'App', form: 'Form',
 }
-const linkLabels: Record<string, string> = { execute: 'Execute', webhookHttp: 'Webhook → HTTP', error: 'Error' }
+const linkLabels = { execute: 'Execute', webhookHttp: 'Webhook → HTTP', error: 'Error' } as const
 const types = computed(() => allNodeTypes(store.graph))
 
 function typeVisible(t: string) { return !store.visibility.hiddenNodeTypes.includes(t) }

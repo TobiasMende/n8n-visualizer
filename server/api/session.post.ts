@@ -10,7 +10,7 @@ export default defineEventHandler(async (event) => {
   if (!password)
     throw createError({ statusCode: 500, statusMessage: 'Remember-me is not configured on this server' })
 
-  const { baseUrl, apiKey } = (await readJsonBodyCapped(event, MAX_BODY_BYTES)) ?? {}
+  const { baseUrl, apiKey } = ((await readJsonBodyCapped(event, MAX_BODY_BYTES)) ?? {}) as { baseUrl?: unknown; apiKey?: unknown }
   if (typeof baseUrl !== 'string' || typeof apiKey !== 'string' || !baseUrl || !apiKey)
     throw createError({ statusCode: 400, statusMessage: 'baseUrl and apiKey are required' })
   if (!isHttpUrl(baseUrl))
