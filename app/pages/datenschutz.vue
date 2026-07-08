@@ -10,12 +10,19 @@ useHead({ title: 'Datenschutzerklärung — n8viz' })
       <p class="meta">Stand: Juli 2026 · Gilt für die offizielle Instanz unter n8viz.effizienzagent.de</p>
 
       <aside v-if="!isOfficialHost" class="selfhost-note">
-        Hinweis: Diese Datenschutzerklärung gilt ausschließlich für die vom unten genannten
-        Verantwortlichen betriebene Instanz. Wird n8viz selbst gehostet, ist der jeweilige
-        Betreiber für eine eigene Datenschutzerklärung verantwortlich.
+        Diese Erklärung gilt nur für die Instanz, die der unten genannte Verantwortliche
+        betreibt. Hostest Du n8viz selbst, bist Du selbst Betreiber — und brauchst eine eigene
+        Datenschutzerklärung.
       </aside>
 
-      <h2>1. Verantwortlicher</h2>
+      <h2>1. Worum es hier geht</h2>
+      <p>
+        n8viz zeigt Dir Deine n8n-Workflows als Karte. Dafür braucht es erstaunlich wenig:
+        keine Konten, kein Tracking, keine Werbung. Was an Daten trotzdem technisch anfällt,
+        steht hier — vollständig und ohne Kleingedrucktes.
+      </p>
+
+      <h2>2. Wer verantwortlich ist</h2>
       <p>
         INOCEA LLC<br />
         Tobias Mende<br />
@@ -25,79 +32,67 @@ useHead({ title: 'Datenschutzerklärung — n8viz' })
         Telefon: +49 451 7072134
       </p>
       <p>
-        Weitere Angaben im
+        Weitere Angaben findest Du im
         <a href="https://effizienzagent.de/impressum/" target="_blank" rel="noopener noreferrer">Impressum</a>.
       </p>
 
-      <h2>2. Überblick</h2>
+      <h2>3. Hosting bei Vercel</h2>
       <p>
-        n8viz visualisiert n8n-Workflows. Die Anwendung kommt ohne Benutzerkonten, ohne
-        Tracking- oder Analyse-Tools und ohne Werbung aus. Personenbezogene Daten werden nur
-        verarbeitet, soweit dies für den technischen Betrieb erforderlich ist.
+        n8viz läuft bei Vercel Inc., 340 S Lemon Ave #4133, Walnut, CA 91789, USA. Die
+        Serverfunktionen laufen in Frankfurt am Main (Region fra1). Beim Aufruf entstehen
+        Server-Logs: Deine IP-Adresse, Zeitpunkt des Zugriffs, aufgerufene Ressource und
+        Browser-Kennung (User-Agent). Ohne diese Daten funktioniert keine Webanwendung.
+      </p>
+      <p>
+        Rechtsgrundlage ist Art. 6 Abs. 1 lit. f DSGVO — das berechtigte Interesse, die
+        Anwendung sicher und stabil zu betreiben. Mit Vercel besteht ein
+        Auftragsverarbeitungsvertrag. Für Übermittlungen in die USA ist Vercel unter dem
+        EU-US Data Privacy Framework zertifiziert, ergänzend gelten
+        EU-Standardvertragsklauseln.
       </p>
 
-      <h2>3. Hosting (Vercel)</h2>
+      <h2>4. Schutz vor Missbrauch</h2>
       <p>
-        Diese Anwendung wird bei Vercel Inc., 340 S Lemon Ave #4133, Walnut, CA 91789, USA
-        gehostet. Die Serverfunktionen werden in der Region Frankfurt am Main (fra1) ausgeführt.
-        Beim Aufruf der Anwendung verarbeitet Vercel technisch notwendige Verbindungsdaten,
-        insbesondere IP-Adresse, Datum und Uhrzeit des Zugriffs, aufgerufene Ressource und
-        User-Agent (Server-Logs).
-      </p>
-      <p>
-        Rechtsgrundlage ist Art. 6 Abs. 1 lit. f DSGVO (berechtigtes Interesse an der sicheren
-        und stabilen Bereitstellung der Anwendung). Mit Vercel besteht ein
-        Auftragsverarbeitungsvertrag. Soweit Daten in die USA übermittelt werden, stützt sich
-        die Übermittlung auf die Zertifizierung von Vercel unter dem EU-US Data Privacy
-        Framework sowie ergänzend auf EU-Standardvertragsklauseln.
+        Damit niemand die API überlastet, begrenzen wir Anfragen pro IP-Adresse. Deine
+        IP-Adresse liegt dafür kurz als Zähler in einem Redis-Speicher von Upstash, Inc. —
+        nach Ablauf des Zeitfensters wird sie automatisch gelöscht. Rechtsgrundlage ist
+        Art. 6 Abs. 1 lit. f DSGVO (Schutz der Infrastruktur).
       </p>
 
-      <h2>4. Schutz vor Missbrauch (Rate-Limiting)</h2>
+      <h2>5. Deine n8n-Verbindung</h2>
       <p>
-        Um die API-Endpunkte der Anwendung vor Überlastung und Missbrauch zu schützen, wird die
-        Anzahl der Anfragen pro IP-Adresse begrenzt. Dazu wird die IP-Adresse für die Dauer des
-        jeweiligen Bewertungszeitfensters als Zählerschlüssel in einem Redis-Datenspeicher von
-        Upstash, Inc. verarbeitet und anschließend automatisch gelöscht. Rechtsgrundlage ist
-        Art. 6 Abs. 1 lit. f DSGVO (berechtigtes Interesse am Schutz der Infrastruktur).
+        Wo landen Deine n8n-URL und Dein API-Schlüssel? — Bei Deiner n8n-Instanz und
+        nirgendwo sonst. n8viz reicht beides serverseitig durch und verwirft es nach der
+        Anfrage. Durchgereicht, nicht gespeichert.
+      </p>
+      <p>
+        Deine Workflow-Daten werden nur flüchtig im Arbeitsspeicher verarbeitet, um die Karte
+        zu bauen. Sie werden weder gespeichert noch protokolliert.
       </p>
 
-      <h2>5. Verbindung zu Ihrer n8n-Instanz</h2>
+      <h2>6. Das eine Cookie</h2>
       <p>
-        Wenn Sie n8viz mit Ihrer n8n-Instanz verbinden, geben Sie die URL Ihrer Instanz und
-        einen API-Schlüssel ein. Diese Daten werden ausschließlich dazu verwendet, die Anfrage
-        serverseitig an Ihre n8n-Instanz weiterzuleiten. Standardmäßig werden sie nicht
-        gespeichert und nach der Anfrage verworfen.
+        Nur wenn Du beim Verbinden „Remember" anhakst, speichert n8viz URL und API-Schlüssel
+        verschlüsselt in einem Cookie in Deinem Browser (<code>n8nviz_sess</code>). Das Cookie
+        ist serverseitig versiegelt, mit HttpOnly, Secure und SameSite=Strict geschützt und
+        läuft nach 7 Tagen ab. Auf unseren Servern wird nichts gespeichert. Trennst Du die
+        Verbindung in der Anwendung, ist das Cookie weg.
       </p>
       <p>
-        Die abgerufenen Workflow-Daten werden nur flüchtig im Arbeitsspeicher verarbeitet, um
-        die Visualisierung zu erzeugen. Sie werden weder serverseitig gespeichert noch
-        protokolliert.
-      </p>
-
-      <h2>6. Cookie „Verbindung merken"</h2>
-      <p>
-        Nur wenn Sie beim Verbinden die Option „Remember" aktivieren, werden URL und
-        API-Schlüssel verschlüsselt in einem Cookie (<code>n8nviz_sess</code>) in Ihrem Browser
-        gespeichert. Das Cookie ist mit den Attributen HttpOnly, Secure und SameSite=Strict
-        geschützt, serverseitig versiegelt (verschlüsselt) und läuft nach 7 Tagen ab. Eine
-        serverseitige Speicherung findet nicht statt; Sie können die Verbindung jederzeit in
-        der Anwendung trennen und das Cookie damit löschen.
-      </p>
-      <p>
-        Da das Cookie ausschließlich auf Ihren ausdrücklichen Wunsch und für die von Ihnen
-        angeforderte Funktion gesetzt wird, ist es technisch erforderlich im Sinne von § 25
-        Abs. 2 Nr. 2 TDDDG. Rechtsgrundlage der Datenverarbeitung ist Art. 6 Abs. 1 lit. b
-        DSGVO. Weitere Cookies werden nicht gesetzt.
+        Das Cookie wird nur auf Deinen ausdrücklichen Wunsch und für genau diese Funktion
+        gesetzt — es ist damit technisch erforderlich im Sinne von § 25 Abs. 2 Nr. 2 TDDDG.
+        Rechtsgrundlage der Verarbeitung ist Art. 6 Abs. 1 lit. b DSGVO. Weitere Cookies gibt
+        es nicht.
       </p>
 
-      <h2>7. Ihre Rechte</h2>
+      <h2>7. Deine Rechte</h2>
       <p>
-        Sie haben gegenüber dem Verantwortlichen das Recht auf Auskunft (Art. 15 DSGVO),
+        Du hast gegenüber dem Verantwortlichen das Recht auf Auskunft (Art. 15 DSGVO),
         Berichtigung (Art. 16 DSGVO), Löschung (Art. 17 DSGVO), Einschränkung der Verarbeitung
-        (Art. 18 DSGVO), Datenübertragbarkeit (Art. 20 DSGVO) sowie Widerspruch gegen
-        Verarbeitungen auf Grundlage von Art. 6 Abs. 1 lit. f DSGVO (Art. 21 DSGVO). Außerdem
-        haben Sie das Recht, sich bei einer Datenschutzaufsichtsbehörde zu beschweren, etwa der
-        Berliner Beauftragten für Datenschutz und Informationsfreiheit.
+        (Art. 18 DSGVO), Datenübertragbarkeit (Art. 20 DSGVO) und Widerspruch gegen
+        Verarbeitungen auf Grundlage von Art. 6 Abs. 1 lit. f DSGVO (Art. 21 DSGVO). Du kannst
+        Dich außerdem bei einer Datenschutzaufsichtsbehörde beschweren, etwa der Berliner
+        Beauftragten für Datenschutz und Informationsfreiheit.
       </p>
     </article>
   </div>
