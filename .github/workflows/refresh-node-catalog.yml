@@ -33,7 +33,7 @@ jobs:
         run: node scripts/generate-node-catalog.mjs /tmp/package
 
       - name: Open PR if changed
-        uses: peter-evans/create-pull-request@v6
+        uses: peter-evans/create-pull-request@v8
         with:
           branch: chore/node-catalog
           commit-message: "chore(catalog): refresh node names to n8n-nodes-base ${{ steps.pack.outputs.version }}"
